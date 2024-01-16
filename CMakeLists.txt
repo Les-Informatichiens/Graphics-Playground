@@ -32,7 +32,42 @@ endif ()
 # Dependencies ========================================================================================
 include(cmake/CPM.cmake)
 
-# Add dependencies here...
+# glm =================================================================================================
+CPMAddPackage(
+        NAME "glm"
+        GITHUB_REPOSITORY "g-truc/glm"
+        GIT_TAG "0.9.9.8"
+)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
+# =====================================================================================================
+
+# glew ================================================================================================
+if (NOT TARGET libglew_static)
+    CPMAddPackage(
+            NAME "GLEW"
+            GITHUB_REPOSITORY "Perlmint/glew-cmake"
+            GIT_TAG "glew-cmake-2.2.0"
+    )
+endif ()
+
+target_link_libraries(${PROJECT_NAME} PRIVATE libglew_static)
+# =====================================================================================================
+
+# imgui ===============================================================================================
+if (NOT TARGET imgui::imgui)
+    CPMFindPackage(
+            NAME "imgui"
+            GITHUB_REPOSITORY "Les-Informatichiens/imgui-cmake"
+            GIT_TAG "v1.90.1-docking-cmake"
+            OPTIONS
+            "IMGUI_BUILD_OPENGL3_BINDING ON"
+            "IMGUI_BUILD_GLFW_BINDING ON"
+    )
+endif ()
+
+target_link_libraries(${PROJECT_NAME} PRIVATE imgui::imgui)
+# =====================================================================================================
 
 # =====================================================================================================
 
