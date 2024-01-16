@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+# Project exclude paths
+/cmake-build-debug/
+.idea/
+
+# Build files
+build-debug
+build-release
