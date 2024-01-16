@@ -23,6 +23,15 @@ if (MSVC)
 endif ()
 
 
+if(EMSCRIPTEN)
+    target_link_options(${PROJECT_NAME} PRIVATE "-s WASM=1 -sUSE_GLFW=3 -sUSE_WEBGL2 -sEMULATE_FUNCTION_POINTER_CASTS=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=\"['ccall', 'cwrap']\"")
+    set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX .html)
+
+    if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/res")
+        set(CMAKE_CXX_FLAGS  "--preload-file res")
+    endif ()
+endif()
+
 if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/res")
     message(STATUS "Copying res to build directory")
     file(COPY res DESTINATION "${CMAKE_BINARY_DIR}")
@@ -43,15 +52,25 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 # =====================================================================================================
 
 # glew ================================================================================================
-if (NOT TARGET libglew_static)
-    CPMAddPackage(
-            NAME "GLEW"
-            GITHUB_REPOSITORY "Perlmint/glew-cmake"
-            GIT_TAG "glew-cmake-2.2.0"
-    )
-endif ()
+if(EMSCRIPTEN)
+    target_link_options(${PROJECT_NAME} PRIVATE "-sUSE_WEBGL2=1")
+else()
+    if(NOT TARGET libglew_static)
+        CPMAddPackage(
+                NAME "GLEW"
+                GITHUB_REPOSITORY "Perlmint/glew-cmake"
+                GIT_TAG "glew-cmake-2.2.0"
+        )
+    endif()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE libglew_static)
+    target_link_libraries(${PROJECT_NAME} PRIVATE libglew_static)
+endif()
+# =====================================================================================================
+
+# glfw ================================================================================================
+if(EMSCRIPTEN)
+    target_link_options(${PROJECT_NAME} PRIVATE "-sUSE_GLFW=3")
+endif()
 # =====================================================================================================
 
 # imgui ===============================================================================================
