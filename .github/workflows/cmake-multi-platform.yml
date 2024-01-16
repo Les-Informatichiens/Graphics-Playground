@@ -21,6 +21,9 @@ jobs:
           - os: ubuntu-latest
             generator: Ninja
             compiler: g++
+          - os: ubuntu-latest
+            generator: Ninja
+            compiler: em++
     steps:
       - uses: actions/checkout@v3
       - uses: ilammy/msvc-dev-cmd@v1
@@ -30,6 +33,21 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install ninja-build libgl1-mesa-dev libegl1-mesa-dev xorg-dev libglu1-mesa-dev
+
+      - name: Setup emsdk
+        if: matrix.compiler == 'em++'
+        uses: mymindstorm/setup-emsdk@v13
+        with:
+          # Make sure to set a version number!
+          version: 1.38.40
+          # This is the name of the cache folder.
+          # The cache folder will be placed in the build directory,
+          #  so make sure it doesn't conflict with anything!
+          actions-cache-folder: 'emsdk-cache'
+      
+      - name: Verify emsdk
+        if: matrix.compiler == 'em++'
+        run: emcc -v
 
       - name: Set up cache
         uses: actions/cache@v3
@@ -42,8 +60,14 @@ jobs:
 
 
       - name: Configure CMake
+        if: matrix.compiler != 'em++'
         run: |
           cmake -DCPM_SOURCE_CACHE=~/cpm-cache -S . -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G "Ninja"
+
+      - name: Configure Emscripten CMake
+        if: matrix.compiler == 'em++'
+        run: |
+          cmake -DCPM_SOURCE_CACHE=~/cpm-cache -S . -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G "Ninja" -DCMAKE_TOOLCHAIN_FILE=""
 
       - name: Build CMake
         # Execute the build.  You can specify a specific target with "--target <NAME>"
