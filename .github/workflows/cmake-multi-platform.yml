@@ -67,7 +67,7 @@ jobs:
       - name: Configure Emscripten CMake
         if: matrix.compiler == 'em++'
         run: |
-          emcmake cmake -DEMSCRIPTEN=1 -DCPM_SOURCE_CACHE=~/cpm-cache -S . -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G "Ninja"
+          emcmake cmake -DCPM_SOURCE_CACHE=~/cpm-cache -S . -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G "Ninja"
 
       - name: Build CMake
         # Execute the build.  You can specify a specific target with "--target <NAME>"
