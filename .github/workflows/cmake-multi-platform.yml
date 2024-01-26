@@ -44,7 +44,7 @@ jobs:
           # The cache folder will be placed in the build directory,
           #  so make sure it doesn't conflict with anything!
           actions-cache-folder: 'emsdk-cache'
-      
+
       - name: Verify emsdk
         if: matrix.compiler == 'em++'
         run: emcc -v
