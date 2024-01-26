@@ -1,1 +1,1 @@
-# Graphics-Playground
+# Graphics-Playground [![ci](https://github.com/Les-Informatichiens/Graphics-Playground/actions/workflows/cmake-multi-platform.yml/badge.svg?branch=master)](https://github.com/Les-Informatichiens/Graphics-Playground/actions/workflows/cmake-multi-platform.yml)
