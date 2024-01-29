@@ -5,9 +5,9 @@ set(CMAKE_CXX_STANDARD 23)
 
 add_executable(
         ${PROJECT_NAME}
-        src/main.cpp
-        src/application.cpp
-        src/application.h
+        src/editor.cpp
+        ../application.cpp
+        ../application.h
 )
 
 target_include_directories(
@@ -18,7 +18,7 @@ target_include_directories(
 
 if (MSVC)
     # Set the app as solution startup project
-    set_property(DIRECTORY .. PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
+    set_property(DIRECTORY ../.. PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
 
     # Parallel c++ compilation
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")

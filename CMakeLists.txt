@@ -3,5 +3,5 @@ project(graphics-playground VERSION 0.1)
 
 add_subdirectory(renderer)
 add_subdirectory(engine)
-add_subdirectory(editor)
+add_subdirectory(applications/editor)
 #add_subdirectory(projects)
