@@ -3,6 +3,8 @@
 //
 #pragma once
 
+#include "GLFW/glfw3.h"
+
 class application
 {
 public:
@@ -11,5 +13,10 @@ public:
 
     void update();
 
+    bool shouldClose();
+
     void exit();
+
+    GLFWwindow* window;
+    bool windowShouldClose = false;
 };

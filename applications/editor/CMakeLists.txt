@@ -5,9 +5,9 @@ set(CMAKE_CXX_STANDARD 23)
 
 add_executable(
         ${PROJECT_NAME}
-        src/editor.cpp
-        ../application.cpp
-        ../application.h
+        src/main.cpp
+        src/application.cpp
+        src/application.h
 )
 
 target_include_directories(
@@ -57,7 +57,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 if (EMSCRIPTEN)
     target_link_options(${PROJECT_NAME} PRIVATE "-sUSE_WEBGL2=1")
 else ()
-    CPMFindPackage(
+    CPMAddPackage(
             NAME "GLEW"
             GITHUB_REPOSITORY "Perlmint/glew-cmake"
             GIT_TAG "glew-cmake-2.2.0"
