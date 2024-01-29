@@ -1,0 +1,109 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 23,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "core",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "installDir": "${sourceDir}/out/install/${presetName}"
+    },
+    {
+      "name": "debug",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "msvc",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "cl.exe"
+      }
+    },
+    {
+      "name": "gcc",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    },
+    {
+      "name": "emscripten",
+      "hidden": true,
+      "toolchainFile": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "$env{EMSDK}/upstream/emscripten/em++.bat",
+        "CMAKE_C_COMPILER": "$env{EMSDK}/upstream/emscripten/emcc.bat"
+      }
+    },
+    {
+      "name": "debug-msvc",
+      "displayName": "Debug (MSVC)",
+      "inherits": [
+        "core",
+        "debug",
+        "msvc"
+      ]
+    },
+    {
+      "name": "debug-gcc",
+      "displayName": "Debug (GCC)",
+      "inherits": [
+        "core",
+        "debug",
+        "gcc"
+      ]
+    },
+    {
+      "name": "release-msvc",
+      "displayName": "Debug (MSVC)",
+      "inherits": [
+        "core",
+        "release",
+        "msvc"
+      ]
+    },
+    {
+      "name": "release-gcc",
+      "displayName": "Debug (GCC)",
+      "inherits": [
+        "core",
+        "release",
+        "gcc"
+      ]
+    },
+    {
+      "name": "debug-emscripten",
+      "displayName": "Debug (Emscripten)",
+      "inherits": [
+        "core",
+        "debug",
+        "emscripten"
+      ]
+    },
+    {
+      "name": "release-emscripten",
+      "displayName": "Release (Emscripten)",
+      "inherits": [
+        "core",
+        "release",
+        "emscripten"
+      ]
+    }
+  ],
+  "buildPresets": []
+}
