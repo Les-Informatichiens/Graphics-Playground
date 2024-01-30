@@ -3,14 +3,15 @@
 //
 #pragma once
 
-#include "GLFW/glfw3.h"
 #include "engine/engine.h"
+#define GLFW_INCLUDE_NONE
+#include "GLFW/glfw3.h"
 
 class application
 {
 public:
 
-    application(const engine& engine, GLFWwindow *window) : engine(engine), window(window) {};
+    application(engine engine, GLFWwindow *window) : engine(engine), window(window) {};
 
     void init();
 
@@ -20,7 +21,7 @@ public:
 
 private:
 
-    const engine& engine;
+    const engine engine;
     GLFWwindow* window;
     bool windowShouldClose = false;
 };

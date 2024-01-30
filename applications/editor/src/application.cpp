@@ -20,6 +20,7 @@ void application::init()
 
 void application::run()
 {
+
     while (!windowShouldClose)
     {
         engine.update(0.0f);

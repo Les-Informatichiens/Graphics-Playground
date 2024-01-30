@@ -3,17 +3,19 @@
 //
 #pragma once
 #include "renderer/renderer.h"
+#include <utility>
+#include <memory>
 
 class engine
 {
 public:
 
-    explicit engine(const renderer &renderer) : renderer(renderer) {};
+    explicit engine(renderer& renderer) : renderer(renderer) {};
 
     void update(float dt) const;
     void render() const;
 
 private:
 
-    const renderer& renderer;
+    renderer& renderer;
 };

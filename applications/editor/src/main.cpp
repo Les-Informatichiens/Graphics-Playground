@@ -2,15 +2,13 @@
 // Created by Jonathan Richard on 2024-01-29.
 //
 
-#include "application.h"
 #include "renderer/renderAPI/openGLRenderer.h"
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
+#include "application.h"
 
 int main(int argc, char* argv[])
 {
     // Renderer init
-    openGLRenderer renderer = openGLRenderer();
+    openGLRenderer renderer;
 
     // Engine init
     engine engine(renderer);

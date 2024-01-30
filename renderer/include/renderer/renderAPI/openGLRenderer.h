@@ -4,6 +4,7 @@
 #pragma once
 
 #include "renderer/renderer.h"
+#include "GL/glew.h"
 
 class openGLRenderer : public renderer {
 public:
