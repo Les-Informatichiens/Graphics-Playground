@@ -4,8 +4,15 @@
 
 #pragma once
 
-class renderer
-{
+#include "renderer/renderAPI/vertexBuffer.h"
+
+class renderer {
 public:
-    void draw_triangle();
+    virtual ~renderer() = default;
+
+    virtual void init() = 0;
+
+    virtual void clear() const = 0;
+
+    virtual void draw(const vertexBuffer& vertexBuffer) const = 0;
 };

@@ -4,16 +4,14 @@
 
 #include "engine/engine.h"
 
-
 #include <iostream>
 
-void engine::update(float dt)
+void engine::update(float dt) const
 {
-    renderer.draw_triangle();
-    std::cout << "Engine updated with " << dt << "ms" << std::endl;
+    //renderer.draw();
+    std::cout << "Engine updated in " << dt << "ms" << std::endl;
 }
 
-void engine::render()
-{
+void engine::render() const {
     std::cout << "Engine rendered" << std::endl;
 }

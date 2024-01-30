@@ -7,10 +7,13 @@
 class engine
 {
 public:
-    void update(float dt);
-    void render();
+
+    explicit engine(const renderer &renderer) : renderer(renderer) {};
+
+    void update(float dt) const;
+    void render() const;
 
 private:
 
-    renderer renderer{};
+    const renderer& renderer;
 };

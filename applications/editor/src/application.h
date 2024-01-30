@@ -10,23 +10,17 @@ class application
 {
 public:
 
-    application();
+    application(const engine& engine, GLFWwindow *window) : engine(engine), window(window) {};
 
     void init();
 
     void run();
 
-    bool shouldClose();
-
-    void exit();
-
-private:
-    void update();
+    ~application();
 
 private:
 
-    engine engine;
-
+    const engine& engine;
     GLFWwindow* window;
     bool windowShouldClose = false;
 };
