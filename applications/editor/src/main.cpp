@@ -9,11 +9,6 @@ int main(int argc, char* argv[])
     application app;
 
     app.init();
-
-    while (!app.shouldClose())
-    {
-        app.update();
-    }
-
+    app.run();
     app.exit();
 }

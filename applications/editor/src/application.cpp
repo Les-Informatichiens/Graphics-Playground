@@ -34,6 +34,11 @@ static void glfw_error_callback(int error, const char* description)
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
+application::application()
+    : engine(), window(nullptr)
+{
+}
+
 void application::init()
 {
     glfwSetErrorCallback(glfw_error_callback);
@@ -97,6 +102,18 @@ void application::init()
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init();
+}
+
+void application::run()
+{
+    float dt = 0;
+    while (!this->shouldClose())
+    {
+        dt = 0;
+        this->engine.update(dt);
+        this->engine.render();
+        this->update();
+    }
 }
 
 void application::update()
