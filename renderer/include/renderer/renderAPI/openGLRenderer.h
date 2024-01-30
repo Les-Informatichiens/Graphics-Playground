@@ -3,10 +3,10 @@
 //
 #pragma once
 
-#include "renderer/renderer.h"
+#include "renderer/iRenderer.h"
 #include "GL/glew.h"
 
-class openGLRenderer : public renderer {
+class openGLRenderer : public iRenderer {
 public:
     void init() override{
         // Initialize OpenGL

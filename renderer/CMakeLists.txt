@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 23)
 add_library(
         ${PROJECT_NAME} STATIC
         src/renderer/openGLRenderer.cpp
-        include/renderer/renderer.h
+        include/renderer/iRenderer.h
         include/renderer/renderAPI/openGLRenderer.h
         include/renderer/renderAPI/shader.h
         include/renderer/renderAPI/vertexBuffer.h

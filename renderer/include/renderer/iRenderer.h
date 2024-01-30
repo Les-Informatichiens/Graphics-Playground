@@ -6,9 +6,9 @@
 
 #include "renderer/renderAPI/vertexBuffer.h"
 
-class renderer {
+class iRenderer {
 public:
-    virtual ~renderer() = default;
+    virtual ~iRenderer() = default;
 
     virtual void init() = 0;
 

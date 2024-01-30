@@ -11,7 +11,7 @@ class application
 {
 public:
 
-    application(engine engine, GLFWwindow *window) : engine(engine), window(window) {};
+    application(engine& engine, GLFWwindow *window) : gameEngine(engine), window(window) {};
 
     void init();
 
@@ -21,7 +21,7 @@ public:
 
 private:
 
-    const engine engine;
+    engine& gameEngine;
     GLFWwindow* window;
     bool windowShouldClose = false;
 };

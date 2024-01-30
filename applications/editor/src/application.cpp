@@ -23,8 +23,8 @@ void application::run()
 
     while (!windowShouldClose)
     {
-        engine.update(0.0f);
-        engine.render();
+        gameEngine.update(0.0f);
+        gameEngine.render();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
