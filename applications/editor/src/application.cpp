@@ -34,6 +34,5 @@ void application::run()
 
 application::~application()
 {
-    glfwDestroyWindow(window);
     glfwTerminate();
 }

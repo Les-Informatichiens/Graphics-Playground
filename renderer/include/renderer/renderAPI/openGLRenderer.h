@@ -4,12 +4,13 @@
 #pragma once
 
 #include "renderer/iRenderer.h"
-#include "GL/glew.h"
+#include <GL/glew.h>
 
 class openGLRenderer : public iRenderer {
 public:
     void init() override{
         // Initialize OpenGL
+        glewInit();
     }
 
     void clear() const override  {
