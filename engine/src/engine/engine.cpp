@@ -13,5 +13,6 @@ void engine::update(float dt) const
 }
 
 void engine::render() const {
+    renderer.clear();
     std::cout << "Engine rendered" << std::endl;
 }
