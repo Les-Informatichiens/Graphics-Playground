@@ -18,7 +18,7 @@ target_include_directories(
 
 if (MSVC)
     # Set the app as solution startup project
-    set_property(DIRECTORY .. PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
+    set_property(DIRECTORY ../.. PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
 
     # Parallel c++ compilation
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
@@ -57,7 +57,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 if (EMSCRIPTEN)
     target_link_options(${PROJECT_NAME} PRIVATE "-sUSE_WEBGL2=1")
 else ()
-    CPMFindPackage(
+    CPMAddPackage(
             NAME "GLEW"
             GITHUB_REPOSITORY "Perlmint/glew-cmake"
             GIT_TAG "glew-cmake-2.2.0"
@@ -102,6 +102,13 @@ target_sources(${PROJECT_NAME} PRIVATE ${imgui_SOURCE_DIR}/backends/imgui_impl_g
 
 target_link_libraries(${PROJECT_NAME} PRIVATE imgui::imgui)
 # ======================================================================================================
+
+# engine ===============================================================================================
+
+target_link_libraries(${PROJECT_NAME} PRIVATE engine)
+
+# ======================================================================================================
+
 
 # End dependencies =====================================================================================
 
