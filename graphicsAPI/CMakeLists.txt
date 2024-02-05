@@ -43,6 +43,8 @@ add_library(
         src/opengl/ShaderModuleReflection.cpp
         src/opengl/ShaderModuleReflection.h
         include/graphicsAPI/common/Common.h
+        src/opengl/VertexArrayObject.cpp
+        src/opengl/VertexArrayObject.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
@@ -71,6 +73,15 @@ endif ()
 # spirv-cross =========================================================================================
 CPMAddPackage("gh:KhronosGroup/SPIRV-Cross#main")
 target_link_libraries(${PROJECT_NAME} PRIVATE spirv-cross-core spirv-cross-glsl)
+# =====================================================================================================
+
+# fmt =================================================================================================
+CPMAddPackage(
+        NAME "fmt"
+        GITHUB_REPOSITORY "fmtlib/fmt"
+        GIT_TAG "10.2.1"
+)
+target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt)
 # =====================================================================================================
 
 # cpptrace ============================================================================================

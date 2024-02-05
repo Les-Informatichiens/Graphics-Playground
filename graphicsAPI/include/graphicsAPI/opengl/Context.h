@@ -62,7 +62,24 @@ public: // OpenGL functions
     GLboolean isRenderbuffer(GLuint renderbuffer);
     GLboolean isShader(GLuint shader);
     GLboolean isTexture(GLuint texture);
-
+    void enableVertexAttribArray(GLuint index);
+    void disableVertexAttribArray(GLuint index);
+    void vertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer);
+    void vertexAttribIPointer(GLuint index, GLint size, GLenum type, GLsizei stride, const void* pointer);
+    void vertexAttribDivisor(GLuint index, GLuint divisor);
+    void vertexAttribFormat(GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset);
+    void vertexAttribBinding(GLuint attribindex, GLuint bindingindex);
+    void genVertexArrays(GLsizei n, GLuint* arrays);
+    void genBuffers(GLsizei n, GLuint* buffers);
+    void genTextures(GLsizei n, GLuint* textures);
+    void genFramebuffers(GLsizei n, GLuint* framebuffers);
+    void genRenderbuffers(GLsizei n, GLuint* renderbuffers);
+    void deleteVertexArrays(GLsizei n, const GLuint* arrays);
+    void deleteBuffers(GLsizei n, const GLuint* buffers);
+    void deleteTextures(GLsizei n, const GLuint* textures);
+    void deleteFramebuffers(GLsizei n, const GLuint* framebuffers);
+    void deleteRenderbuffers(GLsizei n, const GLuint* renderbuffers);
+    void bindFramebuffer(GLenum target, GLuint framebuffer);
 
 private:
     bool isInit = false;

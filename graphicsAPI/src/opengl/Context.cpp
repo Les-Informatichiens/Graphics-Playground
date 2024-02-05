@@ -289,4 +289,95 @@ GLboolean Context::isTexture(GLuint texture)
     glLog(glIsTexture(texture));
 }
 
+void Context::enableVertexAttribArray(GLuint index)
+{
+    glLog(glEnableVertexAttribArray(index));
+}
+
+void Context::disableVertexAttribArray(GLuint index)
+{
+    glLog(glDisableVertexAttribArray(index));
+}
+
+void Context::vertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer)
+{
+    glLog(glVertexAttribPointer(index, size, type, normalized, stride, pointer));
+}
+
+void Context::vertexAttribIPointer(GLuint index, GLint size, GLenum type, GLsizei stride, const void* pointer)
+{
+    glLog(glVertexAttribIPointer(index, size, type, stride, pointer));
+}
+
+void Context::vertexAttribDivisor(GLuint index, GLuint divisor)
+{
+    glLog(glVertexAttribDivisor(index, divisor));
+}
+
+void Context::vertexAttribFormat(GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset)
+{
+    glLog(glVertexAttribFormat(attribindex, size, type, normalized, relativeoffset));
+}
+
+void Context::vertexAttribBinding(GLuint attribindex, GLuint bindingindex)
+{
+    glLog(glVertexAttribBinding(attribindex, bindingindex));
+}
+
+void Context::genVertexArrays(GLsizei n, GLuint* arrays)
+{
+    glLog(glGenVertexArrays(n, arrays));
+}
+
+void Context::genBuffers(GLsizei n, GLuint* buffers)
+{
+    glLog(glGenBuffers(n, buffers));
+}
+
+void Context::genTextures(GLsizei n, GLuint* textures)
+{
+    glLog(glGenTextures(n, textures));
+}
+
+void Context::genFramebuffers(GLsizei n, GLuint* framebuffers)
+{
+    glLog(glGenFramebuffers(n, framebuffers));
+}
+
+void Context::genRenderbuffers(GLsizei n, GLuint* renderbuffers)
+{
+    glLog(glGenRenderbuffers(n, renderbuffers));
+}
+
+void Context::deleteVertexArrays(GLsizei n, const GLuint* arrays)
+{
+    glLog(glDeleteVertexArrays(n, arrays));
+}
+
+void Context::deleteBuffers(GLsizei n, const GLuint* buffers)
+{
+    glLog(glDeleteBuffers(n, buffers));
+}
+
+void Context::deleteTextures(GLsizei n, const GLuint* textures)
+{
+    glLog(glDeleteTextures(n, textures));
+}
+
+void Context::deleteFramebuffers(GLsizei n, const GLuint* framebuffers)
+{
+    glLog(glDeleteFramebuffers(n, framebuffers));
+}
+
+void Context::deleteRenderbuffers(GLsizei n, const GLuint* renderbuffers)
+{
+    glLog(glDeleteRenderbuffers(n, renderbuffers));
+}
+
+void Context::bindFramebuffer(GLenum target, GLuint framebuffer)
+{
+    glLog(glBindFramebuffer(target, framebuffer));
+}
+
+
 } // namespace opengl

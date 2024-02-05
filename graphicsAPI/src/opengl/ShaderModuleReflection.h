@@ -42,13 +42,13 @@ class ShaderModuleReflection
 public:
     explicit ShaderModuleReflection(spirv_cross::Compiler& compiler);
 
-    const OpenGLUniformMap& GetPushConstants() const { return pushConstants; }
-    const OpenGLBindingMap& GetUniformBufferBindingMap() const { return uniformBufferBindingMap; }
-    const OpenGLResourceMap& GetUniformBufferResources() const { return uniformBufferResources; }
-    const OpenGLBindingMap& GetSamplerBindingMap() const { return samplerBindingMap; }
-    const OpenGLResourceMap& GetSamplerResources() const { return samplerResources; }
-    const OpenGLBindingMap& GetStorageImageBindingMap() const { return storageImageBindingMap; }
-    const OpenGLResourceMap& GetStorageImageResources() const { return storageImageResources; }
+    [[nodiscard]] const OpenGLUniformMap& getPushConstants() const { return pushConstants; }
+    [[nodiscard]] const OpenGLBindingMap& getUniformBufferBindingMap() const { return uniformBufferBindingMap; }
+    [[nodiscard]] const OpenGLResourceMap& getUniformBufferResources() const { return uniformBufferResources; }
+    [[nodiscard]] const OpenGLBindingMap& getSamplerBindingMap() const { return samplerBindingMap; }
+    [[nodiscard]] const OpenGLResourceMap& getSamplerResources() const { return samplerResources; }
+    [[nodiscard]] const OpenGLBindingMap& getStorageImageBindingMap() const { return storageImageBindingMap; }
+    [[nodiscard]] const OpenGLResourceMap& getStorageImageResources() const { return storageImageResources; }
 
 private:
     void parsePushConstants(spirv_cross::Compiler& compiler);

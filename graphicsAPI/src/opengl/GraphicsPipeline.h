@@ -4,8 +4,11 @@
 
 #pragma once
 
+#include "GraphicsPipelineReflection.h"
 #include "graphicsAPI/common/GraphicsPipeline.h"
 #include "graphicsAPI/opengl/Context.h"
+
+#include <map>
 
 namespace opengl
 {
@@ -18,13 +21,19 @@ public:
     void initialize();
 
     void bindVertexAttributes(size_t bufferIndex, size_t offset);
+    void unbindVertexAttributes();
 
+    [[nodiscard]] const GraphicsPipelineReflection& getReflection() const { return *reflection; }
     [[nodiscard]] const GraphicsPipelineDesc& getDesc() const override { return this->desc; }
 
 private:
     GraphicsPipelineDesc desc;
 
-    std::vector<uint32_t> bindingAttribLocations;
+    std::map<uint32_t, std::vector<uint32_t>> bindingAttribLocations;
+    std::vector<uint32_t> activeBindingAttribLocations;
+
+//    std::vector<uint32_t> bindingAttribLocations;
+    std::shared_ptr<GraphicsPipelineReflection> reflection;
 };
 
 }
