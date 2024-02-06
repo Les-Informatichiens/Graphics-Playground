@@ -3,3 +3,10 @@
 //
 
 #pragma once
+#include "Framebuffer.h"
+
+struct RenderPassDesc
+{
+    std::shared_ptr<IFramebuffer> framebuffer;
+
+};

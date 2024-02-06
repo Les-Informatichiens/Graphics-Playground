@@ -7,20 +7,58 @@
 #include "Context.h"
 #include "graphicsAPI/common/Buffer.h"
 
-namespace opengl
+namespace opengl {
+class Buffer : public IBuffer, public WithContext
 {
-    class Buffer : public IBuffer, public WithContext
+public:
+    enum class Type : uint8_t
     {
-    public:
-        explicit Buffer(Context& context, const BufferDesc& desc);
-
-        virtual void initialize() = 0;
-
-        void map(const void* data, unsigned int size) const override;
-        void mapRange(const void* data, unsigned int size, unsigned int offset) const override;
-        void unmap() const override;
-
-    private:
-        uint32_t id;
+        Attribute,
+        Index,
+        Uniform
     };
-}
+
+    explicit Buffer(Context& context) : WithContext(context){};
+
+    [[nodiscard]] virtual Type getType() const noexcept = 0;
+
+    virtual void initialize(const BufferDesc& desc) = 0;
+};
+
+class ArrayBuffer : public Buffer
+{
+public:
+    explicit ArrayBuffer(Context& context);
+    ~ArrayBuffer() override;
+
+    void initialize(const BufferDesc& desc) override;
+
+    void bind() const noexcept;
+    void bindBase(uint32_t index) const noexcept;
+    void unbind() const noexcept;
+
+    void data(const void* data, uint32_t size, uint32_t offset) const override;
+    void* map(uint32_t size, uint32_t offset) const override;
+    void unmap() const override;
+
+    [[nodiscard]] GLuint getId() const noexcept { return id_; }
+    [[nodiscard]] Type getType() const noexcept override { return Type::Attribute; }
+    [[nodiscard]] GLenum getTarget() const noexcept { return target_; }
+
+private:
+    GLuint id_;
+    GLenum target_;
+    bool isDynamic_;
+    uint32_t size_;
+};
+
+// class ElementArrayBuffer : public Buffer
+// {
+// public:
+//     explicit ElementArrayBuffer(Context& context);
+//     ~ElementArrayBuffer() override;
+//
+//     [[nodiscard]] GLuint getId() const noexcept { return id_; }
+//     [[nodiscard]] Type getType() const noexcept override { return Type::Uniform; }
+//
+}// namespace opengl

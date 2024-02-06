@@ -4,6 +4,11 @@
 
 #pragma once
 
+#include "GraphicsPipeline.h"
+#include "RenderPass.h"
+#include "Common.h"
+#include "Buffer.h"
+
 struct CommandBufferDesc
 {
 };
@@ -11,6 +16,16 @@ struct CommandBufferDesc
 class ICommandBuffer
 {
 public:
-    virtual void begin() = 0;
-    virtual void end() = 0;
+    virtual ~ICommandBuffer() = default;
+
+    virtual void beginRenderPass(const RenderPassDesc& renderPass) = 0;
+    virtual void endRenderPass() = 0;
+    virtual void bindGraphicsPipeline(std::shared_ptr<IGraphicsPipeline> pipeline) = 0;
+    virtual void bindBuffer(std::shared_ptr<IBuffer> buffer) = 0;
+    virtual void draw(PrimitiveType primitiveType, size_t vertexStart, size_t vertexCount) = 0;
+    virtual void drawIndexed(PrimitiveType primitiveType,
+                     size_t indexCount,
+                     IndexFormat indexFormat,
+                     IBuffer& indexBuffer,
+                     size_t indexBufferOffset) = 0;
 };

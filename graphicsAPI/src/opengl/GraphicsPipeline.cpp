@@ -43,6 +43,23 @@ void GraphicsPipeline::initialize()
     }
 }
 
+void GraphicsPipeline::bind()
+{
+    if (auto shaderStages = dynamic_cast<PipelineShaderStages*>(desc.shaderStages.get()))
+    {
+        shaderStages->bind();
+    }
+}
+
+void GraphicsPipeline::unbind()
+{
+    if (auto shaderStages = dynamic_cast<PipelineShaderStages*>(desc.shaderStages.get()))
+    {
+        shaderStages->unbind();
+    }
+    unbindVertexAttributes();
+}
+
 void GraphicsPipeline::bindVertexAttributes(size_t bufferIndex, size_t offset)
 {
     const auto& vertexInput = dynamic_cast<const VertexInputState*>(desc.vertexInputState.get());

@@ -159,4 +159,21 @@ const std::shared_ptr<IShaderModule>& PipelineShaderStages::getComputeShader() c
     return desc.computeModule;
 }
 
+void PipelineShaderStages::bind()
+{
+    if (program != -1)
+    {
+        getContext().useProgram(program);
+    }
+}
+
+void PipelineShaderStages::unbind()
+{
+    if (program != -1)
+    {
+        getContext().useProgram(0);
+    }
+}
+
+
 }; // namespace opengl

@@ -22,6 +22,9 @@ public:
     [[nodiscard]] const std::shared_ptr<IShaderModule>& getGeometryShader() const override;
     [[nodiscard]] const std::shared_ptr<IShaderModule>& getComputeShader() const override;
 
+    void bind();
+    void unbind();
+
 private:
     void createRenderProgram();
     void createComputeProgram();

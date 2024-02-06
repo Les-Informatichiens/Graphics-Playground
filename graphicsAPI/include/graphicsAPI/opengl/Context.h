@@ -5,6 +5,7 @@
 #pragma once
 
 #include "GL/glew.h"
+#include "graphicsAPI/common/Buffer.h"
 #include "spirv_cross.hpp"
 
 namespace opengl {
@@ -80,6 +81,13 @@ public: // OpenGL functions
     void deleteFramebuffers(GLsizei n, const GLuint* framebuffers);
     void deleteRenderbuffers(GLsizei n, const GLuint* renderbuffers);
     void bindFramebuffer(GLenum target, GLuint framebuffer);
+    void deleteBuffer(GLuint id);
+    void unbindBuffer(GLenum target);
+    void bufferData(GLenum target, uint32_t size, const void* data, GLenum usage);
+    void bufferSubData(GLenum get_target, uint32_t uint32, uint32_t size, const void* data);
+    void* mapBufferRange(GLenum get_target, uint32_t uint32, uint32_t size, int i);
+    void unmapBuffer(GLenum target);
+    void bindBufferBase(GLenum target, GLuint index, GLuint id);
 
 private:
     bool isInit = false;

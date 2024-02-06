@@ -379,5 +379,39 @@ void Context::bindFramebuffer(GLenum target, GLuint framebuffer)
     glLog(glBindFramebuffer(target, framebuffer));
 }
 
+void Context::deleteBuffer(GLuint id)
+{
+    glLog(glDeleteBuffers(1, &id));
+}
+
+void Context::unbindBuffer(GLenum target)
+{
+    glLog(glBindBuffer(target, 0));
+}
+
+void Context::bufferData(GLenum target, uint32_t size, const void* data, GLenum usage)
+{
+    glLog(glBufferData(target, size, data, usage));
+}
+
+void Context::bufferSubData(GLenum get_target, uint32_t uint32, uint32_t size, const void* data)
+{
+    glLog(glBufferSubData(get_target, uint32, size, data));
+}
+
+void* Context::mapBufferRange(GLenum get_target, uint32_t uint32, uint32_t size, int i)
+{
+    glLog(glMapBufferRange(get_target, uint32, size, i));
+}
+
+void Context::unmapBuffer(GLenum target)
+{
+    glLog(glUnmapBuffer(target));
+}
+
+void Context::bindBufferBase(GLenum target, GLuint index, GLuint id)
+{
+    glLog(glBindBufferBase(target, index, id));
+}
 
 } // namespace opengl

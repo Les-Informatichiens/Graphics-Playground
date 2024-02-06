@@ -45,6 +45,10 @@ add_library(
         include/graphicsAPI/common/Common.h
         src/opengl/VertexArrayObject.cpp
         src/opengl/VertexArrayObject.h
+        src/opengl/CommandBuffer.cpp
+        src/opengl/CommandBuffer.h
+        src/opengl/CommandPool.cpp
+        src/opengl/CommandPool.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)

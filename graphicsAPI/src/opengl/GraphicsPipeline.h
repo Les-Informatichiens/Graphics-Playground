@@ -20,6 +20,9 @@ public:
 
     void initialize();
 
+    void bind();
+    void unbind();
+
     void bindVertexAttributes(size_t bufferIndex, size_t offset);
     void unbindVertexAttributes();
 

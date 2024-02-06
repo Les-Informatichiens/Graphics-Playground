@@ -4,6 +4,9 @@
 
 #pragma once
 
+#include "Common.h"
+
+
 #include <cstdint>
 
 struct BufferDesc
@@ -18,14 +21,17 @@ struct BufferDesc
         Indirect = 1 << 4,
     };
 
-    BufferType type;
+    BufferType type = 0;
+    const void* data = nullptr;
+    uint32_t size = 0;
+    ResourceStorage storage = ResourceStorage::Invalid;
 };
 
 class IBuffer
 {
 public:
     virtual ~IBuffer() = default;
-    virtual void map(const void* data, unsigned int size) const = 0;
-    virtual void mapRange(const void* data, unsigned int size, unsigned int offset) const = 0;
+    virtual void data(const void* data, uint32_t size, uint32_t offset) const = 0;
+    [[nodiscard]] virtual void* map(uint32_t size, uint32_t offset) const = 0;
     virtual void unmap() const = 0;
 };

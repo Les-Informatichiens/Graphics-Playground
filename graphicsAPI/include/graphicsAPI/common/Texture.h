@@ -85,11 +85,33 @@ struct TextureDesc
     uint32_t usage;
 };
 
+struct TextureCopyRegion {
+    int32_t srcX = 0;
+    int32_t srcY = 0;
+    int32_t srcZ = 0;
+    uint32_t srcLayer = 0;
+    uint32_t srcMipLevel = 0;
+
+    int32_t dstX = 0;
+    int32_t dstY = 0;
+    int32_t dstZ = 0;
+    uint32_t dstLayer = 0;
+    uint32_t dstMipLevel = 0;
+
+    uint32_t width = 0;      // 0 means full width
+    uint32_t height = 0;     // 0 means full height
+    uint32_t depth = 0;      // 0 means full depth
+    uint32_t layerCount = 0; // 0 means all layers
+    // nb: can only copy 1 mip level at a time
+};
+
 class ITexture
 {
 public:
     virtual ~ITexture() = default;
 
-    virtual void map(const void* data, size_t size) const = 0;
+    // virtual void data(const void* data, size_t size) const = 0;
+    virtual void copyFrom(const ITexture& src, TextureCopyRegion region) const = 0;
     virtual void commit() const = 0;
+
 };

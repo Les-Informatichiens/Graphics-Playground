@@ -14,6 +14,8 @@ class PlatformDevice : public IPlatformDevice
 public:
     PlatformDevice() = default;
 
+
+
     [[nodiscard]] bool isOfType(PlatformDeviceType type) const override;
 };
 
