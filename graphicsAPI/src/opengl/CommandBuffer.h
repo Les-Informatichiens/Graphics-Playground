@@ -5,6 +5,7 @@
 #pragma once
 
 #include "GraphicsPipeline.h"
+#include "UniformBinder.h"
 #include "VertexArrayObject.h"
 #include "graphicsAPI/common/CommandBuffer.h"
 #include "graphicsAPI/opengl/Buffer.h"
@@ -38,6 +39,8 @@ private:
     // std::shared_ptr<Framebuffer> activeFramebuffer;
     std::shared_ptr<GraphicsPipeline> activeGraphicsPipeline;
     std::shared_ptr<VertexArrayObject> activeVAO;
+
+    UniformBinder uniformBinder;
 
     bool isRecordingRenderCommands = false;
     bool isRecordingComputeCommands = false;

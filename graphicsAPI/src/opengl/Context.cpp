@@ -427,6 +427,11 @@ void Context::bindBufferBase(GLenum target, GLuint index, GLuint id)
     glLog(glBindBufferBase(target, index, id));
 }
 
+void Context::bindBufferRange(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size)
+{
+    glLog(glBindBufferRange(target, index, buffer, offset, size));
+}
+
 WithContext::WithContext(Context& context) : context_(&context)
 {
 }

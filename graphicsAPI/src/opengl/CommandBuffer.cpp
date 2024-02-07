@@ -45,6 +45,9 @@ CommandBuffer::CommandBuffer(const std::shared_ptr<Context>& context)
 {
     activeVAO = std::make_shared<VertexArrayObject>(*context);
     activeVAO->create();
+
+    uniformBinder = UniformBinder();
+
     this->context = context;
 }
 
@@ -62,6 +65,7 @@ void CommandBuffer::endRenderPass()
     activeGraphicsPipeline = nullptr;
 
     vertexBuffersDirtyCache.clear();
+    uniformBinder.clearDirtyBufferCache();
 
     isRecordingRenderCommands = false;
 }
@@ -81,8 +85,10 @@ void CommandBuffer::bindBuffer(uint32_t index, std::shared_ptr<IBuffer> buffer, 
     {
         vertexBuffersCache.insert_or_assign(index, std::move(std::static_pointer_cast<Buffer>(buffer)));
         vertexBuffersDirtyCache.insert(index);
-        // } else if (bufferType == Buffer::Type::Uniform) {
-        // dynamic_cast<ArrayBuffer*>(buffer.get())->bind();
+    }
+    else if (bufferType == Buffer::Type::Uniform)
+    {
+        uniformBinder.setBuffer(index, glBuffer, offset);
     }
 }
 
@@ -103,6 +109,7 @@ void CommandBuffer::drawIndexed(PrimitiveType primitiveType, size_t indexCount, 
 
 void CommandBuffer::prepareForDraw()
 {
+    // bind vertex buffers and graphics pipeline
     if (activeGraphicsPipeline)
     {
         for (auto& [index, buffer] : vertexBuffersCache)
@@ -118,6 +125,9 @@ void CommandBuffer::prepareForDraw()
 
         activeGraphicsPipeline->bind();
     }
+
+    // bind uniform buffers
+    uniformBinder.bindBuffers(*context);
 }
 
 void CommandBuffer::clearPipelineResources(const std::shared_ptr<GraphicsPipeline>& newPipeline)

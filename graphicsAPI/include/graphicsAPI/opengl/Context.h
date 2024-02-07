@@ -33,6 +33,7 @@ public: // OpenGL functions
     void useProgram(GLuint program);
     void bindVertexArray(GLuint array);
     void bindBuffer(GLenum target, GLuint buffer);
+    void bindBufferRange(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
     void bindTexture(GLenum target, GLuint texture);
     void activeTexture(GLenum texture);
     void uniform1i(GLint location, GLint v0);

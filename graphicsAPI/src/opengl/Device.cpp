@@ -35,15 +35,13 @@ std::unique_ptr<IBuffer> Device::createBuffer(const BufferDesc& desc)
 
     if ((bufferType & BufferDesc::BufferTypeBits::Index) ||
         (bufferType & BufferDesc::BufferTypeBits::Vertex) ||
-        (bufferType & BufferDesc::BufferTypeBits::Storage)) {
+        (bufferType & BufferDesc::BufferTypeBits::Storage) ||
+        (bufferType & BufferDesc::BufferTypeBits::Uniform))
+    {
         resource = std::make_unique<ArrayBuffer>(getContext());
-    } else if (bufferType & BufferDesc::BufferTypeBits::Uniform) {
-//        if (requestedApiHints & BufferDesc::BufferAPIHintBits::UniformBlock) {
-//            resource = std::make_unique<UniformBlockBuffer>(context, requestedApiHints);
-//        } else {
-//            resource = std::make_unique<UniformBuffer>(context, requestedApiHints);
-//        }
-
+    }
+    if (!resource) {
+        return nullptr;
     }
     resource->initialize(desc);
     return resource;
@@ -55,9 +53,11 @@ std::shared_ptr<IShaderModule> Device::createShaderModule(const ShaderModuleDesc
 
     shaderc::Compiler glslcompiler;
     shaderc::CompileOptions options;
+    options.SetVulkanRulesRelaxed(true);
     shaderc::SpvCompilationResult result = glslcompiler.CompileGlslToSpv(desc.code, shaderc_shader_kind::shaderc_glsl_vertex_shader, "main", options);
     if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
         //handle errors
+        throw std::runtime_error("Failed to compile shader : " + result.GetErrorMessage());
     }
     std::vector<uint32_t> vertexSPRV;
     vertexSPRV.assign(result.begin(), result.end());

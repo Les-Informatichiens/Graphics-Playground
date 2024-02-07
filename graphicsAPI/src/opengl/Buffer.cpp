@@ -52,12 +52,16 @@ void ArrayBuffer::initialize(const BufferDesc& desc)
     if (desc.type & BufferDesc::BufferTypeBits::Storage) {
         // if (getContext().deviceFeatures().hasFeature(DeviceFeatures::Compute)) {
         target_ = GL_SHADER_STORAGE_BUFFER;
+        type_ = Type::Storage;
     } else if (desc.type & BufferDesc::BufferTypeBits::Uniform) {
         target_ = GL_UNIFORM_BUFFER;
+        type_ = Type::Uniform;
     } else if (desc.type & BufferDesc::BufferTypeBits::Vertex) {
         target_ = GL_ARRAY_BUFFER;
+        type_ = Type::Attribute;
     } else if (desc.type & BufferDesc::BufferTypeBits::Index) {
         target_ = GL_ELEMENT_ARRAY_BUFFER;
+        type_ = Type::Index;
     } else {
         // err, unknown buffer type
         return;
@@ -101,8 +105,8 @@ void ArrayBuffer::bind() const noexcept
 
 void ArrayBuffer::bindBase(uint32_t index) const noexcept
 {
-    if (target_ != GL_SHADER_STORAGE_BUFFER) {
-        // err, can only bind to shader storage buffers
+    if (target_ != GL_SHADER_STORAGE_BUFFER && target_ != GL_UNIFORM_BUFFER) {
+        // err, can only bind to shader storage buffers or uniform buffers
         return;
     }
     getContext().bindBuffer(target_, id_);
@@ -112,6 +116,16 @@ void ArrayBuffer::bindBase(uint32_t index) const noexcept
 void ArrayBuffer::unbind() const noexcept
 {
     getContext().bindBuffer(getTarget(), 0);
+}
+
+void ArrayBuffer::bindRange(uint32_t index, uint32_t offset) const noexcept
+{
+    if (target_ != GL_SHADER_STORAGE_BUFFER || target_ != GL_UNIFORM_BUFFER) {
+        // err, can only bind to shader storage buffers or uniform buffers
+        return;
+    }
+    getContext().bindBuffer(target_, id_);
+    getContext().bindBufferRange(target_, (GLuint)index, id_, offset, size_ - offset);
 }
 
 }// namespace opengl

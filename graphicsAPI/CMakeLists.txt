@@ -49,6 +49,8 @@ add_library(
         src/opengl/CommandBuffer.h
         src/opengl/CommandPool.cpp
         src/opengl/CommandPool.h
+        src/opengl/UniformBinder.cpp
+        src/opengl/UniformBinder.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
