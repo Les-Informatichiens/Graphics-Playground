@@ -6,6 +6,14 @@
 
 #include <iostream>
 
+#define DEBUG_FUNCTION(func, ...) \
+do { \
+    printf("Calling function: %s\n", #func); \
+    printf("Parameters: "); \
+    printf(__VA_ARGS__); \
+    printf("\n"); \
+} while(0)
+
 // Macro to print which line has an error
 #ifndef Debug
 
@@ -49,7 +57,7 @@ static void _glPrintErrors(const char* func, const char* file, const int line)
     }
 }
 
-#   define glLog(x)  x; _glPrintErrors(#x, __FILE__, __LINE__)
+#   define glLog(x)  x; _glPrintErrors(#x, __FILE__, __LINE__); std::cout << #x << std::endl
 #else
 #   define glLog(x) x
 #endif
@@ -58,6 +66,11 @@ namespace opengl {
 
 void Context::init()
 {
+    if (this->isInit)
+    {
+        return;
+    }
+
     if (this->isInit = glewInit(); this->isInit != GLEW_OK)
     {
         std::cerr << "Failed to initialize GLEW" << std::endl;
@@ -246,47 +259,47 @@ void Context::detachShader(GLuint program, GLuint shader)
 
 GLuint Context::createShader(GLenum type)
 {
-    glLog(glCreateShader(type));
+    return glLog(glCreateShader(type));
 }
 
 GLuint Context::createProgram()
 {
-    glLog(glCreateProgram());
+    return glLog(glCreateProgram());
 }
 
 GLboolean Context::isBuffer(GLuint buffer)
 {
-    glLog(glIsBuffer(buffer));
+    return glLog(glIsBuffer(buffer));
 }
 
 GLboolean Context::isEnabled(GLenum cap)
 {
-    glLog(glIsEnabled(cap));
+    return glLog(glIsEnabled(cap));
 }
 
 GLboolean Context::isFramebuffer(GLuint framebuffer)
 {
-    glLog(glIsFramebuffer(framebuffer));
+    return glLog(glIsFramebuffer(framebuffer));
 }
 
 GLboolean Context::isProgram(GLuint program)
 {
-    glLog(glIsProgram(program));
+    return glLog(glIsProgram(program));
 }
 
 GLboolean Context::isRenderbuffer(GLuint renderbuffer)
 {
-    glLog(glIsRenderbuffer(renderbuffer));
+    return glLog(glIsRenderbuffer(renderbuffer));
 }
 
 GLboolean Context::isShader(GLuint shader)
 {
-    glLog(glIsShader(shader));
+    return glLog(glIsShader(shader));
 }
 
 GLboolean Context::isTexture(GLuint texture)
 {
-    glLog(glIsTexture(texture));
+    return glLog(glIsTexture(texture));
 }
 
 void Context::enableVertexAttribArray(GLuint index)
@@ -401,7 +414,7 @@ void Context::bufferSubData(GLenum get_target, uint32_t uint32, uint32_t size, c
 
 void* Context::mapBufferRange(GLenum get_target, uint32_t uint32, uint32_t size, int i)
 {
-    glLog(glMapBufferRange(get_target, uint32, size, i));
+    return glLog(glMapBufferRange(get_target, uint32, size, i));
 }
 
 void Context::unmapBuffer(GLenum target)
@@ -412,6 +425,19 @@ void Context::unmapBuffer(GLenum target)
 void Context::bindBufferBase(GLenum target, GLuint index, GLuint id)
 {
     glLog(glBindBufferBase(target, index, id));
+}
+
+WithContext::WithContext(Context& context) : context_(&context)
+{
+}
+
+WithContext::~WithContext()
+{
+}
+
+Context& WithContext::getContext() const
+{
+    return *context_;
 }
 
 } // namespace opengl

@@ -85,14 +85,14 @@ class VertexInputStateDescBuilder
 public:
     VertexInputStateDescBuilder() = default;
     VertexInputStateDescBuilder& beginBinding(uint32_t binding);
-    VertexInputStateDescBuilder& addVertexAttribute(VertexAttributeFormat format, const std::string& name);
+    VertexInputStateDescBuilder& addVertexAttribute(VertexAttributeFormat format, const std::string& name, uint32_t location = 0);
     VertexInputStateDescBuilder& endBinding();
     [[nodiscard]] VertexInputStateDesc build() const;
 
 private:
     VertexInputStateDesc vertexInputStateDesc;
     uint32_t currentBindingAttribOffset = 0;
-    uint32_t currentBindingAttribLocation = 0;
+//    uint32_t currentBindingAttribLocation = 0;
     VertexInputBindingDesc currentBindingDesc;
     bool bindingStarted = false;
 };
@@ -101,5 +101,4 @@ class IVertexInputState
 {
 public:
     virtual ~IVertexInputState() = default;
-    [[nodiscard]] virtual const VertexInputStateDesc& getDesc() const = 0;
 };

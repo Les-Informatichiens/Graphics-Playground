@@ -9,10 +9,10 @@
 
 namespace opengl {
 
-class CommandPool : ICommandPool
+class CommandPool : public ICommandPool
 {
 public:
-    explicit CommandPool(const std::shared_ptr<Context>& context);
+    explicit CommandPool(const std::shared_ptr<Context>& context, const CommandPoolDesc& desc);
 
     std::shared_ptr<ICommandBuffer> acquireCommandBuffer(const CommandBufferDesc& desc) override;
     void submitCommandBuffer(std::shared_ptr<ICommandBuffer> commandBuffer) override;

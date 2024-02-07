@@ -8,7 +8,7 @@
 
 #include <utility>
 
-opengl::CommandPool::CommandPool(const std::shared_ptr<Context>& context)
+opengl::CommandPool::CommandPool(const std::shared_ptr<Context>& context, const CommandPoolDesc& desc)
 {
     this->context = context;
 }

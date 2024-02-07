@@ -45,8 +45,16 @@ VertexInputStateDescBuilder& VertexInputStateDescBuilder::beginBinding(uint32_t 
     bindingStarted = true;
     return *this;
 }
+//{
+//    currentBindingDesc = {
+//        .binding = binding,
+//        .stride = 0,
+//    };
+//    bindingStarted = true;
+//    return *this;
+//}
 
-VertexInputStateDescBuilder& VertexInputStateDescBuilder::addVertexAttribute(VertexAttributeFormat format, const std::string& name)
+VertexInputStateDescBuilder& VertexInputStateDescBuilder::addVertexAttribute(VertexAttributeFormat format, const std::string& name, uint32_t location)
 {
     if (!bindingStarted)
     {
@@ -54,14 +62,14 @@ VertexInputStateDescBuilder& VertexInputStateDescBuilder::addVertexAttribute(Ver
     }
 
     VertexInputAttributeDesc attributeDesc;
-    attributeDesc.location = currentBindingAttribLocation;
+    attributeDesc.location = location;
     attributeDesc.binding = currentBindingDesc.binding;
     attributeDesc.format = format;
     attributeDesc.name = name;
     attributeDesc.size = getVertexAttributeFormatSize(format);
     attributeDesc.offset = currentBindingAttribOffset;
     currentBindingAttribOffset += attributeDesc.size;
-    ++currentBindingAttribLocation;
+//    ++currentBindingAttribLocation;
 
     currentBindingDesc.stride += attributeDesc.size;
 
@@ -85,7 +93,7 @@ VertexInputStateDescBuilder& VertexInputStateDescBuilder::endBinding()
     bindingStarted = false;
     vertexInputStateDesc.vertexBindingDescriptions.push_back(currentBindingDesc);
 
-    currentBindingAttribLocation = 0;
+//    currentBindingAttribLocation = 0;
     currentBindingAttribOffset = 0;
 
     return *this;

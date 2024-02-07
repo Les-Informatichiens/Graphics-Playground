@@ -24,7 +24,7 @@ ShaderModule::ShaderModule(Context& context, const ShaderModuleDesc& desc)
 
 ShaderModule::~ShaderModule()
 {
-    if (shader != -1)
+    if (shader != 0)
     {
         getContext().deleteShader(shader);
     }
@@ -46,16 +46,16 @@ void ShaderModule::create(const std::string& glsl)
 
     GLuint tempShader = getContext().createShader(shaderType);
 
-    const GLchar* code = glsl.data();
-    getContext().shaderSource(shader, 1, &code, nullptr);
-    getContext().compileShader(shader);
+    const GLchar* code = glsl.c_str();
+    getContext().shaderSource(tempShader, 1, &code, nullptr);
+    getContext().compileShader(tempShader);
 
     GLint success = 0;
-    getContext().getShaderiv(shader, GL_COMPILE_STATUS, &success);
+    getContext().getShaderiv(tempShader, GL_COMPILE_STATUS, &success);
     if (!success)
     {
         GLchar infoLog[512];
-        getContext().getShaderInfoLog(shader, 512, nullptr, infoLog);
+        getContext().getShaderInfoLog(tempShader, 512, nullptr, infoLog);
         throw std::runtime_error("Shader compilation failed: " + std::string(infoLog));
     }
     shader = tempShader;

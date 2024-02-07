@@ -5,7 +5,7 @@
 #include "GraphicsPipeline.h"
 #include "ShaderStage.h"
 #include "VertexInputState.h"
-#include "fmt/format.h"
+//#include "fmt/format.h"
 
 namespace opengl {
 
@@ -32,10 +32,10 @@ void GraphicsPipeline::initialize()
         {
             for (int i = 0; i < bindingAttribs.size(); ++i)
             {
-                const auto& location = i;
+                const auto& location = bindingAttribs[i].location;
                 if (location < 0)
                 {
-                    throw std::runtime_error(fmt::format("Invalid location for vertex attribute: {}", location));
+//                    throw std::runtime_error(fmt::format("Invalid location for vertex attribute: {}", location));
                 }
                 bindingAttribLocations[bindingIndex].push_back(location);
             }
@@ -57,7 +57,6 @@ void GraphicsPipeline::unbind()
     {
         shaderStages->unbind();
     }
-    unbindVertexAttributes();
 }
 
 void GraphicsPipeline::bindVertexAttributes(size_t bufferIndex, size_t offset)

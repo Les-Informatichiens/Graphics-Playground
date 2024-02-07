@@ -4,7 +4,7 @@
 
 #include "GraphicsPipelineReflection.h"
 #include "ShaderModule.h"
-#include "fmt/format.h"
+//#include "fmt/format.h"
 
 namespace opengl {
 
@@ -70,7 +70,7 @@ GLuint GraphicsPipelineReflection::getSamplerBinding(uint32_t resourceId, bool e
     const auto resource = uniformBufferResources.find(resourceId);
     GLuint retVal = (resource == uniformBufferResources.end()) ? ~0 : resource->second.binding;
     if (exceptionIfNotFound && retVal == ~0) {
-        throw std::runtime_error(fmt::format("Sampler resource not found: {}", resourceId));
+//        throw std::runtime_error(fmt::format("Sampler resource not found: {}", resourceId));
     }
     return retVal;
 }
@@ -80,7 +80,7 @@ GLuint GraphicsPipelineReflection::getStorageImageBinding(uint32_t resourceId, b
     const auto resource = storageImageResources.find(resourceId);
     GLuint retVal = (resource == storageImageResources.end()) ? ~0 : resource->second.binding;
     if (exceptionIfNotFound && retVal == ~0) {
-        throw std::runtime_error(fmt::format("Storage image resource not found: {}", resourceId));
+//        throw std::runtime_error(fmt::format("Storage image resource not found: {}", resourceId));
     }
     return retVal;
 }
@@ -90,7 +90,7 @@ GLuint GraphicsPipelineReflection::getUniformBufferBinding(uint32_t resourceId, 
     const auto resource = uniformBufferResources.find(resourceId);
     GLuint retVal = (resource == uniformBufferResources.end()) ? ~0 : resource->second.binding;
     if (exceptionIfNotFound && retVal == ~0) {
-        throw std::runtime_error(fmt::format("Uniform buffer resource not found: {}", resourceId));
+//        throw std::runtime_error(fmt::format("Uniform buffer resource not found: {}", resourceId));
     }
     return retVal;
 }

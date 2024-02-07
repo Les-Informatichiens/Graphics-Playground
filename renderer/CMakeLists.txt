@@ -16,6 +16,26 @@ add_library(
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE src)
 
+# Dependencies ========================================================================================
+include(cmake/CPM.cmake)
+
+# glm =================================================================================================
+CPMAddPackage(
+        NAME "glm"
+        GITHUB_REPOSITORY "g-truc/glm"
+        GIT_TAG "0.9.9.8"
+)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
+# =====================================================================================================
+
+# graphics API ========================================================================================
+target_link_libraries(${PROJECT_NAME} PRIVATE graphicsAPI)
+# =====================================================================================================
+
+# End dependencies =====================================================================================
+
+
 # Compile definitions ==================================================================================
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(${PROJECT_NAME} PRIVATE __DEBUG__)

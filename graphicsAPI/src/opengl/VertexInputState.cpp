@@ -3,6 +3,7 @@
 //
 
 #include "VertexInputState.h"
+#include <stdexcept>
 
 namespace opengl {
 
@@ -81,7 +82,12 @@ VertexInputState::VertexInputState(const VertexInputStateDesc& desc)
 
 const std::vector<OpenGLAttributeDesc>& VertexInputState::getBufferAttributes(size_t bufferIndex) const
 {
-    return bufferAttribMap.at(bufferIndex);
+    auto it = bufferAttribMap.find(bufferIndex);
+    if (it == bufferAttribMap.end())
+    {
+        throw std::runtime_error("Buffer index not found in vertex input state");
+    }
+    return it->second;
 }
 
 void VertexInputState::populateBufferAttributes(const VertexInputStateDesc& desc)
@@ -98,6 +104,7 @@ void VertexInputState::populateBufferAttributes(const VertexInputStateDesc& desc
     {
         OpenGLAttributeDesc attribDesc;
 
+        attribDesc.location = attributeDesc.location; // todo: remove when we have a better way to query the location of the attribute in the shader program
         attribDesc.name = attributeDesc.name;
         attribDesc.stride = bindingDescs[attributeDesc.binding].stride;
         attribDesc.offset = attributeDesc.offset;

@@ -3,7 +3,7 @@
 //
 #pragma once
 
-#include "renderer/iRenderer.h"
+#include "../iRenderer.h"
 #include "GL/glew.h"
 
 class openGLRenderer : public iRenderer {

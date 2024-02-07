@@ -20,6 +20,7 @@ struct OpenGLAttributeDesc
     GLint numComponents = 0;
     GLenum type = GL_FLOAT;
     GLboolean normalized = false;
+    GLuint location = 0; // todo: remove when we have a better way to query the location of the attribute in the shader program
 };
 
 class VertexInputState : public IVertexInputState

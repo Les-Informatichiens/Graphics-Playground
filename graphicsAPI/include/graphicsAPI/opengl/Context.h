@@ -6,7 +6,6 @@
 
 #include "GL/glew.h"
 #include "graphicsAPI/common/Buffer.h"
-#include "spirv_cross.hpp"
 
 namespace opengl {
 
