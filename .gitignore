@@ -38,3 +38,7 @@
 # Build files
 build-debug
 build-release
+out
+
+# CMake files
+CMakeUserPresets.json
