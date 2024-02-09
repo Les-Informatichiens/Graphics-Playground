@@ -65,6 +65,10 @@ add_library(
         include/graphicsAPI/common/TextureStructures.h
         src/common/TextureStructures.cpp
         src/common/Texture.cpp
+        include/graphicsAPI/common/SamplerState.h
+        src/common/SamplerState.cpp
+        src/opengl/SamplerState.cpp
+        src/opengl/SamplerState.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)

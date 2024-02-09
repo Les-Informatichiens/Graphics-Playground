@@ -7,10 +7,9 @@
 #include "graphicsAPI/common/DepthStencilState.h"
 #include "graphicsAPI/opengl/Context.h"
 
-namespace opengl
-{
+namespace opengl {
 
-class DepthStencilState: public IDepthStencilState, public WithContext
+class DepthStencilState : public IDepthStencilState, public WithContext
 {
 public:
     explicit DepthStencilState(Context& context, const DepthStencilStateDesc& desc_);
@@ -18,6 +17,10 @@ public:
     void bind();
 
     [[nodiscard]] const DepthStencilStateDesc& getDepthStencilStateDesc() const;
+
+    static GLenum toOpenGLCompareOp(CompareOp op);
+    static GLenum toOpenGLStencilOp(StencilOp op);
+
 private:
     DepthStencilStateDesc desc;
 };

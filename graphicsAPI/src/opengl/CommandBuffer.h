@@ -6,12 +6,15 @@
 
 #include "DepthStencilState.h"
 #include "GraphicsPipeline.h"
+#include "Texture.h"
 #include "UniformBinder.h"
 #include "VertexArrayObject.h"
 #include "graphicsAPI/common/CommandBuffer.h"
 #include "graphicsAPI/opengl/Buffer.h"
 #include "graphicsAPI/opengl/Context.h"
 
+#include <array>
+#include <bitset>
 #include <set>
 
 namespace opengl {
@@ -26,6 +29,12 @@ public:
         DirtyBits_DepthStencilState = 1 << 2,
         DirtyBits_Viewport = 1 << 3,
         DirtyBits_Scissor = 1 << 4,
+    };
+
+    enum BindTarget : uint8_t
+    {
+        BindTarget_Vertex = 1 << 1,
+        BindTarget_Fragment = 1 << 2,
     };
 
     explicit CommandBuffer(const std::shared_ptr<Context>& context);
@@ -53,6 +62,13 @@ private:
     std::shared_ptr<Context> context;
     std::set<uint32_t> vertexBuffersDirtyCache;
     std::unordered_map<uint32_t, std::shared_ptr<Buffer>> vertexBuffersCache;
+
+    std::bitset<MAX_TEXTURE_SAMPLERS> vertTexturesDirtyCache;
+    std::bitset<MAX_TEXTURE_SAMPLERS> fragTexturesDirtyCache;
+
+    using TextureStates = std::array<std::pair<std::shared_ptr<Texture>, std::shared_ptr<Texture>>, MAX_TEXTURE_SAMPLERS>;
+    TextureStates vertTexturesCache;
+    TextureStates fragTexturesCache;
 
     // std::shared_ptr<Framebuffer> activeFramebuffer;
     std::shared_ptr<GraphicsPipeline> activeGraphicsPipeline;

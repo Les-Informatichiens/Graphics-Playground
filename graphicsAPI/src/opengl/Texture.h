@@ -6,6 +6,7 @@
 
 #include "graphicsAPI/opengl/Context.h"
 #include "graphicsAPI/common/Texture.h"
+#include <limits>
 
 namespace opengl
 {
@@ -61,8 +62,14 @@ public:
     [[nodiscard]] std::pair<bool, bool> validateRange(const TextureRangeDesc &range) const override;
     [[nodiscard]] GLint getAlignment(size_t stride, size_t mipLevel = 0) const;
 
+    void setSamplerHash(size_t hash);
+    [[nodiscard]] size_t getSamplerHash() const;
+
+    static GLenum getTextureTarget(TextureType type, bool isMultisampled = false);
 
 protected:
+    size_t samplerHash = std::numeric_limits<size_t>::max();
+
     GLsizei width = 0;
     GLsizei height = 0;
     GLsizei depth = 1;

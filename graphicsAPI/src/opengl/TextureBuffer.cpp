@@ -13,22 +13,6 @@ const GLenum sCubeFaceTargets[6] = {GL_TEXTURE_CUBE_MAP_POSITIVE_X,
                                     GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
                                     GL_TEXTURE_CUBE_MAP_NEGATIVE_Z};
 
-static GLenum getTextureTarget(TextureType type, bool isMultisampled = false)
-{
-    switch (type)
-    {
-        case TextureType::Texture2D:
-            return isMultisampled ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
-        case TextureType::Texture2DArray:
-            return isMultisampled ? GL_TEXTURE_2D_MULTISAMPLE_ARRAY : GL_TEXTURE_2D_ARRAY;
-        case TextureType::Texture3D:
-            return GL_TEXTURE_3D;
-        case TextureType::TextureCube:
-            return GL_TEXTURE_CUBE_MAP;
-        default:
-            return 0;
-    }
-}
 
 TextureBuffer::TextureBuffer(Context& context, TextureFormat format)
     : Texture(context, format)

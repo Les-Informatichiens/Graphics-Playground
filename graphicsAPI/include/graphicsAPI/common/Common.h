@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cstdint>
+#include <type_traits>
 
 enum class DataType
 {
@@ -109,3 +110,11 @@ struct Scissor
     uint32_t width;
     uint32_t height;
 };
+
+constexpr size_t MAX_TEXTURE_SAMPLERS = 16;
+
+// Get value of enum by stripping enum class type
+template<typename E>
+constexpr typename std::underlying_type<E>::type EnumToValue(E enumerator) noexcept {
+    return static_cast<typename std::underlying_type<E>::type>(enumerator);
+}

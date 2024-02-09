@@ -825,4 +825,32 @@ TextureFormat Texture::getFormat() const
     return formatProperties.format;
 }
 
+size_t Texture::getSamplerHash() const
+{
+    return samplerHash;
+}
+
+void Texture::setSamplerHash(size_t hash)
+{
+    samplerHash = hash;
+}
+
+GLenum Texture::getTextureTarget(TextureType type, bool isMultisampled)
+{
+    switch (type)
+    {
+        case TextureType::Texture2D:
+            return isMultisampled ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
+        case TextureType::Texture2DArray:
+            return isMultisampled ? GL_TEXTURE_2D_MULTISAMPLE_ARRAY : GL_TEXTURE_2D_ARRAY;
+        case TextureType::Texture3D:
+            return GL_TEXTURE_3D;
+        case TextureType::TextureCube:
+            return GL_TEXTURE_CUBE_MAP;
+        default:
+            return 0;
+    }
+}
+
+
 }// namespace opengl

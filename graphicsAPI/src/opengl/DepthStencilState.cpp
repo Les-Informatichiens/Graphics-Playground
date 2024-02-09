@@ -6,7 +6,7 @@
 
 namespace opengl {
 
-static GLenum toOpenGLCompareOp(CompareOp op)
+GLenum DepthStencilState::toOpenGLCompareOp(CompareOp op)
 {
     switch (op)
     {
@@ -31,7 +31,7 @@ static GLenum toOpenGLCompareOp(CompareOp op)
     }
 }
 
-static GLenum toOpenGLStencilOp(StencilOp op)
+GLenum DepthStencilState::toOpenGLStencilOp(StencilOp op)
 {
     switch (op)
     {
