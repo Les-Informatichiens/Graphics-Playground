@@ -21,6 +21,13 @@ public: // OpenGL functions
     void enable(GLenum cap);
     void disable(GLenum cap);
     void clearColor(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
+    void clearDepth(GLfloat depth);
+    void clearStencil(GLint s);
+    void colorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
+    void stencilMask(GLuint mask);
+    void stencilMaskSeparate(GLenum face, GLuint mask);
+    void stencilFuncSeparate(GLenum face, GLenum func, GLint ref, GLuint mask);
+    void stencilOpSeparate(GLenum face, GLenum sfail, GLenum dpfail, GLenum dppass);
     void clear(GLbitfield mask);
     void viewport(GLint x, GLint y, GLsizei width, GLsizei height);
     void blendFunc(GLenum sfactor, GLenum dfactor);
@@ -88,6 +95,30 @@ public: // OpenGL functions
     void* mapBufferRange(GLenum get_target, uint32_t uint32, uint32_t size, int i);
     void unmapBuffer(GLenum target);
     void bindBufferBase(GLenum target, GLuint index, GLuint id);
+    void framebufferTexture2D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+    void framebufferTexture2DMultisample(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLsizei samples);
+    void framebufferRenderbuffer(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+    void renderbufferStorage(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+    void renderbufferStorageMultisample(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
+    void drawBuffers(GLsizei n, const GLenum* bufs);
+    void scissor(GLint x, GLint y, GLsizei width, GLsizei height);
+    void texParameteri(GLenum target, GLenum pname, GLint param);
+    void texImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void* pixels);
+    void texImage3D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void* pixels);
+    void texSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* pixels);
+    void texSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void* pixels);
+    void texStorage2D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
+    void texStorage3D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
+    void pixelStorei(GLenum pname, GLint param);
+    void compressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void* data);
+    void compressedTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data);
+    void compressedTexImage3D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const void* data);
+    void compressedTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void* data);
+    void generateMipmap(GLenum target);
+    void bindRenderbuffer(GLenum target, GLuint renderbuffer);
+    void invalidateFramebuffer(GLenum target, GLsizei numAttachments, const GLenum* attachments);
+    GLenum checkFramebufferStatus(GLenum target);
+
 
 private:
     bool isInit = false;

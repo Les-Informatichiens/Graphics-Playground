@@ -6,6 +6,7 @@
 
 #include "Buffer.h"
 #include "CommandPool.h"
+#include "DepthStencilState.h"
 #include "DeviceFeatures.h"
 #include "Framebuffer.h"
 #include "GraphicsPipeline.h"
@@ -22,6 +23,7 @@ public:
     virtual std::shared_ptr<IShaderModule> createShaderModule(const ShaderModuleDesc& desc) = 0;
     virtual std::shared_ptr<IPipelineShaderStages> createPipelineShaderStages(const PipelineShaderStagesDesc& desc) = 0;
     virtual std::shared_ptr<IVertexInputState> createVertexInputState(const VertexInputStateDesc& desc) = 0;
+    virtual std::shared_ptr<IDepthStencilState> createDepthStencilState(const DepthStencilStateDesc& desc) = 0;
 //    virtual std::shared_ptr<IRenderPass> createRenderPass(const RenderPassDesc& desc) = 0;
     virtual std::shared_ptr<IGraphicsPipeline> createGraphicsPipeline(const GraphicsPipelineDesc& desc) = 0;
 

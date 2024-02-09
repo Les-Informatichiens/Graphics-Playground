@@ -60,7 +60,8 @@ enum class ResourceStorage
 };
 
 
-enum class PrimitiveType : uint8_t {
+enum class PrimitiveType : uint8_t
+{
     Point,
     Line,
     LineStrip,
@@ -72,4 +73,39 @@ enum class IndexFormat : uint8_t
 {
     UInt16,
     UInt32,
+};
+
+
+struct Color
+{
+    float r;
+    float g;
+    float b;
+    float a;
+
+    Color(float r, float g, float b) : r(r), g(g), b(b), a(1.0f) {}
+    Color(float r, float g, float b, float a) : r(r), g(g), b(b), a(a) {}
+
+    [[nodiscard]] const float* toFloatPtr() const
+    {
+        return &r;
+    }
+};
+
+struct Viewport
+{
+    float x;
+    float y;
+    float width;
+    float height;
+    float minDepth;
+    float maxDepth;
+};
+
+struct Scissor
+{
+    int32_t x;
+    int32_t y;
+    uint32_t width;
+    uint32_t height;
 };

@@ -4,114 +4,127 @@
 
 #pragma once
 
+#include "Common.h"
+#include "TextureStructures.h"
+
 #include <cstdint>
 
-enum class TextureFormat {
-    Undefined        /* determine automatically from supplied data (e.g. image file), if possible */,
-    RGB8             /* linear RGB, 8 bits per component */,
-    RGBA8            /* linear RGBA, 8 bits per component */,
-    SRGB8            /* non-linear sRGB, 8 bits per component */,
-    SRGBA8           /* non-linear sRGBA, 8 bits per component (alpha channel linear) */,
-    RG16F            /* linear RG, 16-bit floating point components */,
-    RGB16F           /* linear RGB, 16-bit floating point components */,
-    RGBA16F          /* linear RGBA, 16-bit floating point components */,
-    RG32F            /* linear RG, 32-bit floating point components */,
-    RGB32F           /* linear RGB, 32-bit floating point components */,
-    RGBA32F          /* linear RGBA, 32-bit floating point components */,
-    BGR8             /* BGR in sRGB color space, 8 bits per component (except: on Vulkan this one is B10 G11 R11, for 32-bit texels)*/,
-    BGRA8            /* BGRA in sRGB color space. 8 bits per component */,
-    R8               /* linear single channel, 8 bits */,
-    R32F             /* linear single channel, 32-bit floating point */,
-    D32F             /* linear depth component, 32-bit floating point */,
-    D24S8            /* 24-bit depth component packed with 8-bit stencil component */,
-    D32S8            /* 32-bit depth component, 8-bit stencil component */,
-    DXT1RGBA         /* Block compressed RGBA */,
-    DXT1SRGBA        /* Block compressed SRGBA */,
-    DXT3RGBA         /* Block compressed RGBA */,
-    DXT3SRGBA        /* Block compressed SRGBA */,
-    DXT5RGBA         /* Block compressed RGBA */,
-    DXT5SRGBA        /* Block compressed SRGBA */,
-    RGTC1R           /* Red Green compressed R */,
-    RGTC1SR          /* Red Green compressed signed R */,
-    RGTC2RG          /* Red Green compressed RG */,
-    RGTC2SRG         /* Red Green compressed signed RG */,
-};
-
-// TODO: 1D and 3D textures...
-enum class TextureType {
-    Undefined,
+enum class TextureType : uint8_t {
+    Invalid,
     Texture2D,
     Texture2DArray,
-    TextureCube,
-    TextureCubeArray
+    Texture3D,
+    TextureCube
 };
 
+/**
+ * @brief Descriptor for internal texture creation methods used in IGL
+ *
+ *  width              - width of the texture
+ *  height             - height of the texture
+ *  depth              - depth of the texture
+ *  numLayers          - Number of layers for array texture
+ *  numSamples         - Number of samples for multisampling
+ *  usage              - Bitwise flag for containing a mask of TextureUsageBits
+ *  options            - Bitwise flag for containing other options
+ *  numMipLevels       - Number of mipmaps to generate
+ *  format             - Internal texture format type
+ *  storage            - Internal resource storage type
+ */
+struct TextureDesc {
+    /**
+   * @brief Bitwise flags for texture usage
+   *
+   *  Sampled - Can be used as read-only texture in vertex/fragment shaders
+   *  Storage - Can be used as read/write storage texture in vertex/fragment/compute shaders
+   *  Attachment - Can be bound for render target
+   */
+    enum TextureUsageBits : uint8_t {
+        Sampled = 1 << 0,
+        Storage = 1 << 1,
+        Attachment = 1 << 2,
+    };
 
-enum class TextureFilter {
-    Undefined     /* means guess an appropriate setting from other supplied data */,
-    Nearest,
-    NearestMipmapNearest,
-    NearestMipmapLinear,
-    Linear,
-    LinearMipmapNearest,
-    LinearMipmapLinear
+    using TextureUsage = uint8_t;
+
+    size_t width = 1;
+    size_t height = 1;
+    size_t depth = 1;
+    size_t numLayers = 1;
+    size_t numSamples = 1;
+    TextureUsage usage = 0;
+    size_t numMipLevels = 1;
+    TextureType type = TextureType::Invalid;
+    TextureFormat format = TextureFormat::Invalid;
+    ResourceStorage storage = ResourceStorage::Invalid;
+
+    bool operator==(const TextureDesc& rhs) const;
+    bool operator!=(const TextureDesc& rhs) const;
+
+    /**
+   * @brief Utility to create a new 2D texture
+   *
+   * @param format The format of the texture
+   * @param width  The width of the texture
+   * @param height The height of the texture
+   * @param usage A combination of TextureUsage flags
+   * @param debugName An optional debug name
+   * @return TextureDesc
+   */
+    static TextureDesc new2D(TextureFormat format,
+                             size_t width,
+                             size_t height,
+                             TextureUsage usage) {
+        return TextureDesc{width,
+                           height,
+                           1,
+                           1,
+                           1,
+                           usage,
+                           1,
+                           TextureType::Texture2D,
+                           format,
+                           ResourceStorage::Invalid};
+    }
+
+
+    /**
+   * @brief Utility to calculate maximum mipmap level support
+   *
+   * @param width  The width of the texture
+   * @param height The height of the texture
+   * @return uint32_t
+   */
+    static uint32_t calcNumMipLevels(size_t width, size_t height);
 };
 
-
-enum class TextureWrap {
-    Undefined     /* means guess an appropriate setting from other supplied data */,
-    ClampToEdge,
-    ClampToBorder /* border is always opaque black for now */,
-    Repeat,
-    MirrorRepeat
-};
-
-struct TextureDesc
-{
-    TextureType type;
-    TextureFormat format;
-
-    uint32_t width;
-    uint32_t height;
-    uint32_t depth;
-    uint32_t mipLevels;
-    uint32_t arrayLayers;
-    TextureFilter minFilter;
-    TextureFilter magFilter;
-    TextureWrap wrapU;
-    TextureWrap wrapV;
-    TextureWrap wrapW;
-
-    uint32_t usage;
-};
-
-struct TextureCopyRegion {
-    int32_t srcX = 0;
-    int32_t srcY = 0;
-    int32_t srcZ = 0;
-    uint32_t srcLayer = 0;
-    uint32_t srcMipLevel = 0;
-
-    int32_t dstX = 0;
-    int32_t dstY = 0;
-    int32_t dstZ = 0;
-    uint32_t dstLayer = 0;
-    uint32_t dstMipLevel = 0;
-
-    uint32_t width = 0;      // 0 means full width
-    uint32_t height = 0;     // 0 means full height
-    uint32_t depth = 0;      // 0 means full depth
-    uint32_t layerCount = 0; // 0 means all layers
-    // nb: can only copy 1 mip level at a time
-};
+enum class TextureCubeFace : uint8_t { PosX = 0, NegX, PosY, NegY, PosZ, NegZ };
 
 class ITexture
 {
 public:
     virtual ~ITexture() = default;
 
-    // virtual void data(const void* data, size_t size) const = 0;
-    virtual void copyFrom(const ITexture& src, TextureCopyRegion region) const = 0;
-    virtual void commit() const = 0;
+    virtual void upload(const void* data, const TextureRangeDesc& range, size_t bytesPerRow) const = 0;
+    virtual void uploadCube(const void* data, TextureCubeFace face, const TextureRangeDesc& range, size_t bytesPerRow) const = 0;
 
+    [[nodiscard]] virtual float getAspectRatio() const = 0;
+    [[nodiscard]] virtual size_t getWidth() const = 0;
+    [[nodiscard]] virtual size_t getHeight() const = 0;
+    [[nodiscard]] virtual size_t getDepth() const = 0;
+
+    [[nodiscard]] virtual size_t getNumLayers() const = 0;
+    [[nodiscard]] virtual size_t getSamples() const = 0;
+    [[nodiscard]] virtual size_t getNumMipLevels() const = 0;
+    [[nodiscard]] virtual bool isRequiredGenerateMipmap() const = 0;
+    virtual void generateMipmap() const = 0;
+
+    [[nodiscard]] virtual TextureFormatProperties getProperties() const = 0;
+    [[nodiscard]] virtual size_t getUsage() const = 0;
+
+    [[nodiscard]] virtual TextureType getType() const = 0;
+    [[nodiscard]] virtual TextureFormat getFormat() const = 0;
+
+    [[nodiscard]] virtual TextureRangeDesc getFullRange(size_t mipLevel, size_t numMipLevels) const = 0;
+    [[nodiscard]] virtual std::pair<bool, bool> validateRange(const TextureRangeDesc& range) const = 0;
 };

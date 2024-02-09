@@ -5,6 +5,7 @@
 #include "CommandBuffer.h"
 
 
+#include "Framebuffer.h"
 #include "graphicsAPI/opengl/Buffer.h"
 
 namespace opengl {
@@ -51,14 +52,36 @@ CommandBuffer::CommandBuffer(const std::shared_ptr<Context>& context)
     this->context = context;
 }
 
-void CommandBuffer::beginRenderPass(const RenderPassDesc& renderPass)
+void CommandBuffer::beginRenderPass(const RenderPassBeginDesc& renderPass)
 {
+    // save the current state
+    scissorEnabled = context->isEnabled(GL_SCISSOR_TEST);
+    context->disable(GL_SCISSOR_TEST);
+
     activeVAO->bind();
+
+    if (renderPass.framebuffer)
+    {
+        const auto& glFramebuffer = std::static_pointer_cast<Framebuffer>(renderPass.framebuffer);
+        glFramebuffer->bindForRenderPass(renderPass.renderPass);
+        bindViewport(glFramebuffer->getViewport());
+    }
+    else
+    {
+        context->bindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
     isRecordingRenderCommands = true;
 }
 
 void CommandBuffer::endRenderPass()
 {
+    // restore the previous state
+    if (scissorEnabled)
+    {
+        context->enable(GL_SCISSOR_TEST);
+    }
+
     if (activeGraphicsPipeline) {
         activeGraphicsPipeline->unbindVertexAttributes();
     }
@@ -74,6 +97,7 @@ void CommandBuffer::bindGraphicsPipeline(std::shared_ptr<IGraphicsPipeline> pipe
 {
     auto glPipeline = std::static_pointer_cast<GraphicsPipeline>(pipeline);
     activeGraphicsPipeline = glPipeline;
+    setDirty(DirtyFlag::DirtyBits_GraphicsPipeline);
 }
 
 void CommandBuffer::bindBuffer(uint32_t index, std::shared_ptr<IBuffer> buffer, uint32_t offset)
@@ -123,7 +147,17 @@ void CommandBuffer::prepareForDraw()
             }
         }
 
-        activeGraphicsPipeline->bind();
+        if (isDirty(DirtyFlag::DirtyBits_GraphicsPipeline))
+        {
+            activeGraphicsPipeline->bind();
+            clearDirty(DirtyFlag::DirtyBits_GraphicsPipeline);
+        }
+    }
+
+    if (activeDepthStencilState && isDirty(DirtyFlag::DirtyBits_DepthStencilState))
+    {
+        activeDepthStencilState->bind();
+        clearDirty(DirtyFlag::DirtyBits_DepthStencilState);
     }
 
     // bind uniform buffers
@@ -142,7 +176,41 @@ void CommandBuffer::clearPipelineResources(const std::shared_ptr<GraphicsPipelin
         currentGlPipeline->unbind();
         currentGlPipeline->unbindVertexAttributes();
     }
+}
 
+void CommandBuffer::bindDepthStencilState(const std::shared_ptr<IDepthStencilState>& depthStencilState)
+{
+    activeDepthStencilState = std::static_pointer_cast<DepthStencilState>(depthStencilState);
+    setDirty(DirtyFlag::DirtyBits_DepthStencilState);
+}
+
+void CommandBuffer::bindViewport(const Viewport& viewport)
+{
+    context->viewport(static_cast<GLint>(viewport.x), static_cast<GLint>(viewport.y), static_cast<GLint>(viewport.width), static_cast<GLint>(viewport.height));
+}
+
+void CommandBuffer::bindScissor(const Scissor& scissor)
+{
+    context->enable(GL_SCISSOR_TEST);
+    context->scissor(static_cast<GLint>(scissor.x), static_cast<GLint>(scissor.y), static_cast<GLint>(scissor.width), static_cast<GLint>(scissor.height));
+}
+
+void CommandBuffer::bindTexture(uint32_t index, uint8_t target, std::shared_ptr<ITexture> texture)
+{
+}
+
+bool CommandBuffer::isDirty(opengl::CommandBuffer::DirtyFlag flag) const
+{
+    return dirtyFlags & flag;
+}
+void CommandBuffer::setDirty(opengl::CommandBuffer::DirtyFlag flag)
+{
+    dirtyFlags |= flag;
+}
+
+void CommandBuffer::clearDirty(CommandBuffer::DirtyFlag flag)
+{
+    dirtyFlags &= ~flag;
 }
 
 }// namespace opengl

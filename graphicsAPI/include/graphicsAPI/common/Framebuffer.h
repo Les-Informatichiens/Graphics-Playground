@@ -4,41 +4,39 @@
 
 #pragma once
 
+#include "RenderPass.h"
 #include "Texture.h"
 
 #include <memory>
 #include <optional>
+#include <unordered_map>
 #include <vector>
-
-enum class AttachmentType
-{
-    Color,
-    Depth,
-    Stencil
-};
-
 
 struct FramebufferAttachmentDesc
 {
-    AttachmentType type;
-    TextureType textureType;
-    TextureFormat format;
+    std::shared_ptr<ITexture> texture;
+    std::shared_ptr<ITexture> resolveTexture;
 };
 
-struct FramebufferDesc
-{
-    uint32_t width;
-    uint32_t height;
-    uint32_t layers;
-    std::vector<FramebufferAttachmentDesc> colorAttachments;
-    std::optional<FramebufferAttachmentDesc> depthAttachment;
-    std::optional<FramebufferAttachmentDesc> stencilAttachment;
+/**
+ * @brief Represents textures associated with the frame buffer including color, depth, and stencil
+ * surfaces.
+ */
+struct FramebufferDesc {
+    /** @brief Mapping of index to specific color texture attachments */
+    std::unordered_map<size_t, FramebufferAttachmentDesc> colorAttachments;
+    /** @brief The depth texture attachment */
+    FramebufferAttachmentDesc depthAttachment;
+    /** @brief The stencil texture attachment */
+    FramebufferAttachmentDesc stencilAttachment;
 };
 
 class IFramebuffer
 {
 public:
     virtual ~IFramebuffer() = default;
+
+    virtual void updateDrawable(std::shared_ptr<ITexture> drawable) = 0;
 
     [[nodiscard]] virtual std::vector<size_t> getColorAttachmentIndices() const = 0;
     [[nodiscard]] virtual std::shared_ptr<ITexture> getColorAttachment(size_t index) const = 0;

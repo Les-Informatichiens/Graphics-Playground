@@ -10,7 +10,7 @@
 engine::engine(IDevice& graphicsDevice) : device(graphicsDevice) {
 }
 
-void engine::update(float dt) const
+void engine::update(float dt)
 {
     //renderer.draw();
     std::cout << "Engine updated in " << dt << "ms" << std::endl;
@@ -18,7 +18,7 @@ void engine::update(float dt) const
 template<typename T>
 using Ref = std::shared_ptr<T>;
 
-void engine::render() const {
+void engine::render() {
 
 
     Ref<IShaderModule> vs = device.createShaderModule({
@@ -56,6 +56,8 @@ void engine::render() const {
     });
 
     Ref<IPipelineShaderStages> shaderStages = device.createPipelineShaderStages(PipelineShaderStagesDesc::fromRenderModules(vs, fs));
+
+    this->createOffscreenFramebuffer(800, 600);
 
     VertexInputStateDesc vertexInputStateDesc = VertexInputStateDescBuilder()
                                         .beginBinding(0)
@@ -134,7 +136,24 @@ void engine::render() const {
     Ref<ICommandPool> commandPool = device.createCommandPool({});
     Ref<ICommandBuffer> commandBuffer = commandPool->acquireCommandBuffer({});
 
-    commandBuffer->beginRenderPass({});
+    commandBuffer->beginRenderPass({
+            .renderPass = {
+                    .colorAttachments = {
+                            RenderPassDesc::ColorAttachmentDesc{
+                                    LoadAction::Clear,
+                                    StoreAction::Store,
+                                    Color{0.0f, 0.0f, 0.0f, 1.0f}
+                            }
+                    },
+                    .depthAttachment = RenderPassDesc::DepthAttachmentDesc{
+                            LoadAction::Clear,
+                            StoreAction::Store,
+                            0, 0,
+                            1.0f
+                    }
+            },
+            .framebuffer = fbOffscreen,
+    });
     commandBuffer->bindGraphicsPipeline(pipeline);
     commandBuffer->bindBuffer(0, vertexBuffer, 0);
     commandBuffer->bindBuffer(1, vertexBuffer2, 0);
@@ -147,4 +166,18 @@ void engine::render() const {
 
 
     std::cout << "Engine rendered" << std::endl;
+}
+
+void engine::createOffscreenFramebuffer(uint32_t width, uint32_t height)
+{
+    auto texUsageBits = TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled;
+
+    auto colorAttachment = device.createTexture(TextureDesc::new2D(TextureFormat::RGBA_UNorm8, width, height, texUsageBits));
+    auto depthAttachment = device.createTexture(TextureDesc::new2D(TextureFormat::Z_UNorm24, width, height, texUsageBits));
+
+    fbOffscreen = device.createFramebuffer({
+        .colorAttachments = {{0, FramebufferAttachmentDesc{colorAttachment, nullptr}}},
+        .depthAttachment = {depthAttachment, nullptr},
+        .stencilAttachment = {nullptr, nullptr}
+    });
 }

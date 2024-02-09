@@ -51,6 +51,20 @@ add_library(
         src/opengl/CommandPool.h
         src/opengl/UniformBinder.cpp
         src/opengl/UniformBinder.h
+        src/opengl/Framebuffer.cpp
+        src/opengl/Framebuffer.h
+        src/opengl/Texture.cpp
+        src/opengl/Texture.h
+        src/opengl/Renderbuffer.cpp
+        src/opengl/Renderbuffer.h
+        src/opengl/TextureBuffer.cpp
+        src/opengl/TextureBuffer.h
+        include/graphicsAPI/common/DepthStencilState.h
+        src/opengl/DepthStencilState.cpp
+        src/opengl/DepthStencilState.h
+        include/graphicsAPI/common/TextureStructures.h
+        src/common/TextureStructures.cpp
+        src/common/Texture.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)

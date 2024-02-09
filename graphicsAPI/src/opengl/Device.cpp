@@ -4,9 +4,13 @@
 
 #include "graphicsAPI/opengl/Device.h"
 #include "CommandPool.h"
+#include "DepthStencilState.h"
+#include "Framebuffer.h"
 #include "GraphicsPipeline.h"
+#include "Renderbuffer.h"
 #include "ShaderModule.h"
 #include "ShaderStage.h"
+#include "TextureBuffer.h"
 #include "VertexInputState.h"
 #include "graphicsAPI/opengl/Buffer.h"
 #include "shaderc/shaderc.hpp"
@@ -85,12 +89,34 @@ std::shared_ptr<IGraphicsPipeline> Device::createGraphicsPipeline(const Graphics
 
 std::shared_ptr<IFramebuffer> Device::createFramebuffer(const FramebufferDesc& desc)
 {
-    return std::shared_ptr<IFramebuffer>();
+    auto framebuffer = std::make_shared<Framebuffer>(getContext());
+    framebuffer->create(desc);
+    return framebuffer;
 }
 
 std::shared_ptr<ITexture> Device::createTexture(const TextureDesc& desc)
 {
-    return std::shared_ptr<ITexture>();
+    const auto sanitizedDesc = sanitizeTextureDesc(desc);
+    std::unique_ptr<Texture> texture;
+
+    if ((sanitizedDesc.usage & TextureDesc::TextureUsageBits::Sampled) != 0 ||
+        (sanitizedDesc.usage & TextureDesc::TextureUsageBits::Storage) != 0) {
+        texture = std::make_unique<TextureBuffer>(getContext(), desc.format);
+    } else if ((sanitizedDesc.usage & TextureDesc::TextureUsageBits::Attachment) != 0) {
+        if (sanitizedDesc.type == TextureType::Texture2D) {
+            texture = std::make_unique<Renderbuffer>(getContext(), desc.format);
+        } else {
+            // Fall back to texture. e.g. TextureType::TwoDArray
+            texture = std::make_unique<TextureBuffer>(getContext(), desc.format);
+        }
+    }
+
+    if (texture != nullptr)
+    {
+        texture->create(sanitizedDesc, false);
+    }
+
+    return texture;
 }
 
 bool Device::hasFeature(DeviceFeatures feature) const
@@ -111,9 +137,30 @@ std::shared_ptr<IVertexInputState> Device::createVertexInputState(const VertexIn
     return vertexInputState;
 }
 
+std::shared_ptr<IDepthStencilState> Device::createDepthStencilState(const DepthStencilStateDesc& desc)
+{
+    return std::make_shared<DepthStencilState>(getContext(), desc);
+}
+
 Context& Device::getContext() const
 {
     return *context;
+}
+
+TextureDesc Device::sanitizeTextureDesc(const TextureDesc& desc) const
+{
+    TextureDesc sanitized = desc;
+    if (desc.width == 0 || desc.height == 0 || desc.depth == 0 || desc.numLayers == 0 ||
+        desc.numSamples == 0 || desc.numMipLevels == 0) {
+        sanitized.width = std::max(sanitized.width, static_cast<size_t>(1));
+        sanitized.height = std::max(sanitized.height, static_cast<size_t>(1));
+        sanitized.depth = std::max(sanitized.depth, static_cast<size_t>(1));
+        sanitized.numLayers = std::max(sanitized.numLayers, static_cast<size_t>(1));
+        sanitized.numSamples = std::max(sanitized.numSamples, static_cast<size_t>(1));
+        sanitized.numMipLevels = std::max(sanitized.numMipLevels, static_cast<size_t>(1));
+    }
+
+    return sanitized;
 }
 
 }// namespace opengl

@@ -25,6 +25,7 @@ public:
     std::shared_ptr<IFramebuffer> createFramebuffer(const FramebufferDesc& desc) override;
     std::shared_ptr<ITexture> createTexture(const TextureDesc& desc) override;
     std::shared_ptr<IVertexInputState> createVertexInputState(const VertexInputStateDesc& desc) override;
+    std::shared_ptr<IDepthStencilState> createDepthStencilState(const DepthStencilStateDesc &desc) override;
 
     [[nodiscard]] ShaderVersion getShaderVersion() const override
     {
@@ -39,6 +40,9 @@ public:
     [[nodiscard]] TextureFormatCapabilities getTextureFormatCapabilities(TextureFormat format) const override;
 
     [[nodiscard]] Context& getContext() const;
+
+private:
+    TextureDesc sanitizeTextureDesc(const TextureDesc& desc) const;
 
 private:
     PlatformDevice platformDevice;

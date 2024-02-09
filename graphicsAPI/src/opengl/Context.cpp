@@ -54,6 +54,7 @@ static void _glPrintErrors(const char* func, const char* file, const int line)
                 "\n  Type - " << _glStringError(err)
                   << std::endl;
         err = glGetError();
+        __debugbreak();
     }
 }
 
@@ -430,6 +431,157 @@ void Context::bindBufferBase(GLenum target, GLuint index, GLuint id)
 void Context::bindBufferRange(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size)
 {
     glLog(glBindBufferRange(target, index, buffer, offset, size));
+}
+
+void Context::framebufferTexture2D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
+{
+    glLog(glFramebufferTexture2D(target, attachment, textarget, texture, level));
+}
+
+void Context::framebufferTexture2DMultisample(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLsizei samples)
+{
+    glLog(glFramebufferTexture2DMultisampleEXT(target, attachment, textarget, texture, level, samples));
+}
+
+void Context::framebufferRenderbuffer(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
+{
+    glLog(glFramebufferRenderbuffer(target, attachment, renderbuffertarget, renderbuffer));
+}
+
+void Context::renderbufferStorage(GLenum target, GLenum internalformat, GLsizei width, GLsizei height)
+{
+    glLog(glRenderbufferStorage(target, internalformat, width, height));
+}
+
+void Context::renderbufferStorageMultisample(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height)
+{
+    glLog(glRenderbufferStorageMultisample(target, samples, internalformat, width, height));
+}
+
+void Context::drawBuffers(GLsizei n, const GLenum* bufs)
+{
+    glLog(glDrawBuffers(n, bufs));
+}
+
+void Context::colorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha)
+{
+    glLog(glColorMask(red, green, blue, alpha));
+}
+
+void Context::clearDepth(GLfloat depth)
+{
+    glLog(glClearDepth(depth));
+}
+
+void Context::clearStencil(GLint s)
+{
+    glLog(glClearStencil(s));
+}
+
+void Context::stencilMask(GLuint mask)
+{
+    glLog(glStencilMask(mask));
+}
+
+void Context::stencilFuncSeparate(GLenum face, GLenum func, GLint ref, GLuint mask)
+{
+    glLog(glStencilFuncSeparate(face, func, ref, mask));
+}
+
+void Context::stencilOpSeparate(GLenum face, GLenum sfail, GLenum dpfail, GLenum dppass)
+{
+    glLog(glStencilOpSeparate(face, sfail, dpfail, dppass));
+}
+
+void Context::stencilMaskSeparate(GLenum face, GLuint mask)
+{
+    glLog(glStencilMaskSeparate(face, mask));
+}
+
+void Context::scissor(GLint x, GLint y, GLsizei width, GLsizei height)
+{
+    glLog(glScissor(x, y, width, height));
+}
+
+void Context::texParameteri(GLenum target, GLenum pname, GLint param)
+{
+    glLog(glTexParameteri(target, pname, param));
+}
+
+void Context::texImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void* pixels)
+{
+    glLog(glTexImage2D(target, level, internalformat, width, height, border, format, type, pixels));
+}
+
+void Context::texImage3D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void* pixels)
+{
+    glLog(glTexImage3D(target, level, internalformat, width, height, depth, border, format, type, pixels));
+}
+
+void Context::texSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* pixels)
+{
+    glLog(glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels));
+}
+
+void Context::texStorage2D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
+{
+    glLog(glTexStorage2D(target, levels, internalformat, width, height));
+}
+
+void Context::texStorage3D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
+{
+    glLog(glTexStorage3D(target, levels, internalformat, width, height, depth));
+}
+
+void Context::pixelStorei(GLenum pname, GLint param)
+{
+    glLog(glPixelStorei(pname, param));
+}
+
+void Context::compressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void* data)
+{
+    glLog(glCompressedTexImage2D(target, level, internalformat, width, height, border, imageSize, data));
+}
+
+void Context::compressedTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data)
+{
+    glLog(glCompressedTexSubImage2D(target, level, xoffset, yoffset, width, height, format, imageSize, data));
+}
+
+void Context::compressedTexImage3D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const void* data)
+{
+    glLog(glCompressedTexImage3D(target, level, internalformat, width, height, depth, border, imageSize, data));
+}
+
+void Context::compressedTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void* data)
+{
+    glLog(glCompressedTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, data));
+}
+
+void Context::texSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void* pixels)
+{
+    glLog(glTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels));
+}
+
+void Context::generateMipmap(GLenum target)
+{
+    glLog(glGenerateMipmap(target));
+}
+
+void Context::bindRenderbuffer(GLenum target, GLuint renderbuffer)
+{
+    glLog(glBindRenderbuffer(target, renderbuffer));
+}
+
+void Context::invalidateFramebuffer(GLenum target, GLsizei numAttachments, const GLenum* attachments)
+{
+    glLog(glInvalidateFramebuffer(target, numAttachments, attachments));
+}
+
+GLenum Context::checkFramebufferStatus(GLenum target)
+{
+    GLenum status = glLog(glCheckFramebufferStatus(target));
+    return status;
 }
 
 WithContext::WithContext(Context& context) : context_(&context)

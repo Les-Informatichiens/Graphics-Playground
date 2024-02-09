@@ -12,10 +12,21 @@ public:
 
     explicit engine(IDevice& graphicsDevice);;
 
-    void update(float dt) const;
-    void render() const;
+    void update(float dt);
+    void render();
 
 private:
+    void createOffscreenFramebuffer(uint32_t width, uint32_t height);
+
+private:
+
+    std::shared_ptr<IShaderModule> vs;
+    std::shared_ptr<IShaderModule> fs;
+    std::shared_ptr<IPipelineShaderStages> shaderStages;
+
+    std::shared_ptr<IGraphicsPipeline> pipeline;
+
+    std::shared_ptr<IFramebuffer> fbOffscreen;
 
     IDevice& device;
 };
