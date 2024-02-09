@@ -25,6 +25,8 @@ public:
     void bind();
     void unbind();
 
+    [[nodiscard]] GLuint getProgram() const { return program; }
+
 private:
     void createRenderProgram();
     void createComputeProgram();

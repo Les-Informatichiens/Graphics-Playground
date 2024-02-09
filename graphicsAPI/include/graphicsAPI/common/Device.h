@@ -11,6 +11,7 @@
 #include "Framebuffer.h"
 #include "GraphicsPipeline.h"
 #include "PlatformDevice.h"
+#include "SamplerState.h"
 #include "ShaderModule.h"
 #include "Texture.h"
 #include <memory>
@@ -24,6 +25,8 @@ public:
     virtual std::shared_ptr<IPipelineShaderStages> createPipelineShaderStages(const PipelineShaderStagesDesc& desc) = 0;
     virtual std::shared_ptr<IVertexInputState> createVertexInputState(const VertexInputStateDesc& desc) = 0;
     virtual std::shared_ptr<IDepthStencilState> createDepthStencilState(const DepthStencilStateDesc& desc) = 0;
+    virtual std::shared_ptr<ISamplerState> createSamplerState(const SamplerStateDesc& desc) = 0;
+
 //    virtual std::shared_ptr<IRenderPass> createRenderPass(const RenderPassDesc& desc) = 0;
     virtual std::shared_ptr<IGraphicsPipeline> createGraphicsPipeline(const GraphicsPipelineDesc& desc) = 0;
 

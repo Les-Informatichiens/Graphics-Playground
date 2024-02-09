@@ -10,6 +10,7 @@
 #include "Framebuffer.h"
 #include "GraphicsPipeline.h"
 #include "RenderPass.h"
+#include "SamplerState.h"
 
 struct CommandBufferDesc
 {
@@ -19,6 +20,13 @@ struct RenderPassBeginDesc
 {
     RenderPassDesc renderPass;
     std::shared_ptr<IFramebuffer> framebuffer;
+};
+
+
+enum BindTarget : uint8_t
+{
+    BindTarget_Vertex = 1 << 1,
+    BindTarget_Fragment = 1 << 2,
 };
 
 class ICommandBuffer
@@ -40,5 +48,6 @@ public:
     virtual void bindScissor(const Scissor& scissor) = 0;
     virtual void bindDepthStencilState(const std::shared_ptr<IDepthStencilState>& depthStencilState) = 0;
     virtual void bindTexture(uint32_t index, uint8_t target, std::shared_ptr<ITexture> texture) = 0;
+    virtual void bindSamplerState(uint32_t index, uint8_t target, std::shared_ptr<ISamplerState> samplerState) = 0;
 
 };

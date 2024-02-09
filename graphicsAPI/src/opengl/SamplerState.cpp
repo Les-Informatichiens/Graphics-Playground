@@ -33,12 +33,11 @@ SamplerState::SamplerState(Context& context, const SamplerStateDesc& desc)
     hash_ = h(desc);
 }
 
-void SamplerState::bind(ITexture* t) {
-    if (t == nullptr) {
+void SamplerState::bind(const std::shared_ptr<Texture>& texture) {
+    if (texture == nullptr) {
         return;
     }
 
-    auto texture = static_cast<opengl::Texture*>(t);
     if (texture->getSamplerHash() == hash_) {
         return;
     }

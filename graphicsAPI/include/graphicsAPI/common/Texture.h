@@ -105,7 +105,7 @@ class ITexture
 public:
     virtual ~ITexture() = default;
 
-    virtual void upload(const void* data, const TextureRangeDesc& range, size_t bytesPerRow) const = 0;
+    virtual void upload(const void* data, const TextureRangeDesc& range, size_t bytesPerRow = 0) const = 0;
     virtual void uploadCube(const void* data, TextureCubeFace face, const TextureRangeDesc& range, size_t bytesPerRow) const = 0;
 
     [[nodiscard]] virtual float getAspectRatio() const = 0;

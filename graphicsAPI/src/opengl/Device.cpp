@@ -8,6 +8,7 @@
 #include "Framebuffer.h"
 #include "GraphicsPipeline.h"
 #include "Renderbuffer.h"
+#include "SamplerState.h"
 #include "ShaderModule.h"
 #include "ShaderStage.h"
 #include "TextureBuffer.h"
@@ -15,6 +16,8 @@
 #include "graphicsAPI/opengl/Buffer.h"
 #include "shaderc/shaderc.hpp"
 #include <spirv_glsl.hpp>
+
+#include <iostream>
 
 namespace opengl {
 
@@ -142,11 +145,15 @@ std::shared_ptr<IDepthStencilState> Device::createDepthStencilState(const DepthS
     return std::make_shared<DepthStencilState>(getContext(), desc);
 }
 
+std::shared_ptr<ISamplerState> Device::createSamplerState(const SamplerStateDesc& desc)
+{
+    return std::make_shared<SamplerState>(getContext(), desc);
+}
+
 Context& Device::getContext() const
 {
     return *context;
 }
-
 TextureDesc Device::sanitizeTextureDesc(const TextureDesc& desc) const
 {
     TextureDesc sanitized = desc;

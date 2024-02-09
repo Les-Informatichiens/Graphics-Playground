@@ -26,6 +26,7 @@ public:
     std::shared_ptr<ITexture> createTexture(const TextureDesc& desc) override;
     std::shared_ptr<IVertexInputState> createVertexInputState(const VertexInputStateDesc& desc) override;
     std::shared_ptr<IDepthStencilState> createDepthStencilState(const DepthStencilStateDesc &desc) override;
+    std::shared_ptr<ISamplerState> createSamplerState(const SamplerStateDesc &desc) override;
 
     [[nodiscard]] ShaderVersion getShaderVersion() const override
     {

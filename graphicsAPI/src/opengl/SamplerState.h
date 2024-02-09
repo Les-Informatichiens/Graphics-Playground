@@ -6,9 +6,11 @@
 
 #include "graphicsAPI/common/SamplerState.h"
 #include "graphicsAPI/common/Texture.h"
+#include "Texture.h"
 #include "graphicsAPI/opengl/Context.h"
 
 #include <limits>
+#include <memory>
 
 namespace opengl {
 
@@ -16,7 +18,7 @@ class SamplerState final : public WithContext, public ISamplerState
 {
 public:
     SamplerState(Context& context, const SamplerStateDesc& desc);
-    void bind(ITexture* texture);
+    void bind(const std::shared_ptr<Texture>& texture);
 
     static GLint convertMinMipFilter(SamplerMinMagFilter minFilter, SamplerMipFilter mipFilter);
     static GLint convertMagFilter(SamplerMinMagFilter magFilter);

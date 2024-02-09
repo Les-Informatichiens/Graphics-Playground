@@ -43,6 +43,8 @@ public: // OpenGL functions
     void bindBufferRange(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
     void bindTexture(GLenum target, GLuint texture);
     void activeTexture(GLenum texture);
+    void getActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLsizei* length, GLint* size, GLenum* type, GLchar* name);
+    GLint getUniformLocation(GLuint program, const GLchar* name);
     void uniform1i(GLint location, GLint v0);
     void uniform1f(GLint location, GLfloat v0);
     void uniform2f(GLint location, GLfloat v0, GLfloat v1);
@@ -58,6 +60,8 @@ public: // OpenGL functions
     void getShaderiv(GLuint shader, GLenum pname, GLint* params);
     void getShaderInfoLog(GLuint shader, GLsizei bufSize, GLsizei* length, GLchar* infoLog);
     void getProgramiv(GLuint program, GLenum pname, GLint* params);
+    void getProgramResourceiv(GLuint program, GLenum programInterface, GLuint index, GLsizei propCount, const GLenum* props, GLsizei bufSize, GLsizei* length, GLint* params);
+    void getProgramResourceName(GLuint program, GLenum programInterface, GLuint index, GLsizei bufSize, GLsizei* length, GLchar* name);
     void getProgramInfoLog(GLuint program, GLsizei bufSize, GLsizei* length, GLchar* infoLog);
     void attachShader(GLuint program, GLuint shader);
     void detachShader(GLuint program, GLuint shader);

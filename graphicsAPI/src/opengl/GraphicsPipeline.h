@@ -22,6 +22,7 @@ public:
 
     void bind();
     void unbind();
+    void bindTextureUnit(size_t unit, uint8_t bindTarget);
 
     void bindVertexAttributes(size_t bufferIndex, size_t offset);
     void unbindVertexAttributes();
@@ -34,6 +35,7 @@ private:
 
     std::map<uint32_t, std::vector<uint32_t>> bindingAttribLocations;
     std::vector<uint32_t> activeBindingAttribLocations;
+    std::array<GLint, MAX_TEXTURE_SAMPLERS> unitSamplerLocations;
 
 //    std::vector<uint32_t> bindingAttribLocations;
     std::shared_ptr<GraphicsPipelineReflection> reflection;

@@ -43,7 +43,7 @@ void TextureBuffer::create(const TextureDesc& desc, bool hasStorageAlready)
     auto isSampledOrStorage = (desc.usage & (TextureDesc::TextureUsageBits::Sampled | TextureDesc::TextureUsageBits::Storage)) != 0;
     if (isSampledOrStorage || desc.type != TextureType::Texture2D)
     {
-        const auto tempTarget = getTextureTarget(desc.type, numSamples > 1);
+        target = getTextureTarget(desc.type, numSamples > 1);
         if (target == 0)
         {
             return;
@@ -57,7 +57,6 @@ void TextureBuffer::create(const TextureDesc& desc, bool hasStorageAlready)
         glInternalFormat = formatDescGL.internalFormat;
 
         getContext().genTextures(1, &handle);
-        target = tempTarget;
         usage = desc.usage;
 
         getContext().bindTexture(target, handle);

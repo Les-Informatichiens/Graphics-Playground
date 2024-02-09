@@ -52,7 +52,7 @@ CommandBuffer::CommandBuffer(const std::shared_ptr<Context>& context)
     this->context = context;
 }
 
-void CommandBuffer::beginRenderPass(const RenderPassBeginDesc& renderPass)
+void CommandBuffer::beginRenderPass(const RenderPassBeginDesc& desc)
 {
     // save the current state
     scissorEnabled = context->isEnabled(GL_SCISSOR_TEST);
@@ -60,15 +60,44 @@ void CommandBuffer::beginRenderPass(const RenderPassBeginDesc& renderPass)
 
     activeVAO->bind();
 
-    if (renderPass.framebuffer)
+    if (desc.framebuffer)
     {
-        const auto& glFramebuffer = std::static_pointer_cast<Framebuffer>(renderPass.framebuffer);
-        glFramebuffer->bindForRenderPass(renderPass.renderPass);
+        const auto& glFramebuffer = std::static_pointer_cast<Framebuffer>(desc.framebuffer);
+        glFramebuffer->bindForRenderPass(desc.renderPass);
         bindViewport(glFramebuffer->getViewport());
     }
     else
     {
+        // for the moment we will do this for the default framebuffer
         context->bindFramebuffer(GL_FRAMEBUFFER, 0);
+        GLbitfield clearMask = 0;
+
+        auto& renderPass = desc.renderPass;
+
+        if (renderPass.colorAttachments[0].loadAction == LoadAction::Clear)
+        {
+            clearMask |= GL_COLOR_BUFFER_BIT;
+            auto& clearColor = renderPass.colorAttachments[0].clearColor;
+            context->colorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+            context->clearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
+        }
+        if (renderPass.depthAttachment.loadAction == LoadAction::Clear)
+        {
+            clearMask |= GL_DEPTH_BUFFER_BIT;
+            context->depthMask(GL_TRUE);
+            context->clearDepth(renderPass.depthAttachment.clearDepth);
+        }
+        if (renderPass.stencilAttachment.loadAction == LoadAction::Clear)
+        {
+            clearMask |= GL_STENCIL_BUFFER_BIT;
+            context->stencilMask(0xFF);
+            context->clearStencil(renderPass.stencilAttachment.clearStencil);
+        }
+
+        if (clearMask != 0)
+        {
+            context->clear(clearMask);
+        }
     }
 
     isRecordingRenderCommands = true;
@@ -86,9 +115,16 @@ void CommandBuffer::endRenderPass()
         activeGraphicsPipeline->unbindVertexAttributes();
     }
     activeGraphicsPipeline = nullptr;
+    activeDepthStencilState = nullptr;
 
     vertexBuffersDirtyCache.clear();
     uniformBinder.clearDirtyBufferCache();
+
+    vertTexturesCache = {};
+    fragTexturesCache = {};
+    vertTexturesDirtyCache.reset();
+    fragTexturesDirtyCache.reset();
+    dirtyFlags = DirtyFlag::DirtyBits_None;
 
     isRecordingRenderCommands = false;
 }
@@ -160,8 +196,51 @@ void CommandBuffer::prepareForDraw()
         clearDirty(DirtyFlag::DirtyBits_DepthStencilState);
     }
 
-    // bind uniform buffers
-    uniformBinder.bindBuffers(*context);
+    if (activeGraphicsPipeline)
+    {
+        // bind uniform buffers
+        uniformBinder.bindBuffers(*context);
+
+        // TODO: bind textures and samplers
+        for (size_t i = 0; i < MAX_TEXTURE_SAMPLERS; ++i)
+        {
+            if (!vertTexturesDirtyCache[i])
+            {
+                continue;
+            }
+            auto& textureState = vertTexturesCache[i];
+            if (auto& texture = textureState.first)
+            {
+                activeGraphicsPipeline->bindTextureUnit(i, BindTarget::BindTarget_Vertex);
+                texture->bind();
+
+                if (auto& sampler = textureState.second)
+                {
+                    sampler->bind(texture);
+                }
+                vertTexturesDirtyCache.reset(i);
+            }
+        }
+        for (size_t i = 0; i < MAX_TEXTURE_SAMPLERS; ++i)
+        {
+            if (!fragTexturesDirtyCache[i])
+            {
+                continue;
+            }
+            auto& textureState = fragTexturesCache[i];
+            if (auto& texture = textureState.first)
+            {
+                activeGraphicsPipeline->bindTextureUnit(i, BindTarget::BindTarget_Fragment);
+                texture->bind();
+
+                if (auto& sampler = textureState.second)
+                {
+                    sampler->bind(texture);
+                }
+                fragTexturesDirtyCache.reset(i);
+            }
+        }
+    }
 }
 
 void CommandBuffer::clearPipelineResources(const std::shared_ptr<GraphicsPipeline>& newPipeline)
@@ -197,17 +276,41 @@ void CommandBuffer::bindScissor(const Scissor& scissor)
 
 void CommandBuffer::bindTexture(uint32_t index, uint8_t target, std::shared_ptr<ITexture> texture)
 {
+    if ((target & BindTarget::BindTarget_Vertex) != 0)
+    {
+        vertTexturesCache[index].first = std::static_pointer_cast<Texture>(texture);
+        vertTexturesDirtyCache.set(index);
+    }
+    if ((target & BindTarget::BindTarget_Fragment) != 0)
+    {
+        fragTexturesCache[index].first = std::static_pointer_cast<Texture>(texture);
+        fragTexturesDirtyCache.set(index);
+    }
+}
+
+void CommandBuffer::bindSamplerState(uint32_t index, uint8_t target, std::shared_ptr<ISamplerState> samplerState)
+{
+    if ((target & BindTarget::BindTarget_Vertex) != 0)
+    {
+        vertTexturesCache[index].second = std::static_pointer_cast<SamplerState>(samplerState);
+        vertTexturesDirtyCache.set(index);
+    }
+    if ((target & BindTarget::BindTarget_Fragment) != 0)
+    {
+        fragTexturesCache[index].second = std::static_pointer_cast<SamplerState>(samplerState);
+        fragTexturesDirtyCache.set(index);
+    }
 }
 
 bool CommandBuffer::isDirty(opengl::CommandBuffer::DirtyFlag flag) const
 {
     return dirtyFlags & flag;
 }
+
 void CommandBuffer::setDirty(opengl::CommandBuffer::DirtyFlag flag)
 {
     dirtyFlags |= flag;
 }
-
 void CommandBuffer::clearDirty(CommandBuffer::DirtyFlag flag)
 {
     dirtyFlags &= ~flag;

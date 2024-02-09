@@ -584,6 +584,27 @@ GLenum Context::checkFramebufferStatus(GLenum target)
     return status;
 }
 
+void Context::getProgramResourceiv(GLuint program, GLenum programInterface, GLuint index, GLsizei propCount, const GLenum* props, GLsizei bufSize, GLsizei* length, GLint* params)
+{
+    glLog(glGetProgramResourceiv(program, programInterface, index, propCount, props, bufSize, length, params));
+}
+
+void Context::getProgramResourceName(GLuint program, GLenum programInterface, GLuint index, GLsizei bufSize, GLsizei* length, GLchar* name)
+{
+    glLog(glGetProgramResourceName(program, programInterface, index, bufSize, length, name));
+}
+
+void Context::getActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLsizei* length, GLint* size, GLenum* type, GLchar* name)
+{
+    glLog(glGetActiveUniform(program, index, bufSize, length, size, type, name));
+}
+
+GLint Context::getUniformLocation(GLuint program, const GLchar* name)
+{
+    GLint loc = glLog(glGetUniformLocation(program, name));
+    return loc;
+}
+
 WithContext::WithContext(Context& context) : context_(&context)
 {
 }

@@ -7,6 +7,7 @@
 #include "graphicsAPI/opengl/Context.h"
 #include "graphicsAPI/common/Texture.h"
 #include <limits>
+#include <iostream>
 
 namespace opengl
 {
@@ -31,10 +32,7 @@ public:
     void upload(const void* data, const TextureRangeDesc& range, size_t bytesPerRow) const override;
     void uploadCube(const void* data, TextureCubeFace face, const TextureRangeDesc& range, size_t bytesPerRow) const override;
 
-    virtual void create(const TextureDesc&
-                                desc,
-                        bool
-                                hasStorageAlready) = 0;
+    virtual void create(const TextureDesc& desc, bool hasStorageAlready) = 0;
     virtual void bind() =  0;
     virtual void unbind() = 0;
 

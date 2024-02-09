@@ -6,6 +6,7 @@
 
 #include "DepthStencilState.h"
 #include "GraphicsPipeline.h"
+#include "SamplerState.h"
 #include "Texture.h"
 #include "UniformBinder.h"
 #include "VertexArrayObject.h"
@@ -21,6 +22,8 @@ namespace opengl {
 
 class CommandBuffer : public ICommandBuffer
 {
+    using TextureStates = std::array<std::pair<std::shared_ptr<Texture>, std::shared_ptr<SamplerState>>, MAX_TEXTURE_SAMPLERS>;
+
 public:
     enum DirtyFlag : uint32_t
     {
@@ -29,12 +32,6 @@ public:
         DirtyBits_DepthStencilState = 1 << 2,
         DirtyBits_Viewport = 1 << 3,
         DirtyBits_Scissor = 1 << 4,
-    };
-
-    enum BindTarget : uint8_t
-    {
-        BindTarget_Vertex = 1 << 1,
-        BindTarget_Fragment = 1 << 2,
     };
 
     explicit CommandBuffer(const std::shared_ptr<Context>& context);
@@ -49,6 +46,7 @@ public:
     void bindScissor(const Scissor& scissor) override;
     void bindDepthStencilState(const std::shared_ptr<IDepthStencilState>& depthStencilState) override;
     void bindTexture(uint32_t index, uint8_t target, std::shared_ptr<ITexture> texture) override;
+    void bindSamplerState(uint32_t index, uint8_t target, std::shared_ptr<ISamplerState> samplerState) override;
 
 private:
     void clearPipelineResources(const std::shared_ptr<GraphicsPipeline>& newPipeline);
@@ -66,7 +64,6 @@ private:
     std::bitset<MAX_TEXTURE_SAMPLERS> vertTexturesDirtyCache;
     std::bitset<MAX_TEXTURE_SAMPLERS> fragTexturesDirtyCache;
 
-    using TextureStates = std::array<std::pair<std::shared_ptr<Texture>, std::shared_ptr<Texture>>, MAX_TEXTURE_SAMPLERS>;
     TextureStates vertTexturesCache;
     TextureStates fragTexturesCache;
 

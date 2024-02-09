@@ -7,6 +7,8 @@
 #include "TextureBuffer.h"
 
 #include <algorithm>
+#include <iostream>
+#include <thread>
 
 namespace opengl
 {
@@ -140,7 +142,7 @@ void Framebuffer::bindForRenderPass(const RenderPassDesc& renderPass) const
         }
     }
 
-    GLbitfield clearMask;
+    GLbitfield clearMask = 0;
 
     if (auto colorAttachment0 = renderTarget.colorAttachments.find(0);
         colorAttachment0 != renderTarget.colorAttachments.end() && colorAttachment0->second.texture != nullptr &&

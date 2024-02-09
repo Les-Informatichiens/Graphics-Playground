@@ -69,6 +69,7 @@ add_library(
         src/common/SamplerState.cpp
         src/opengl/SamplerState.cpp
         src/opengl/SamplerState.h
+        include/graphicsAPI/common/Uniform.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)

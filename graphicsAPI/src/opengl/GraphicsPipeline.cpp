@@ -5,12 +5,14 @@
 #include "GraphicsPipeline.h"
 #include "ShaderStage.h"
 #include "VertexInputState.h"
-//#include "fmt/format.h"
+#include "graphicsAPI/common/CommandBuffer.h"
 
 namespace opengl {
 
 GraphicsPipeline::GraphicsPipeline(Context& context, const GraphicsPipelineDesc& desc_) : desc(desc_), WithContext(context)
 {
+    activeBindingAttribLocations.reserve(64);
+    unitSamplerLocations.fill(-1);
     this->initialize();
 }
 
@@ -41,6 +43,27 @@ void GraphicsPipeline::initialize()
             }
         }
     }
+
+    // Setup the texture units
+    for (const auto& [unit, samplerName] : desc.fragmentUnitSamplerMap)
+    {
+        GLint loc = reflection->getLocation(samplerName);
+        if (loc >= 0)
+        {
+            unitSamplerLocations[unit] = loc;
+        }
+    }
+
+    // Setup the texture units
+    for (const auto& [unit, samplerName] : desc.vertexUnitSamplerMap)
+    {
+        GLint loc = reflection->getLocation(samplerName);
+        if (loc >= 0)
+        {
+            unitSamplerLocations[unit] = loc;
+        }
+    }
+
 }
 
 void GraphicsPipeline::bind()
@@ -57,6 +80,36 @@ void GraphicsPipeline::unbind()
     {
         shaderStages->unbind();
     }
+}
+
+void GraphicsPipeline::bindTextureUnit(const size_t unit, uint8_t bindTarget)
+{
+    if (!desc.shaderStages)
+    {
+        return;
+    }
+
+    if (unit >= MAX_TEXTURE_SAMPLERS)
+    {
+        return;
+    }
+
+    GLint samplerLocation = -1;
+    if (bindTarget == BindTarget::BindTarget_Vertex)
+    {
+        samplerLocation = unitSamplerLocations[unit]; // todo figure out what to do with this?
+    }
+    else
+    {
+        samplerLocation = unitSamplerLocations[unit];
+    }
+
+    if (samplerLocation >= 0)
+    {
+        getContext().uniform1i(samplerLocation, static_cast<GLint>(unit));
+        getContext().activeTexture(GL_TEXTURE0 + unit);
+    }
+
 }
 
 void GraphicsPipeline::bindVertexAttributes(size_t bufferIndex, size_t offset)

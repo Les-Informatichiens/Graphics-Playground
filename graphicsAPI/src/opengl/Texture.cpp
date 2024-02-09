@@ -840,15 +840,33 @@ GLenum Texture::getTextureTarget(TextureType type, bool isMultisampled)
     switch (type)
     {
         case TextureType::Texture2D:
-            return isMultisampled ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
+        {
+            if (isMultisampled)
+            {
+                return GL_TEXTURE_2D_MULTISAMPLE;
+            }
+            return GL_TEXTURE_2D;
+        }
         case TextureType::Texture2DArray:
-            return isMultisampled ? GL_TEXTURE_2D_MULTISAMPLE_ARRAY : GL_TEXTURE_2D_ARRAY;
+        {
+            if (isMultisampled)
+            {
+                return GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
+            }
+            return GL_TEXTURE_2D_ARRAY;
+        }
         case TextureType::Texture3D:
+        {
             return GL_TEXTURE_3D;
+        }
         case TextureType::TextureCube:
+        {
             return GL_TEXTURE_CUBE_MAP;
+        }
         default:
+        {
             return 0;
+        }
     }
 }
 

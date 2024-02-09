@@ -16,6 +16,7 @@ public:
     void render();
 
 private:
+    void createShaderStages();
     void createOffscreenFramebuffer(uint32_t width, uint32_t height);
 
 private:
@@ -27,6 +28,8 @@ private:
     std::shared_ptr<IGraphicsPipeline> pipeline;
 
     std::shared_ptr<IFramebuffer> fbOffscreen;
+
+    std::shared_ptr<ISamplerState> sampler;
 
     IDevice& device;
 };
