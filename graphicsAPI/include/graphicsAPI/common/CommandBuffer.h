@@ -45,7 +45,7 @@ public:
                      IBuffer& indexBuffer,
                      size_t indexBufferOffset) = 0;
     virtual void bindViewport(const Viewport& viewport) = 0;
-    virtual void bindScissor(const Scissor& scissor) = 0;
+    virtual void bindScissor(const ScissorRect& scissor) = 0;
     virtual void bindDepthStencilState(const std::shared_ptr<IDepthStencilState>& depthStencilState) = 0;
     virtual void bindTexture(uint32_t index, uint8_t target, std::shared_ptr<ITexture> texture) = 0;
     virtual void bindSamplerState(uint32_t index, uint8_t target, std::shared_ptr<ISamplerState> samplerState) = 0;

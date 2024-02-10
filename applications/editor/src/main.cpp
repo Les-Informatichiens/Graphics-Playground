@@ -8,10 +8,13 @@
 int main(int argc, char* argv[])
 {
     // Window init
+    int width = 1280;
+    int height = 720;
+
     GLFWwindow* window;
     if (!glfwInit())
         return -1;
-    window = glfwCreateWindow(1280, 720, "ENGINFORMATICHIENS", NULL, NULL);
+    window = glfwCreateWindow(width, height, "ENGINFORMATICHIENS", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -21,11 +24,12 @@ int main(int argc, char* argv[])
     glfwMakeContextCurrent(window);
 
     // Renderer init
-    auto oglContext = std::make_unique<opengl::Context>();
-    opengl::Device device(std::move(oglContext));
+//    auto oglContext = std::make_unique<opengl::Context>();
+//    opengl::Device device(std::move(oglContext));
 
     // Engine init
-    engine engine(device);
+    InstanceDesc desc = {width, height};
+    EngineInstance engine(desc);
 
     // Application init
     application app(engine, window);

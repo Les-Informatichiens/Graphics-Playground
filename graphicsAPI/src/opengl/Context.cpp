@@ -6,14 +6,6 @@
 
 #include <iostream>
 
-#define DEBUG_FUNCTION(func, ...) \
-do { \
-    printf("Calling function: %s\n", #func); \
-    printf("Parameters: "); \
-    printf(__VA_ARGS__); \
-    printf("\n"); \
-} while(0)
-
 // Macro to print which line has an error
 #ifndef Debug
 
@@ -58,8 +50,8 @@ static void _glPrintErrors(const char* func, const char* file, const int line)
     }
 }
 
-#   define glLog(x)  x; _glPrintErrors(#x, __FILE__, __LINE__); std::cout << #x << std::endl
-#else
+//#   define glLog(x)  x; _glPrintErrors(#x, __FILE__, __LINE__); std::cout << #x << std::endl
+//#else
 #   define glLog(x) x
 #endif
 
@@ -604,6 +596,22 @@ GLint Context::getUniformLocation(GLuint program, const GLchar* name)
     GLint loc = glLog(glGetUniformLocation(program, name));
     return loc;
 }
+
+void Context::blendEquationSeparate(GLenum modeRGB, GLenum modeAlpha)
+{
+    glLog(glBlendEquationSeparate(modeRGB, modeAlpha));
+}
+
+void Context::blendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
+{
+    glLog(glBlendFuncSeparate(srcRGB, dstRGB, srcAlpha, dstAlpha));
+}
+
+void Context::polygonFillMode(GLenum mode)
+{
+    glLog(glPolygonMode(GL_FRONT_AND_BACK, mode));
+}
+
 
 WithContext::WithContext(Context& context) : context_(&context)
 {

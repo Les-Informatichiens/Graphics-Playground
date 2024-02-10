@@ -163,7 +163,7 @@ void CommandBuffer::drawIndexed(PrimitiveType primitiveType, size_t indexCount, 
     prepareForDraw();
     auto glBuffer = dynamic_cast<ArrayBuffer*>(&indexBuffer);
     glBuffer->bind();
-    void* offsetPtr = reinterpret_cast<void*>(indexBufferOffset);
+    auto* offsetPtr = reinterpret_cast<GLvoid*>(indexBufferOffset);
     context->drawElements(toOpenGLPrimitiveType(primitiveType), indexCount, toOpenGLIndexFormat(indexFormat), offsetPtr);
 }
 
@@ -268,8 +268,13 @@ void CommandBuffer::bindViewport(const Viewport& viewport)
     context->viewport(static_cast<GLint>(viewport.x), static_cast<GLint>(viewport.y), static_cast<GLint>(viewport.width), static_cast<GLint>(viewport.height));
 }
 
-void CommandBuffer::bindScissor(const Scissor& scissor)
+void CommandBuffer::bindScissor(const ScissorRect& scissor)
 {
+    if (scissor.isNull())
+    {
+        context->disable(GL_SCISSOR_TEST);
+        return;
+    }
     context->enable(GL_SCISSOR_TEST);
     context->scissor(static_cast<GLint>(scissor.x), static_cast<GLint>(scissor.y), static_cast<GLint>(scissor.width), static_cast<GLint>(scissor.height));
 }

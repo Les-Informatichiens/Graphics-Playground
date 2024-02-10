@@ -21,6 +21,7 @@ TextureBuffer::TextureBuffer(Context& context, TextureFormat format)
 
 TextureBuffer::~TextureBuffer()
 {
+    std::cout << "TextureBuffer::~TextureBuffer()" << std::endl;
     if (handle != 0)
     {
         getContext().deleteTextures(1, &handle);

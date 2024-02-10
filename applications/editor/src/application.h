@@ -3,17 +3,22 @@
 //
 #pragma once
 
-#include "engine/engine.h"
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
+
+#include "engine/EngineInstance.h"
+#include "imgui/ImGuiInstance.h"
 
 class application
 {
 public:
 
-    application(engine& engine, GLFWwindow *window) : gameEngine(engine), window(window) {};
+    application(EngineInstance& engine, GLFWwindow *window)
+        : gameEngine(engine), window(window), imguiInstance({}) {};
 
     void init();
+
+    void onWindowResize(int width, int height);
 
     void run();
 
@@ -21,7 +26,11 @@ public:
 
 private:
 
-    engine& gameEngine;
+    EngineInstance& gameEngine;
+    imgui::ImGuiInstance imguiInstance;
     GLFWwindow* window;
     bool windowShouldClose = false;
+
+    int width;
+    int height;
 };

@@ -13,6 +13,16 @@
 namespace opengl
 {
 
+
+struct BlendMode {
+    GLenum blendOpColor;
+    GLenum blendOpAlpha;
+    GLenum srcColor;
+    GLenum dstColor;
+    GLenum srcAlpha;
+    GLenum dstAlpha;
+};
+
 class GraphicsPipeline : public IGraphicsPipeline, public WithContext
 {
 public:
@@ -30,6 +40,9 @@ public:
     [[nodiscard]] const GraphicsPipelineReflection& getReflection() const { return *reflection; }
     [[nodiscard]] const GraphicsPipelineDesc& getDesc() const override { return this->desc; }
 
+    static GLenum convertBlendOp(BlendOp value);
+    static GLenum convertBlendFactor(BlendFactor value);
+
 private:
     GraphicsPipelineDesc desc;
 
@@ -39,6 +52,13 @@ private:
 
 //    std::vector<uint32_t> bindingAttribLocations;
     std::shared_ptr<GraphicsPipelineReflection> reflection;
+
+    std::array<GLboolean, 4> colorMask = {GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE};
+    BlendMode blendMode = {GL_FUNC_ADD, GL_FUNC_ADD, GL_ONE, GL_ZERO, GL_ONE, GL_ZERO};
+    CullMode cullMode = CullMode::None;
+    FrontFace frontFace = FrontFace::CounterClockwise;
+    PolygonFillMode fillMode = PolygonFillMode::Fill;
+    bool blendEnabled = false;
 };
 
 }

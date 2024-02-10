@@ -11,18 +11,59 @@
 
 enum class VertexAttributeFormat
 {
-    FLOAT,
-    FLOAT2,
-    FLOAT3,
-    FLOAT4,
-    INT,
-    INT2,
-    INT3,
-    INT4,
-    UINT,
-    UINT2,
-    UINT3,
-    UINT4,
+    Float = 0,
+    Float2,
+    Float3,
+    Float4,
+
+    Byte,
+    Byte2,
+    Byte3,
+    Byte4,
+
+    UByte,
+    UByte2,
+    UByte3,
+    UByte4,
+
+    Short,
+    Short2,
+    Short3,
+    Short4,
+
+    UShort,
+    UShort2,
+    UShort3,
+    UShort4,
+
+    // Normalized variants
+    Byte2Norm,
+    Byte4Norm,
+
+    UByte2Norm,
+    UByte4Norm,
+
+    Short2Norm,
+    Short4Norm,
+
+    UShort2Norm,
+    UShort4Norm,
+
+    Int,
+    Int2,
+    Int3,
+    Int4,
+
+    UInt,
+    UInt2,
+    UInt3,
+    UInt4,
+
+    // packed formats
+    HalfFloat,
+    HalfFloat2,
+    HalfFloat3,
+    HalfFloat4,
 };
 
 //enum class VertexInputRate
@@ -67,7 +108,7 @@ struct VertexInputAttributeDesc
 {
     uint32_t location = 0;
     uint32_t binding = 0; // buffer index
-    VertexAttributeFormat format = VertexAttributeFormat::FLOAT;
+    VertexAttributeFormat format = VertexAttributeFormat::Float;
     std::string name; // attribute name (only for opengl to query the location of the attribute in the shader program)
     uint32_t size = 0; // size of the attribute in bytes
     uint32_t offset = 0; // offset in bytes from the start of the vertex

@@ -80,7 +80,11 @@ void ArrayBuffer::data(const void* data, uint32_t size, uint32_t offset) const
         return;
     }
     getContext().bindBuffer(getTarget(), id_);
-    getContext().bufferSubData(getTarget(), offset, size, data);
+    if (offset == 0 && size == 0) {
+        getContext().bufferData(getTarget(), size_, data, GL_DYNAMIC_DRAW);
+    } else {
+        getContext().bufferSubData(getTarget(), offset, size, data);
+    }
     getContext().bindBuffer(getTarget(), 0);
 }
 
@@ -126,6 +130,11 @@ void ArrayBuffer::bindRange(uint32_t index, uint32_t offset) const noexcept
     }
     getContext().bindBuffer(target_, id_);
     getContext().bindBufferRange(target_, (GLuint)index, id_, offset, size_ - offset);
+}
+
+size_t ArrayBuffer::getSize() const
+{
+    return size_;
 }
 
 }// namespace opengl

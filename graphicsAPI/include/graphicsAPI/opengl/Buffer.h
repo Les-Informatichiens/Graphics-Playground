@@ -43,6 +43,8 @@ public:
     void* map(uint32_t size, uint32_t offset) const override;
     void unmap() const override;
 
+    [[nodiscard]] size_t getSize() const override;
+
     [[nodiscard]] GLuint getId() const noexcept { return id_; }
     [[nodiscard]] Type getType() const noexcept override { return type_; }
     [[nodiscard]] GLenum getTarget() const noexcept { return target_; }

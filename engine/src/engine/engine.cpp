@@ -37,13 +37,13 @@ void engine::render() {
 
     VertexInputStateDesc vertexInputStateDesc = VertexInputStateDescBuilder()
                                         .beginBinding(0)
-                                            .addVertexAttribute(VertexAttributeFormat::FLOAT3, "inPosition", 0)
+                                            .addVertexAttribute(VertexAttributeFormat::Float3, "inPosition", 0)
                                         .endBinding()
                                         .beginBinding(1)
-                                            .addVertexAttribute(VertexAttributeFormat::FLOAT3, "inColor", 1)
+                                            .addVertexAttribute(VertexAttributeFormat::Float3, "inColor", 1)
                                         .endBinding()
                                         .beginBinding(2)
-                                            .addVertexAttribute(VertexAttributeFormat::FLOAT2, "inTexCoord", 2)
+                                            .addVertexAttribute(VertexAttributeFormat::Float3, "inTexCoord", 2)
                                         .endBinding()
                                         .build();
     Ref<IVertexInputState> vertexInputState = device.createVertexInputState(vertexInputStateDesc);

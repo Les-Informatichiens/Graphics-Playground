@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <type_traits>
+#include <limits>
 
 enum class DataType
 {
@@ -103,13 +104,26 @@ struct Viewport
     float maxDepth;
 };
 
-struct Scissor
-{
-    int32_t x;
-    int32_t y;
-    uint32_t width;
-    uint32_t height;
+/// Use value-initialization (i.e. braces) to 0-initialize: `Rect<float> myRect{};`
+template<typename T>
+struct Rect {
+private:
+    static constexpr T kNullValue = std::numeric_limits<T>::has_infinity
+                                            ? std::numeric_limits<T>::infinity()
+                                            : std::numeric_limits<T>::max();
+
+public:
+    T x = kNullValue;
+    T y = kNullValue;
+    T width{}; // zero-initialize
+    T height{}; // zero-initialize
+
+    bool isNull() const {
+        return kNullValue == x && kNullValue == y;
+    }
 };
+
+using ScissorRect = Rect<uint32_t>;
 
 constexpr size_t MAX_TEXTURE_SAMPLERS = 16;
 

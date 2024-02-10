@@ -122,6 +122,9 @@ public: // OpenGL functions
     void bindRenderbuffer(GLenum target, GLuint renderbuffer);
     void invalidateFramebuffer(GLenum target, GLsizei numAttachments, const GLenum* attachments);
     GLenum checkFramebufferStatus(GLenum target);
+    void blendEquationSeparate(GLenum modeRGB, GLenum modeAlpha);
+    void blendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha);
+    void polygonFillMode(GLenum mode);
 
 
 private:

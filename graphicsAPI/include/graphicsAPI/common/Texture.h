@@ -8,6 +8,7 @@
 #include "TextureStructures.h"
 
 #include <cstdint>
+#include <memory>
 
 enum class TextureType : uint8_t {
     Invalid,
@@ -100,7 +101,7 @@ struct TextureDesc {
 
 enum class TextureCubeFace : uint8_t { PosX = 0, NegX, PosY, NegY, PosZ, NegZ };
 
-class ITexture
+class ITexture : public std::enable_shared_from_this<ITexture>
 {
 public:
     virtual ~ITexture() = default;

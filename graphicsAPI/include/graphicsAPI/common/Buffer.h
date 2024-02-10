@@ -34,4 +34,6 @@ public:
     virtual void data(const void* data, uint32_t size, uint32_t offset) const = 0;
     [[nodiscard]] virtual void* map(uint32_t size, uint32_t offset) const = 0;
     virtual void unmap() const = 0;
+
+    [[nodiscard]] virtual size_t getSize() const = 0;
 };

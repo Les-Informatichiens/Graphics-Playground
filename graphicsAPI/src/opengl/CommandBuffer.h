@@ -43,7 +43,7 @@ public:
     void draw(PrimitiveType primitiveType, size_t vertexStart, size_t vertexCount) override;
     void drawIndexed(PrimitiveType primitiveType, size_t indexCount, IndexFormat indexFormat, IBuffer& indexBuffer, size_t indexBufferOffset) override;
     void bindViewport(const Viewport& viewport) override;
-    void bindScissor(const Scissor& scissor) override;
+    void bindScissor(const ScissorRect& scissor) override;
     void bindDepthStencilState(const std::shared_ptr<IDepthStencilState>& depthStencilState) override;
     void bindTexture(uint32_t index, uint8_t target, std::shared_ptr<ITexture> texture) override;
     void bindSamplerState(uint32_t index, uint8_t target, std::shared_ptr<ISamplerState> samplerState) override;

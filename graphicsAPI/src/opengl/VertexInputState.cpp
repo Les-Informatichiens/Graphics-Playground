@@ -12,66 +12,208 @@ static void toOGLAttribute(const VertexInputAttributeDesc& attrib,
                            GLenum& componentType,
                            GLboolean& normalized) {
     switch (attrib.format) {
-        case VertexAttributeFormat::FLOAT:
+        case VertexAttributeFormat::Float:
             numComponents = 1;
             componentType = GL_FLOAT;
             normalized = GL_FALSE;
             break;
-        case VertexAttributeFormat::FLOAT2:
+        case VertexAttributeFormat::Float2:
             numComponents = 2;
             componentType = GL_FLOAT;
             normalized = GL_FALSE;
             break;
-        case VertexAttributeFormat::FLOAT3:
+        case VertexAttributeFormat::Float3:
             numComponents = 3;
             componentType = GL_FLOAT;
             normalized = GL_FALSE;
             break;
-        case VertexAttributeFormat::FLOAT4:
+        case VertexAttributeFormat::Float4:
             numComponents = 4;
             componentType = GL_FLOAT;
             normalized = GL_FALSE;
             break;
-        case VertexAttributeFormat::INT:
+        case VertexAttributeFormat::Byte:
+            numComponents = 1;
+            componentType = GL_BYTE;
+            normalized = GL_FALSE;
+            break;
+        case VertexAttributeFormat::Byte2:
+            numComponents = 2;
+            componentType = GL_BYTE;
+            normalized = GL_FALSE;
+            break;
+        case VertexAttributeFormat::Byte3:
+            numComponents = 3;
+            componentType = GL_BYTE;
+            normalized = GL_FALSE;
+            break;
+        case VertexAttributeFormat::Byte4:
+            numComponents = 4;
+            componentType = GL_BYTE;
+            normalized = GL_FALSE;
+            break;
+        case VertexAttributeFormat::UByte:
+            numComponents = 1;
+            componentType = GL_UNSIGNED_BYTE;
+            normalized = GL_FALSE;
+            break;
+        case VertexAttributeFormat::UByte2:
+            numComponents = 2;
+            componentType = GL_UNSIGNED_BYTE;
+            normalized = GL_FALSE;
+            break;
+        case VertexAttributeFormat::UByte3:
+            numComponents = 3;
+            componentType = GL_UNSIGNED_BYTE;
+            normalized = GL_FALSE;
+            break;
+        case VertexAttributeFormat::UByte4:
+            numComponents = 4;
+            componentType = GL_UNSIGNED_BYTE;
+            normalized = GL_FALSE;
+            break;
+        case VertexAttributeFormat::Short:
+            numComponents = 1;
+            componentType = GL_SHORT;
+            normalized = GL_FALSE;
+            break;
+        case VertexAttributeFormat::Short2:
+            numComponents = 2;
+            componentType = GL_SHORT;
+            normalized = GL_FALSE;
+            break;
+        case VertexAttributeFormat::Short3:
+            numComponents = 3;
+            componentType = GL_SHORT;
+            normalized = GL_FALSE;
+            break;
+        case VertexAttributeFormat::Short4:
+            numComponents = 4;
+            componentType = GL_SHORT;
+            normalized = GL_FALSE;
+            break;
+        case VertexAttributeFormat::UShort:
+            numComponents = 1;
+            componentType = GL_UNSIGNED_SHORT;
+            normalized = GL_FALSE;
+            break;
+        case VertexAttributeFormat::UShort2:
+            numComponents = 2;
+            componentType = GL_UNSIGNED_SHORT;
+            normalized = GL_FALSE;
+            break;
+        case VertexAttributeFormat::UShort3:
+            numComponents = 3;
+            componentType = GL_UNSIGNED_SHORT;
+            normalized = GL_FALSE;
+            break;
+        case VertexAttributeFormat::UShort4:
+            numComponents = 4;
+            componentType = GL_UNSIGNED_SHORT;
+            normalized = GL_FALSE;
+            break;
+        case VertexAttributeFormat::Byte2Norm:
+            numComponents = 2;
+            componentType = GL_BYTE;
+            normalized = GL_TRUE;
+            break;
+        case VertexAttributeFormat::Byte4Norm:
+            numComponents = 4;
+            componentType = GL_BYTE;
+            normalized = GL_TRUE;
+            break;
+        case VertexAttributeFormat::UByte2Norm:
+            numComponents = 2;
+            componentType = GL_UNSIGNED_BYTE;
+            normalized = GL_TRUE;
+            break;
+        case VertexAttributeFormat::UByte4Norm:
+            numComponents = 4;
+            componentType = GL_UNSIGNED_BYTE;
+            normalized = GL_TRUE;
+            break;
+        case VertexAttributeFormat::Short2Norm:
+            numComponents = 2;
+            componentType = GL_SHORT;
+            normalized = GL_TRUE;
+            break;
+        case VertexAttributeFormat::Short4Norm:
+            numComponents = 4;
+            componentType = GL_SHORT;
+            normalized = GL_TRUE;
+            break;
+        case VertexAttributeFormat::UShort2Norm:
+            numComponents = 2;
+            componentType = GL_UNSIGNED_SHORT;
+            normalized = GL_TRUE;
+            break;
+        case VertexAttributeFormat::UShort4Norm:
+            numComponents = 4;
+            componentType = GL_UNSIGNED_SHORT;
+            normalized = GL_TRUE;
+            break;
+        case VertexAttributeFormat::Int:
             numComponents = 1;
             componentType = GL_INT;
             normalized = GL_FALSE;
             break;
-        case VertexAttributeFormat::INT2:
+        case VertexAttributeFormat::Int2:
             numComponents = 2;
             componentType = GL_INT;
             normalized = GL_FALSE;
             break;
-        case VertexAttributeFormat::INT3:
+        case VertexAttributeFormat::Int3:
             numComponents = 3;
             componentType = GL_INT;
             normalized = GL_FALSE;
             break;
-        case VertexAttributeFormat::INT4:
+        case VertexAttributeFormat::Int4:
             numComponents = 4;
             componentType = GL_INT;
             normalized = GL_FALSE;
             break;
-        case VertexAttributeFormat::UINT:
+        case VertexAttributeFormat::UInt:
             numComponents = 1;
             componentType = GL_UNSIGNED_INT;
             normalized = GL_FALSE;
             break;
-        case VertexAttributeFormat::UINT2:
+        case VertexAttributeFormat::UInt2:
             numComponents = 2;
             componentType = GL_UNSIGNED_INT;
             normalized = GL_FALSE;
             break;
-        case VertexAttributeFormat::UINT3:
+        case VertexAttributeFormat::UInt3:
             numComponents = 3;
             componentType = GL_UNSIGNED_INT;
             normalized = GL_FALSE;
             break;
-        case VertexAttributeFormat::UINT4:
+        case VertexAttributeFormat::UInt4:
             numComponents = 4;
             componentType = GL_UNSIGNED_INT;
             normalized = GL_FALSE;
             break;
+        case VertexAttributeFormat::HalfFloat:
+            numComponents = 1;
+            componentType = GL_HALF_FLOAT;
+            normalized = GL_FALSE;
+            break;
+        case VertexAttributeFormat::HalfFloat2:
+            numComponents = 2;
+            componentType = GL_HALF_FLOAT;
+            normalized = GL_FALSE;
+            break;
+        case VertexAttributeFormat::HalfFloat3:
+            numComponents = 3;
+            componentType = GL_HALF_FLOAT;
+            normalized = GL_FALSE;
+            break;
+        case VertexAttributeFormat::HalfFloat4:
+            numComponents = 4;
+            componentType = GL_HALF_FLOAT;
+            normalized = GL_FALSE;
+            break;
+        default:
+            throw std::runtime_error("Invalid vertex attribute format");
     }
 }
 
