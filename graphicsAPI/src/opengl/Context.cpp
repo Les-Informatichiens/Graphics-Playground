@@ -612,6 +612,11 @@ void Context::polygonFillMode(GLenum mode)
     glLog(glPolygonMode(GL_FRONT_AND_BACK, mode));
 }
 
+void Context::getIntegerv(GLenum pname, GLint* data)
+{
+    glLog(glGetIntegerv(pname, data));
+}
+
 
 WithContext::WithContext(Context& context) : context_(&context)
 {

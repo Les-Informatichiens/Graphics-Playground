@@ -125,6 +125,7 @@ public: // OpenGL functions
     void blendEquationSeparate(GLenum modeRGB, GLenum modeAlpha);
     void blendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha);
     void polygonFillMode(GLenum mode);
+    void getIntegerv(GLenum pname, GLint* data);
 
 
 private:

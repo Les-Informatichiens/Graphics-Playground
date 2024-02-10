@@ -14,8 +14,8 @@ void ImGuiRenderer::initialize(IDevice& device, uint32_t width, uint32_t height)
         const size_t kMaxVertexBufferSize = kMaxVertices * sizeof(ImDrawVert);
         const size_t kMaxIndexBufferSize = kMaxVertices * sizeof(ImDrawIdx);
 
-        vertexBuffer = device.createBuffer(BufferDesc{ .type = BufferDesc::BufferTypeBits::Vertex, .data = nullptr, .size = kMaxVertexBufferSize, .storage = ResourceStorage::Shared});
-        indexBuffer = device.createBuffer(BufferDesc{ .type = BufferDesc::BufferTypeBits::Index, .data = nullptr, .size = kMaxIndexBufferSize, .storage = ResourceStorage::Shared});
+        vertexBuffer = device.createBuffer(BufferDesc{ .type = BufferDesc::BufferTypeBits::Vertex, .data = nullptr, .size = 0, .storage = ResourceStorage::Shared});
+        indexBuffer = device.createBuffer(BufferDesc{ .type = BufferDesc::BufferTypeBits::Index, .data = nullptr, .size = 0, .storage = ResourceStorage::Shared});
         uniformBuffer = device.createBuffer(BufferDesc{ .type = BufferDesc::BufferTypeBits::Uniform, .data = nullptr, .size = 4*4*sizeof(float), .storage = ResourceStorage::Shared});
     }
 
@@ -72,7 +72,7 @@ void ImGuiRenderer::initialize(IDevice& device, uint32_t width, uint32_t height)
                     layout(binding = 1) uniform sampler2D tex;
                     void main()
                     {
-                        FragColor = vColor * texture(tex, vTex);
+                        FragColor = vColor * texture(tex, vTex.st);
                     }
                 )"
         });

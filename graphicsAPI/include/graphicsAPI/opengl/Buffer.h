@@ -50,11 +50,17 @@ public:
     [[nodiscard]] GLenum getTarget() const noexcept { return target_; }
 
 private:
+    void savePreviousBuffer() const;
+    void restorePreviousBuffer() const;
+
+private:
     GLuint id_;
     GLenum target_;
     Type type_;
     bool isDynamic_;
     uint32_t size_;
+
+    mutable GLint lastBoundBuffer_ = 0;
 };
 
 }// namespace opengl
