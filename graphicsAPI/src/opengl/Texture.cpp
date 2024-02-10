@@ -729,9 +729,9 @@ GLint Texture::getAlignment(size_t stride, size_t mipLevel) const
 
 std::pair<bool, bool> Texture::validateRange(const TextureRangeDesc& range) const
 {
-    const auto texWidth = std::max(getWidth() >> range.mipLevel, 1ull);
-    const auto texHeight = std::max(getHeight() >> range.mipLevel, 1ull);
-    const auto texDepth = std::max(getDepth() >> range.mipLevel, 1ull);
+    const auto texWidth = std::max(getWidth() >> range.mipLevel, static_cast<size_t>(1));
+    const auto texHeight = std::max(getHeight() >> range.mipLevel, static_cast<size_t>(1));
+    const auto texDepth = std::max(getDepth() >> range.mipLevel, static_cast<size_t>(1));
     const auto texLayers = getNumLayers();
 
     if (range.x >= texWidth || range.y >= texHeight || range.z >= texDepth)

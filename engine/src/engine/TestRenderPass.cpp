@@ -242,16 +242,6 @@ void TestRenderPass::createOffscreenFramebuffer(IDevice& device, uint32_t width,
     auto texUsageBits = TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled;
 
     auto colorAttachment = device.createTexture(TextureDesc::new2D(TextureFormat::RGBA_UNorm8, width, height, texUsageBits));
-    auto texWidth = colorAttachment->getWidth();
-    auto texHeight = colorAttachment->getHeight();
-    std::vector<uint32_t> pixels(texWidth * texHeight);
-    for (uint32_t y = 0; y != texHeight; y++) {
-        for (uint32_t x = 0; x != texWidth; x++) {
-            // create a XOR pattern
-            pixels[y * texWidth + x] = 0xFF000000 + ((x ^ y) << 16) + ((x ^ y) << 8) + (x ^ y);
-        }
-    }
-    colorAttachment->upload(pixels.data(), TextureRangeDesc::new2D(0, 0, texWidth, texHeight));
 
     auto depthAttachment = device.createTexture(TextureDesc::new2D(TextureFormat::Z_UNorm24, width, height, texUsageBits));
     fbOffscreen = device.createFramebuffer({
