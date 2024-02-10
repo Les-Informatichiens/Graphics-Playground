@@ -46,7 +46,6 @@ static void _glPrintErrors(const char* func, const char* file, const int line)
                 "\n  Type - " << _glStringError(err)
                   << std::endl;
         err = glGetError();
-        __debugbreak();
     }
 }
 

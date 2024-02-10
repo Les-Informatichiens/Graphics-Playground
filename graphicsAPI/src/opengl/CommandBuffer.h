@@ -4,6 +4,7 @@
 
 #pragma once
 
+
 #include "DepthStencilState.h"
 #include "GraphicsPipeline.h"
 #include "SamplerState.h"
@@ -14,6 +15,10 @@
 #include "graphicsAPI/opengl/Buffer.h"
 #include "graphicsAPI/opengl/Context.h"
 
+#include <graphicsAPI/common/Common.h>
+
+#include <memory>
+#include <unordered_map>
 #include <array>
 #include <bitset>
 #include <set>

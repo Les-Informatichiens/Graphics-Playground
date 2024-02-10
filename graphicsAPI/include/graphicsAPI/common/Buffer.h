@@ -6,7 +6,7 @@
 
 #include "Common.h"
 
-
+#include <cstddef>
 #include <cstdint>
 
 struct BufferDesc

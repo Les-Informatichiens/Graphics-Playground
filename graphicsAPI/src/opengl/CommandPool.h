@@ -7,6 +7,9 @@
 #include "graphicsAPI/common/CommandPool.h"
 #include "graphicsAPI/opengl/Context.h"
 
+#include "graphicsAPI/common/Common.h"
+
+
 namespace opengl {
 
 class CommandPool : public ICommandPool

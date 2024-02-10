@@ -4,11 +4,14 @@
 
 #pragma once
 
+#include "graphicsAPI/common/Common.h"
+
 #include "GraphicsPipelineReflection.h"
 #include "graphicsAPI/common/GraphicsPipeline.h"
 #include "graphicsAPI/opengl/Context.h"
 
 #include <map>
+#include <array>
 
 namespace opengl
 {
