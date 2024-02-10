@@ -3,6 +3,7 @@
 //
 
 #include "engine/EngineInstance.h"
+#include <iostream>
 
 EngineInstance::EngineInstance(InstanceDesc desc)
     : desc(desc), renderer()
@@ -27,10 +28,25 @@ void EngineInstance::initialize()
 
 void EngineInstance::updateSimulation(float dt)
 {
-    if (renderer.isInitialized())
+    std::cout << "Updating simulation (" << (dt * 1000.0f) << " ms)" << std::endl;
+}
+
+void EngineInstance::renderFrame()
+{
+    if (!renderer.isInitialized())
     {
-        renderer.render();
+        // log error
+        return;
     }
+
+    // render something for testing purposes
+    // Note that this is not the thought out way to render things
+    // This is mainly just to render something to the screen and simulate as if the engine was running
+    // to then try to render an imgui frame on top of it, all while being decoupled in the code
+    // Jonathan Richard 2024-02-10
+    testRenderPass.render(renderer.getDevice());
+
+    renderer.render();
 }
 
 void EngineInstance::shutdown()

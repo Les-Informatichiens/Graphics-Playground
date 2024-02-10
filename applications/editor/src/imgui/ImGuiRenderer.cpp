@@ -10,10 +10,6 @@ void ImGuiRenderer::initialize(IDevice& device, uint32_t width, uint32_t height)
 {
     // Create buffers
     {
-        const size_t kMaxVertices = (1l << 16);
-        const size_t kMaxVertexBufferSize = kMaxVertices * sizeof(ImDrawVert);
-        const size_t kMaxIndexBufferSize = kMaxVertices * sizeof(ImDrawIdx);
-
         vertexBuffer = device.createBuffer(BufferDesc{ .type = BufferDesc::BufferTypeBits::Vertex, .data = nullptr, .size = 0, .storage = ResourceStorage::Shared});
         indexBuffer = device.createBuffer(BufferDesc{ .type = BufferDesc::BufferTypeBits::Index, .data = nullptr, .size = 0, .storage = ResourceStorage::Shared});
         uniformBuffer = device.createBuffer(BufferDesc{ .type = BufferDesc::BufferTypeBits::Uniform, .data = nullptr, .size = 4*4*sizeof(float), .storage = ResourceStorage::Shared});
@@ -165,11 +161,6 @@ void ImGuiRenderer::setupRenderState(ImDrawData* drawData, std::shared_ptr<IGrap
         commandBuffer.bindBuffer(0, uniformBuffer, 0);
     }
 
-    //    // Bind texture
-    //    {
-    //        commandBuffer.bindTexture(1, 0, fontTexture);
-    //    }
-
     // Bind sampler state
     {
         commandBuffer.bindSamplerState(1, BindTarget::BindTarget_Fragment, samplerState);
@@ -179,8 +170,6 @@ void ImGuiRenderer::setupRenderState(ImDrawData* drawData, std::shared_ptr<IGrap
     {
         commandBuffer.bindDepthStencilState(depthStencilState);
     }
-
-    // Setup
 }
 
 void ImGuiRenderer::renderDrawData(ImDrawData* drawData, IDevice& device, std::shared_ptr<ICommandBuffer>& commandBuffer, std::shared_ptr<IGraphicsPipeline> pipeline_)
@@ -210,6 +199,8 @@ void ImGuiRenderer::renderDrawData(ImDrawData* drawData, IDevice& device, std::s
 
         const size_t vertexBufferSize = cmd_list->VtxBuffer.Size * sizeof(ImDrawVert);
         const size_t indexBufferSize = cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx);
+
+        // Update vertex and index buffer if needed
         if (vertexBuffer == nullptr || vertexBuffer->getSize() < vertexBufferSize)
         {
             vertexBuffer = device.createBuffer(BufferDesc{ .type = BufferDesc::BufferTypeBits::Vertex, .data = nullptr, .size = static_cast<uint32_t>(vertexBufferSize), .storage = ResourceStorage::Shared});
@@ -220,6 +211,7 @@ void ImGuiRenderer::renderDrawData(ImDrawData* drawData, IDevice& device, std::s
             indexBuffer = device.createBuffer(BufferDesc{ .type = BufferDesc::BufferTypeBits::Index, .data = nullptr, .size = static_cast<uint32_t>(indexBufferSize), .storage = ResourceStorage::Shared});
         }
 
+        // Upload vertex and index data
         vertexBuffer->data(cmd_list->VtxBuffer.Data, vertexBufferSize, 0);
         indexBuffer->data(cmd_list->IdxBuffer.Data, indexBufferSize, 0);
 
@@ -242,8 +234,6 @@ void ImGuiRenderer::renderDrawData(ImDrawData* drawData, IDevice& device, std::s
                     continue;
                 }
 
-                static constexpr bool isOpenGL = true;
-
                 // OpenGL Y-axis goes up (Vulkan and Metal are good)
                 // https://www.saschawillems.de/blog/2019/03/29/flipping-the-vulkan-viewport/
                 const ScissorRect rect{uint32_t(clipMin.x),
@@ -253,6 +243,7 @@ void ImGuiRenderer::renderDrawData(ImDrawData* drawData, IDevice& device, std::s
                                             uint32_t(clipMax.y - clipMin.y)};
                 commandBuffer->bindScissor(rect);
 
+                // Bind texture
                 if (pcmd->TextureId != nullptr)
                 {
                     auto* texture = reinterpret_cast<ITexture*>(pcmd->TextureId);

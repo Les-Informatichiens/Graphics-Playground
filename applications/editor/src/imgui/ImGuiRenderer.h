@@ -31,6 +31,8 @@ private:
     std::shared_ptr<IGraphicsPipeline> pipeline;
     std::shared_ptr<IDepthStencilState> depthStencilState;
     std::unordered_map<ImTextureID, std::shared_ptr<ITexture>> textureMap;
+
+    static constexpr bool isOpenGL = true;
 };
 
 }

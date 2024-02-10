@@ -22,6 +22,12 @@ public:
 
     void run();
 
+    void initImGui();
+    void beginImGuiFrame();
+    void endImGuiFrame();
+    void renderImGuiFrame();
+    void shutdownImGui();
+
     ~application();
 
 private:
@@ -33,4 +39,10 @@ private:
 
     int width;
     int height;
+
+    // imgui state
+    double time = 0.0;
+    bool show_demo_window = true;
+    bool show_another_window = false;
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 };

@@ -22,6 +22,9 @@ ImGuiInstance::~ImGuiInstance()
 void ImGuiInstance::initialize(IDevice& device, uint32_t width, uint32_t height)
 {
     ImGui::SetCurrentContext(context);
+
+    ImGui::StyleColorsDark();
+
     renderer.initialize(device, width, height);
 }
 

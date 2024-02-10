@@ -2,6 +2,7 @@
 // Created by Jonathan Richard on 2024-02-09.
 //
 
+#include "TestRenderPass.h"
 #include "engine/graphics/Renderer.h"
 
 struct InstanceDesc
@@ -20,12 +21,14 @@ public:
 
     void initialize();
     void updateSimulation(float dt);
+    void renderFrame();
     void shutdown();
 
     graphics::Renderer& getRenderer();
 
 private:
     graphics::Renderer renderer;
+    TestRenderPass testRenderPass;
 
     InstanceDesc desc;
 };

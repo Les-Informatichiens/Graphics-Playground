@@ -3,8 +3,8 @@ project(engine VERSION 0.1)
 
 add_library(
         ${PROJECT_NAME} STATIC
-        src/engine/engine.cpp
-        include/engine/engine.h
+        src/engine/TestRenderPass.cpp
+        include/engine/TestRenderPass.h
         include/engine/graphics/Renderer.h
         src/engine/graphics/Renderer.cpp
         include/engine/EngineInstance.h

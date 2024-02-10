@@ -6,20 +6,24 @@
 #include <memory>
 #include <utility>
 
-class engine
+class TestRenderPass
 {
 public:
+    TestRenderPass() = default;
+    ~TestRenderPass() = default;
 
-    explicit engine(IDevice& graphicsDevice);;
+    void initialize(IDevice& device);
 
-    void update(float dt);
-    void render();
-
-private:
-    void createShaderStages();
-    void createOffscreenFramebuffer(uint32_t width, uint32_t height);
+    void render(IDevice& device);
 
 private:
+    void createShaderStages(IDevice& device);
+    void createOffscreenFramebuffer(IDevice& device, uint32_t width, uint32_t height);
+
+private:
+
+    std::shared_ptr<ITexture> testLoadedTexture;
+    std::shared_ptr<ITexture> testGeneratedTexture;
 
     std::shared_ptr<IShaderModule> vs;
     std::shared_ptr<IShaderModule> fs;
@@ -30,6 +34,4 @@ private:
     std::shared_ptr<IFramebuffer> fbOffscreen;
 
     std::shared_ptr<ISamplerState> sampler;
-
-    IDevice& device;
 };

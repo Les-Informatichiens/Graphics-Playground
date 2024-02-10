@@ -2,7 +2,7 @@
 // Created by Jonathan Richard on 2024-01-29.
 //
 
-#include "engine/engine.h"
+#include "engine/TestRenderPass.h"
 #include "glm/glm.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -10,21 +10,31 @@
 
 #include <iostream>
 
-engine::engine(IDevice& graphicsDevice) : device(graphicsDevice) {
-}
 
-void engine::update(float dt)
-{
-    //renderer.draw();
-    std::cout << "Engine updated in " << dt << "ms" << std::endl;
-}
 template<typename T>
 using Ref = std::shared_ptr<T>;
 
-void engine::render() {
+void TestRenderPass::initialize(IDevice& device)
+{
 
-    this->createShaderStages();
-    this->createOffscreenFramebuffer(800, 600);
+    // load and create a texture
+    {
+        int32_t texWidth = 0;
+        int32_t texHeight = 0;
+        int32_t channels = 0;
+        uint8_t* pixels = stbi_load("Windows_curtains_diff.png", &texWidth, &texHeight, &channels, STBI_rgb_alpha);
+
+        this->testLoadedTexture = device.createTexture(TextureDesc::new2D(TextureFormat::RGBA_UNorm8, texWidth, texHeight, TextureDesc::TextureUsageBits::Sampled));
+
+        this->testLoadedTexture->upload(pixels, TextureRangeDesc::new2D(0, 0, texWidth, texHeight));
+        stbi_image_free(pixels);
+    }
+}
+
+void TestRenderPass::render(IDevice& device) {
+
+    this->createShaderStages(device);
+    this->createOffscreenFramebuffer(device, 800, 600);
     if (sampler == nullptr)
     {
         SamplerStateDesc samplerDesc = SamplerStateDesc::newLinear();
@@ -43,7 +53,7 @@ void engine::render() {
                                             .addVertexAttribute(VertexAttributeFormat::Float3, "inColor", 1)
                                         .endBinding()
                                         .beginBinding(2)
-                                            .addVertexAttribute(VertexAttributeFormat::Float3, "inTexCoord", 2)
+                                            .addVertexAttribute(VertexAttributeFormat::Float2, "inTexCoord", 2)
                                         .endBinding()
                                         .build();
     Ref<IVertexInputState> vertexInputState = device.createVertexInputState(vertexInputStateDesc);
@@ -174,30 +184,11 @@ void engine::render() {
     commandBuffer->bindBuffer(2, main_vertexBuffer2, 0);
 
 
-    Ref<ITexture> testSample;
-    {
-        int32_t texWidth = 0;
-        int32_t texHeight = 0;
-        int32_t channels = 0;
-        uint8_t* pixels = stbi_load("Windows_curtains_diff.png", &texWidth, &texHeight, &channels, STBI_rgb_alpha);
 
-        testSample = device.createTexture(TextureDesc::new2D(TextureFormat::RGBA_UNorm8, texWidth, texHeight, TextureDesc::TextureUsageBits::Sampled));
-//        auto texWidth = testSample->getWidth();
-//        auto texHeight = testSample->getHeight();
-//        std::vector<uint32_t> pixels(texWidth * texHeight);
-//        for (uint32_t y = 0; y != texHeight; y++) {
-//            for (uint32_t x = 0; x != texWidth; x++) {
-//                // create a XOR pattern
-//                pixels[y * texWidth + x] = 0xFF000000 + ((x ^ y) << 16) + ((x ^ y) << 8) + (x ^ y);
-//            }
-//        }
-        testSample->upload(pixels, TextureRangeDesc::new2D(0, 0, texWidth, texHeight));
-        stbi_image_free(pixels);
-    }
 
     commandBuffer->bindBuffer(0, uniformBuffer, 0);
 
-    commandBuffer->bindTexture(1, BindTarget::BindTarget_Fragment, testSample);
+    commandBuffer->bindTexture(1, BindTarget::BindTarget_Fragment, testLoadedTexture);
     commandBuffer->bindSamplerState(1, BindTarget::BindTarget_Fragment, sampler);
 
     commandBuffer->drawIndexed(PrimitiveType::Triangle, indices.size(), IndexFormat::UInt32, *indexBuffer, 0);
@@ -214,7 +205,7 @@ void engine::render() {
                             RenderPassDesc::ColorAttachmentDesc{
                                     LoadAction::Clear,
                                     StoreAction::DontCare,
-                                    Color{0.0f, 0.0f, 0.0f, 1.0f}
+                                    Color{0.45f, 0.55f, 0.60f, 1.00f}
                             }
                     },
                     .depthAttachment = RenderPassDesc::DepthAttachmentDesc{
@@ -241,7 +232,7 @@ void engine::render() {
     std::cout << "Engine rendered" << std::endl;
 }
 
-void engine::createOffscreenFramebuffer(uint32_t width, uint32_t height)
+void TestRenderPass::createOffscreenFramebuffer(IDevice& device, uint32_t width, uint32_t height)
 {
     if (fbOffscreen != nullptr)
     {
@@ -269,8 +260,7 @@ void engine::createOffscreenFramebuffer(uint32_t width, uint32_t height)
         .stencilAttachment = {nullptr, nullptr}
     });
 }
-
-void engine::createShaderStages()
+void TestRenderPass::createShaderStages(IDevice& device)
 {
     if (vs == nullptr)
     {

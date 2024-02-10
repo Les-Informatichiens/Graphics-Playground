@@ -12,8 +12,6 @@ add_executable(
         src/imgui/ImGuiRenderer.h
         src/imgui/ImGuiInstance.cpp
         src/imgui/ImGuiInstance.h
-        src/imgui/stb_image.h
-        src/imgui/stb_image_write.h
 )
 
 target_include_directories(
