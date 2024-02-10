@@ -14,7 +14,7 @@
 #include "TextureBuffer.h"
 #include "VertexInputState.h"
 #include "graphicsAPI/opengl/Buffer.h"
-#include "shaderc/shaderc.hpp"
+//#include "shaderc/shaderc.hpp"
 #include <spirv_glsl.hpp>
 
 #include <iostream>
@@ -58,22 +58,22 @@ std::shared_ptr<IShaderModule> Device::createShaderModule(const ShaderModuleDesc
 {
     auto shaderModule = std::make_shared<ShaderModule>(getContext(), desc);
 
-    shaderc::Compiler glslcompiler;
-    shaderc::CompileOptions options;
-    options.SetVulkanRulesRelaxed(true);
-    shaderc::SpvCompilationResult result = glslcompiler.CompileGlslToSpv(desc.code, shaderc_shader_kind::shaderc_glsl_vertex_shader, "main", options);
-    if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
-        //handle errors
-        throw std::runtime_error("Failed to compile shader : " + result.GetErrorMessage());
-    }
-    std::vector<uint32_t> vertexSPRV;
-    vertexSPRV.assign(result.begin(), result.end());
+//    shaderc::Compiler glslcompiler;
+//    shaderc::CompileOptions options;
+//    options.SetVulkanRulesRelaxed(true);
+//    shaderc::SpvCompilationResult result = glslcompiler.CompileGlslToSpv(desc.code, shaderc_shader_kind::shaderc_glsl_vertex_shader, "main", options);
+//    if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
+        // handle errors
+//        throw std::runtime_error("Failed to compile shader : " + result.GetErrorMessage());
+//    }
+//    std::vector<uint32_t> vertexSPRV;
+//    vertexSPRV.assign(result.begin(), result.end());
 
     //    spirv_cross::CompilerGLSL compiler(reinterpret_cast<const uint32_t*>(desc.code.data()), desc.code.size() / sizeof(uint32_t));
-        spirv_cross::CompilerGLSL compiler(vertexSPRV);
+//    spirv_cross::CompilerGLSL compiler(vertexSPRV);
 
-    std::string compiledCode = shaderModule->compileAndParseGLSL(compiler);
-    shaderModule->create(compiledCode);
+//    std::string compiledCode = shaderModule->compileAndParseGLSL(compiler);
+    shaderModule->create(desc.code);
 
     return shaderModule;
 }

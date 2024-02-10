@@ -101,63 +101,63 @@ target_link_libraries(${PROJECT_NAME} PRIVATE spirv-cross-core spirv-cross-glsl)
 # =====================================================================================================
 
 # SPIRV-Headers =======================================================================================
-CPMAddPackage(
-        NAME "SPIRV-Headers"
-        GITHUB_REPOSITORY "KhronosGroup/SPIRV-Headers"
-        GIT_TAG "main"
-        OPTIONS
-        "BUILD_TESTS OFF"
-)
+#CPMAddPackage(
+#        NAME "SPIRV-Headers"
+#        GITHUB_REPOSITORY "KhronosGroup/SPIRV-Headers"
+#        GIT_TAG "main"
+#        OPTIONS
+#        "BUILD_TESTS OFF"
+#)
 # =====================================================================================================
 
 # SPIRV-Tools =========================================================================================
-CPMAddPackage(
-        NAME "SPIRV-Tools"
-        GITHUB_REPOSITORY "KhronosGroup/SPIRV-Tools"
-        GIT_TAG "main"
-        OPTIONS
-        "SPIRV_SKIP_EXECUTABLES ON"
-        "SPIRV_SKIP_TESTS ON"
-        "BUILD_SHARED_LIBS ON"
-        "SPIRV_TOOLS_BUILD_STATIC OFF"
-#        "SPIRV_SKIP_INSTALL ON"
-)
+#CPMAddPackage(
+#        NAME "SPIRV-Tools"
+#        GITHUB_REPOSITORY "KhronosGroup/SPIRV-Tools"
+#        GIT_TAG "main"
+#        OPTIONS
+#        "SPIRV_SKIP_EXECUTABLES ON"
+#        "SPIRV_SKIP_TESTS ON"
+#        "BUILD_SHARED_LIBS ON"
+#        "SPIRV_TOOLS_BUILD_STATIC OFF"
+##        "SPIRV_SKIP_INSTALL ON"
+#)
 #target_link_libraries(${PROJECT_NAME} PRIVATE SPIRV-Tools)
 # =====================================================================================================
 
 # glslang =============================================================================================
-CPMAddPackage(
-        NAME "glslang"
-        GITHUB_REPOSITORY "KhronosGroup/glslang"
-        GIT_TAG "14.0.0"
-        OPTIONS
-        "GLSLANG_TESTS OFF"
-        "ENABLE_GLSLANG_BINARIES OFF"
-        "BUILD_SHARED_LIBS ON"
-#        "ENABLE_HLSL OFF"
-#        "ENABLE_OPT OFF"
-#        "ENABLE_SPVREMAPPER OFF"
-#        "ENABLE_AMD_EXTENSIONS OFF"
-#        "ENABLE_NV_EXTENSIONS OFF"
-#        "ENABLE_GLSLANG_JS OFF"
-#        "ENABLE_GLSLANG_WEB OFF"
-)
+#CPMAddPackage(
+#        NAME "glslang"
+#        GITHUB_REPOSITORY "KhronosGroup/glslang"
+#        GIT_TAG "14.0.0"
+#        OPTIONS
+#        "GLSLANG_TESTS OFF"
+#        "ENABLE_GLSLANG_BINARIES OFF"
+#        "BUILD_SHARED_LIBS ON"
+##        "ENABLE_HLSL OFF"
+##        "ENABLE_OPT OFF"
+##        "ENABLE_SPVREMAPPER OFF"
+##        "ENABLE_AMD_EXTENSIONS OFF"
+##        "ENABLE_NV_EXTENSIONS OFF"
+##        "ENABLE_GLSLANG_JS OFF"
+##        "ENABLE_GLSLANG_WEB OFF"
+#)
 # =====================================================================================================
 
 
 # shaderc =============================================================================================
-CPMAddPackage(
-        NAME "shaderc"
-        GITHUB_REPOSITORY "google/shaderc"
-        GIT_TAG "v2023.8"
-        OPTIONS
-        "SHADERC_SKIP_TESTS ON"
-        "SHADERC_SKIP_INSTALL ON"
-        "SHADERC_SKIP_COPYRIGHT_CHECK ON"
-        "SHADERC_SKIP_EXAMPLES ON"
-
-)
-target_link_libraries(${PROJECT_NAME} PRIVATE shaderc)
+#CPMAddPackage(
+#        NAME "shaderc"
+#        GITHUB_REPOSITORY "google/shaderc"
+#        GIT_TAG "v2023.8"
+#        OPTIONS
+#        "SHADERC_SKIP_TESTS ON"
+#        "SHADERC_SKIP_INSTALL ON"
+#        "SHADERC_SKIP_COPYRIGHT_CHECK ON"
+#        "SHADERC_SKIP_EXAMPLES ON"
+#
+#)
+#target_link_libraries(${PROJECT_NAME} PRIVATE shaderc)
 # =====================================================================================================
 
 # fmt =================================================================================================
