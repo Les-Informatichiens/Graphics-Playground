@@ -69,7 +69,8 @@ void application::run()
         gameEngine.render();
 
 
-        endAndRenderImGuiFrame();
+        endImGuiFrame();
+        renderImGuiFrame();
 
         glfwSwapBuffers(window);
         windowShouldClose = glfwWindowShouldClose(window);
@@ -81,11 +82,13 @@ void application::beginImGuiFrame() const
     imguiInstance.beginFrame();
 }
 
-void application::endAndRenderImGuiFrame() const
+void application::endImGuiFrame() const
 {
-    glClear(GL_COLOR_BUFFER_BIT);
-
     imguiInstance.endFrame();
+}
+
+void application::renderImGuiFrame() const
+{
     imguiInstance.renderFrame();
 
     if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)

@@ -33,7 +33,8 @@ public:
     ~application();
 
 private:
-    void endAndRenderImGuiFrame() const;
+    void endImGuiFrame() const;
+    void renderImGuiFrame() const;
     void beginImGuiFrame() const;
 
 private:
