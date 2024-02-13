@@ -4,7 +4,13 @@
 #pragma once
 
 #define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
+#include <GLFW/glfw3.h>// Will drag system OpenGL headers
+
+// This example can also compile and run with Emscripten! See 'Makefile.emscripten' for details.
+#ifdef __EMSCRIPTEN__
+#include "../libs/emscripten/emscripten_mainloop_stub.h"
+#endif
+
 
 #include "engine/EngineInstance.h"
 #include "imgui/ImGuiInstance.h"
@@ -12,6 +18,7 @@
 class application
 {
 public:
+    application(engine& engine) : gameEngine(engine), imguiInstance() {}
 
     application(EngineInstance& engine, GLFWwindow *window)
         : gameEngine(engine), window(window), imguiInstance({}) {};
@@ -31,6 +38,9 @@ public:
     ~application();
 
 private:
+    void endImGuiFrame() const;
+    void renderImGuiFrame() const;
+    void beginImGuiFrame() const;
 
     EngineInstance& gameEngine;
     imgui::ImGuiInstance imguiInstance;

@@ -5,8 +5,13 @@
 #include "application.h"
 #include "backends/imgui_impl_glfw.h"
 
+static void glfw_error_callback(int error, const char* description)
+{
+    fprintf(stderr, "GLFW Error %d: %s\n", error, description);
+}
+
 //implement the application class here
-void application::init()
+int application::init()
 {
     // Set the user pointer of the window to the application object
     // This is needed so that we can access "this" pointer in glfw callbacks
@@ -25,6 +30,11 @@ void application::init()
         app->onWindowResize(width_, height_);
     });
 
+
+    // Create window with graphics context
+    window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 example", nullptr, nullptr);
+    if (window == nullptr)
+        return 0;
     glfwMakeContextCurrent(window);
 
     // The game engine needs to be initialized before the ImGui context,
@@ -38,7 +48,6 @@ void application::init()
 
 void application::run()
 {
-
     while (!windowShouldClose)
     {
         // We will update the simulation and render the frame before rendering the ImGui frame
@@ -100,9 +109,35 @@ void application::run()
         // Jonathan Richard 2024-02-10
         renderImGuiFrame();
 
+
+        endImGuiFrame();
+        renderImGuiFrame();
+
         glfwSwapBuffers(window);
-        glfwPollEvents();
         windowShouldClose = glfwWindowShouldClose(window);
+    }
+}
+
+void application::beginImGuiFrame() const
+{
+    imguiInstance.beginFrame();
+}
+
+void application::endImGuiFrame() const
+{
+    imguiInstance.endFrame();
+}
+
+void application::renderImGuiFrame() const
+{
+    imguiInstance.renderFrame();
+
+    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        GLFWwindow* backup_current_context = glfwGetCurrentContext();
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
+        glfwMakeContextCurrent(backup_current_context);
     }
 }
 
@@ -110,6 +145,7 @@ application::~application()
 {
     shutdownImGui();
     gameEngine.shutdown();
+
     glfwTerminate();
 }
 

@@ -32,8 +32,8 @@ int main(int argc, char* argv[])
     EngineInstance engine(desc);
 
     // Application init
-    application app(engine, window);
-    app.init();
-
+    application app(engine);
+    if (!app.init())
+        return -1;
     app.run();
 }
