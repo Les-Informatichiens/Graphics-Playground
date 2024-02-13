@@ -2,21 +2,38 @@
 // Created by Jonathan Richard on 2024-01-29.
 //
 
-#include "renderer/renderAPI/openGLRenderer.h"
+#include "graphicsAPI/opengl/Device.h"
 #include "application.h"
 
 int main(int argc, char* argv[])
 {
+    // Window init
+    int width = 1280;
+    int height = 720;
+
+    GLFWwindow* window;
+    if (!glfwInit())
+        return -1;
+    window = glfwCreateWindow(width, height, "ENGINFORMATICHIENS", NULL, NULL);
+    if (!window)
+    {
+        glfwTerminate();
+        return -1;
+    }
+    // find a better way to init things this is needed right now to create the opengl context
+    glfwMakeContextCurrent(window);
+
     // Renderer init
-    openGLRenderer renderer;
-    renderer.init();
+//    auto oglContext = std::make_unique<opengl::Context>();
+//    opengl::Device device(std::move(oglContext));
 
     // Engine init
-    engine engine(renderer);
+    InstanceDesc desc = {width, height};
+    EngineInstance engine(desc);
 
     // Application init
-    application app(engine);
-    if (!app.init())
-        return -1;
+    application app(engine, window);
+    app.init();
+
     app.run();
 }

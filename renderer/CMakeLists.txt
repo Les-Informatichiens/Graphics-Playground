@@ -19,24 +19,22 @@ target_include_directories(${PROJECT_NAME} PRIVATE src)
 # Dependencies ========================================================================================
 include(cmake/CPM.cmake)
 
-# glew ================================================================================================
-if (EMSCRIPTEN)
-    target_link_options(${PROJECT_NAME} PUBLIC "-sUSE_WEBGL2=1")
-else ()
-    CPMAddPackage(
-            NAME "GLEW"
-            GITHUB_REPOSITORY "Perlmint/glew-cmake"
-            GIT_TAG "glew-cmake-2.2.0"
-            OPTIONS
-            "glew-cmake_BUILD_SHARED OFF"
-            "glew-cmake_BUILD_STATIC ON"
-            "glew-cmake_ONLY_LIBS ON"
-    )
-    target_link_libraries(${PROJECT_NAME} PUBLIC libglew_static)
-endif ()
+# glm =================================================================================================
+CPMAddPackage(
+        NAME "glm"
+        GITHUB_REPOSITORY "g-truc/glm"
+        GIT_TAG "0.9.9.8"
+)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 # =====================================================================================================
 
-# end dependencies ====================================================================================
+# graphics API ========================================================================================
+target_link_libraries(${PROJECT_NAME} PRIVATE graphicsAPI)
+# =====================================================================================================
+
+# End dependencies =====================================================================================
+
 
 # Compile definitions ==================================================================================
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")

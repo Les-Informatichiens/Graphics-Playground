@@ -2,14 +2,18 @@ cmake_minimum_required(VERSION 3.26)
 project(editor VERSION 0.1)
 
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_executable(
         ${PROJECT_NAME}
         src/main.cpp
         src/application.cpp
         src/application.h
-        src/imgui/ImGuiContextAdapter.cpp
-        src/imgui/ImGuiContextAdapter.h
+        src/imgui/ImGuiRenderer.cpp
+        src/imgui/ImGuiRenderer.h
+        src/imgui/ImGuiInstance.cpp
+        src/imgui/ImGuiInstance.h
 )
 
 target_include_directories(
@@ -45,15 +49,22 @@ endif ()
 # Dependencies ========================================================================================
 include(cmake/CPM.cmake)
 
-# glm =================================================================================================
-CPMAddPackage(
-        NAME "glm"
-        GITHUB_REPOSITORY "g-truc/glm"
-        GIT_TAG "0.9.9.8"
-)
-
-target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
-# =====================================================================================================
+## glew ================================================================================================
+#if (EMSCRIPTEN)
+#    target_link_options(${PROJECT_NAME} PRIVATE "-sUSE_WEBGL2=1")
+#else ()
+#    CPMAddPackage(
+#            NAME "GLEW"
+#            GITHUB_REPOSITORY "Perlmint/glew-cmake"
+#            GIT_TAG "glew-cmake-2.2.0"
+#            OPTIONS
+#            "glew-cmake_BUILD_SHARED OFF"
+#            "glew-cmake_BUILD_STATIC ON"
+#            "glew-cmake_ONLY_LIBS ON"
+#    )
+#    target_link_libraries(${PROJECT_NAME} PRIVATE libglew_static)
+#endif ()
+## =====================================================================================================
 
 # glfw ================================================================================================
 if (EMSCRIPTEN)
