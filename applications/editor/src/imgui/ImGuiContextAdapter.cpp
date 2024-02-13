@@ -2,11 +2,11 @@
 // Created by Jonathan Richard on 2024-02-12.
 //
 
-#include "ImGuiInstance.h"
+#include "ImGuiContextAdapter.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 
-void ImGuiInstance::initialize(ImGuiInstanceDesc desc)
+void ImGuiContextAdapter::initialize(ImGuiContextAdapterDesc desc)
 {
     this->context = ImGui::CreateContext();
     ImGui::SetCurrentContext(this->context);
@@ -43,7 +43,7 @@ void ImGuiInstance::initialize(ImGuiInstanceDesc desc)
     ImGui_ImplOpenGL3_Init(desc.glslVersion);
 }
 
-void ImGuiInstance::beginFrame() const
+void ImGuiContextAdapter::beginFrame() const
 {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -52,20 +52,20 @@ void ImGuiInstance::beginFrame() const
     ImGui::NewFrame();
 }
 
-void ImGuiInstance::endFrame() const
+void ImGuiContextAdapter::endFrame() const
 {
     ImGui::SetCurrentContext(context);
     ImGui::EndFrame();
 }
 
-void ImGuiInstance::renderFrame() const
+void ImGuiContextAdapter::renderFrame() const
 {
     ImGui::SetCurrentContext(context);
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void ImGuiInstance::shutdown()
+void ImGuiContextAdapter::shutdown()
 {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();

@@ -4,7 +4,7 @@
 #pragma once
 
 #include "engine/engine.h"
-#include "imgui/ImGuiInstance.h"
+#include "imgui/ImGuiContextAdapter.h"
 #include <cstdio>
 
 //#define GL_SILENCE_DEPRECATION
@@ -40,7 +40,7 @@ private:
 private:
     engine& gameEngine;
 
-    ImGuiInstance imguiInstance;
+    ImGuiContextAdapter imguiInstance;
 
     GLFWwindow* window = nullptr;
     bool windowShouldClose = false;

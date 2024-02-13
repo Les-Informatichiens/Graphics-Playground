@@ -8,8 +8,8 @@ add_executable(
         src/main.cpp
         src/application.cpp
         src/application.h
-        src/imgui/ImGuiInstance.cpp
-        src/imgui/ImGuiInstance.h
+        src/imgui/ImGuiContextAdapter.cpp
+        src/imgui/ImGuiContextAdapter.h
 )
 
 target_include_directories(

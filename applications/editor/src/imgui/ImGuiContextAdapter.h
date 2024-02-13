@@ -7,19 +7,19 @@
 #include "GLFW/glfw3.h"
 #include "imgui.h"
 
-struct ImGuiInstanceDesc
+struct ImGuiContextAdapterDesc
 {
     GLFWwindow* glfwWindow;
     const char* glslVersion;
 };
 
-class ImGuiInstance
+class ImGuiContextAdapter
 {
 public:
-    explicit ImGuiInstance() = default;
-    ~ImGuiInstance() = default;
+    explicit ImGuiContextAdapter() = default;
+    ~ImGuiContextAdapter() = default;
 
-    void initialize(ImGuiInstanceDesc desc);
+    void initialize(ImGuiContextAdapterDesc desc);
 
     void beginFrame() const;
     void endFrame() const;
