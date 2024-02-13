@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "Renderable.h"
 #include <graphicsAPI/common/Device.h>
 #include <memory>
 
@@ -21,7 +22,11 @@ public:
     ~Renderer() = default;
 
     void initialize(RendererDesc desc);
-    void render();
+
+    void begin();
+    void draw(Renderable& renderable);
+    void end();
+
     void shutdown();
 
     [[nodiscard]] IDevice& getDevice() const;
@@ -29,6 +34,8 @@ public:
 
 private:
     std::unique_ptr<IDevice> device;
+    std::shared_ptr<ICommandPool> activeCommandPool;
+    std::shared_ptr<ICommandBuffer> activeCommandBuffer;
 
     bool initialized = false;
 };

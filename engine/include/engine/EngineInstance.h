@@ -2,6 +2,9 @@
 // Created by Jonathan Richard on 2024-02-09.
 //
 
+#include "Camera.h"
+#include "Mesh.h"
+#include "Model.h"
 #include "TestRenderPass.h"
 #include "engine/graphics/Renderer.h"
 
@@ -31,4 +34,7 @@ private:
     TestRenderPass testRenderPass;
 
     InstanceDesc desc;
+
+    Camera camera;
+    Model testModel;
 };

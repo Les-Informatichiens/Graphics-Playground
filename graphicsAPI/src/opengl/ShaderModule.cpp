@@ -30,14 +30,14 @@ ShaderModule::~ShaderModule()
     }
 }
 
-std::string ShaderModule::compileAndParseGLSL(spirv_cross::Compiler& compiler)
-{
-    std::string glsl = compiler.compile();
-
-    reflection = std::make_shared<ShaderModuleReflection>(compiler);
-
-    return glsl;
-}
+//std::string ShaderModule::compileAndParseGLSL(spirv_cross::Compiler& compiler)
+//{
+//    std::string glsl = compiler.compile();
+//
+//    reflection = std::make_shared<ShaderModuleReflection>(compiler);
+//
+//    return glsl;
+//}
 
 void ShaderModule::create(const std::string& glsl)
 {

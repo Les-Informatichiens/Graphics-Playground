@@ -6,8 +6,10 @@
 
 #include "graphicsAPI/common/Common.h"
 
-#include <spirv_cross.hpp>
+//#include <spirv_cross.hpp>
 #include <unordered_map>
+#include <string>
+#include <vector>
 
 namespace opengl {
 
@@ -40,7 +42,8 @@ using OpenGLResourceMap = std::unordered_map<uint32_t, OpenGLResource>;
 class ShaderModuleReflection
 {
 public:
-    explicit ShaderModuleReflection(spirv_cross::Compiler& compiler);
+    ShaderModuleReflection() = default;
+//    explicit ShaderModuleReflection(spirv_cross::Compiler& compiler);
 
     [[nodiscard]] const OpenGLUniformMap& getPushConstants() const { return pushConstants; }
     [[nodiscard]] const OpenGLBindingMap& getUniformBufferBindingMap() const { return uniformBufferBindingMap; }
@@ -51,11 +54,11 @@ public:
     [[nodiscard]] const OpenGLResourceMap& getStorageImageResources() const { return storageImageResources; }
 
 private:
-    void parsePushConstants(spirv_cross::Compiler& compiler);
-    void parseResources(spirv_cross::Compiler& compiler);
-    void parseInputAttributes(spirv_cross::Compiler& compiler);
+//    void parsePushConstants(spirv_cross::Compiler& compiler);
+//    void parseResources(spirv_cross::Compiler& compiler);
+//    void parseInputAttributes(spirv_cross::Compiler& compiler);
 
-    static void parseResourceBindingsInternal(const std::string_view& resourceType, spirv_cross::Compiler& compiler, OpenGLBindingMap& bindingMap, OpenGLResourceMap& resourceMap, const std::vector<const OpenGLResourceMap*>& otherResourceMaps, spirv_cross::SmallVector<spirv_cross::Resource>& resources);
+//    static void parseResourceBindingsInternal(const std::string_view& resourceType, spirv_cross::Compiler& compiler, OpenGLBindingMap& bindingMap, OpenGLResourceMap& resourceMap, const std::vector<const OpenGLResourceMap*>& otherResourceMaps, spirv_cross::SmallVector<spirv_cross::Resource>& resources);
 
     OpenGLUniformMap pushConstants;
     OpenGLBindingMap uniformBufferBindingMap;

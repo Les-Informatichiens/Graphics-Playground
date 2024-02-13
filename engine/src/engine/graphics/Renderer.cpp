@@ -14,17 +14,38 @@ void Renderer::initialize(graphics::RendererDesc desc)
 
     this->device = std::make_unique<opengl::Device>(std::move(oglContext));
 
+    this->activeCommandPool = device->createCommandPool({});
+
     this->initialized = true;
 }
 
-void Renderer::render()
+void Renderer::begin()
 {
+    activeCommandBuffer = activeCommandPool->acquireCommandBuffer({});
+
+    RenderPassBeginDesc renderPassBegin = {
+            .renderPass = {
+                    .colorAttachments = {
+                            {LoadAction::Clear, StoreAction::Store, {0.0f, 0.0f, 0.0f, 1.0f}}},
+            },
+            .framebuffer = nullptr};
+    activeCommandBuffer->beginRenderPass(renderPassBegin);
+}
+
+void Renderer::draw(Renderable& renderable)
+{
+    renderable.draw(*device, *activeCommandBuffer);
+}
+
+void Renderer::end()
+{
+    activeCommandBuffer->endRenderPass();
+    activeCommandPool->submitCommandBuffer(activeCommandBuffer);
 }
 
 void Renderer::shutdown()
 {
 }
-
 IDevice& Renderer::getDevice() const
 {
     return *this->device;

@@ -7,6 +7,10 @@
 
 namespace opengl {
 
+#define NO_SPIRV 1
+
+#ifndef NO_SPIRV
+
 DataType SPIRTypeToDataType(const spirv_cross::SPIRType& type)
 {
     switch (type.basetype)
@@ -240,5 +244,6 @@ void ShaderModuleReflection::parseResourceBindingsInternal(const std::string_vie
 void ShaderModuleReflection::parseInputAttributes(spirv_cross::Compiler& compiler)
 {
 }
+#endif
 
 }// namespace opengl

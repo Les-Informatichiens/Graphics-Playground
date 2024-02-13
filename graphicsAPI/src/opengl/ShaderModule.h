@@ -10,6 +10,8 @@
 #include "ShaderModuleReflection.h"
 #include "graphicsAPI/opengl/Context.h"
 
+#include <memory>
+
 namespace opengl {
 
 class ShaderModule : public IShaderModule, public WithContext
@@ -18,7 +20,7 @@ public:
     ShaderModule(Context& context, const ShaderModuleDesc& desc);
     ~ShaderModule() override;
 
-    std::string compileAndParseGLSL(spirv_cross::Compiler& compiler);
+//    std::string compileAndParseGLSL(spirv_cross::Compiler& compiler);
     void create(const std::string& glsl);
 
     [[nodiscard]] std::shared_ptr<ShaderModuleReflection> getReflection() const { return reflection; }

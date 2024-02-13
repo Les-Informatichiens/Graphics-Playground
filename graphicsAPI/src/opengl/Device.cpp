@@ -15,7 +15,6 @@
 #include "VertexInputState.h"
 #include "graphicsAPI/opengl/Buffer.h"
 //#include "shaderc/shaderc.hpp"
-#include <spirv_glsl.hpp>
 
 #include <iostream>
 

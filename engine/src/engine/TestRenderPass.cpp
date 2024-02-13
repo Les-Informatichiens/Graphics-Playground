@@ -6,7 +6,7 @@
 #include "glm/glm.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "engine/stb_image.h"
 
 #include <iostream>
 
