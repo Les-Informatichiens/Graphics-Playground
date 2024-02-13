@@ -8,6 +8,8 @@ add_executable(
         src/main.cpp
         src/application.cpp
         src/application.h
+        src/imgui/ImGuiContextAdapter.cpp
+        src/imgui/ImGuiContextAdapter.h
 )
 
 target_include_directories(
@@ -51,23 +53,6 @@ CPMAddPackage(
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
-# =====================================================================================================
-
-# glew ================================================================================================
-if (EMSCRIPTEN)
-    target_link_options(${PROJECT_NAME} PRIVATE "-sUSE_WEBGL2=1")
-else ()
-    CPMAddPackage(
-            NAME "GLEW"
-            GITHUB_REPOSITORY "Perlmint/glew-cmake"
-            GIT_TAG "glew-cmake-2.2.0"
-            OPTIONS
-            "glew-cmake_BUILD_SHARED OFF"
-            "glew-cmake_BUILD_STATIC ON"
-            "glew-cmake_ONLY_LIBS ON"
-    )
-    target_link_libraries(${PROJECT_NAME} PRIVATE libglew_static)
-endif ()
 # =====================================================================================================
 
 # glfw ================================================================================================

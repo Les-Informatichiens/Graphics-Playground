@@ -2,8 +2,9 @@
 // Created by Jonathan Richard on 2024-01-29.
 //
 
-#include "application.h"
 #include "renderer/renderAPI/openGLRenderer.h"
+#include "application.h"
+
 int main(int argc, char* argv[])
 {
     // Renderer init
