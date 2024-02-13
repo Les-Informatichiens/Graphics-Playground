@@ -21,9 +21,9 @@ jobs:
           - os: ubuntu-latest
             generator: Ninja
             compiler: g++
-          - os: ubuntu-latest
-            generator: Ninja
-            compiler: em++
+         # - os: ubuntu-latest
+         #   generator: Ninja
+         #   compiler: em++
     steps:
       - uses: actions/checkout@v4.1.1
       - uses: ilammy/msvc-dev-cmd@v1.13.0

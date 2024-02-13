@@ -7,10 +7,9 @@
 
 namespace opengl {
 
-#define NO_SPIRV 1
+#define SPIRV_CROSS 1
 
-#ifndef NO_SPIRV
-
+#ifndef SPIRV_CROSS
 DataType SPIRTypeToDataType(const spirv_cross::SPIRType& type)
 {
     switch (type.basetype)
