@@ -9,10 +9,9 @@
 //#include "assimp/postprocess.h"
 //#include <assimp/Importer.hpp>
 #include "engine/OBJ_Loader.h"
-#include <glm/gtc/quaternion.hpp>
 
 EngineInstance::EngineInstance(InstanceDesc desc)
-    : desc(desc), renderer(), testModel("teapot")
+    : desc(desc), renderer()
 {
     activeCamera = std::make_unique<Camera>("camera");
 }
@@ -44,25 +43,25 @@ void EngineInstance::initialize()
     renderer.setCamera(activeCamera);
 
     // Load teapot model
-    objl::Loader loader;
-    loader.LoadFile("teapot.obj");
     std::shared_ptr<Mesh> m = std::make_shared<Mesh>();
-    for (auto & LoadedVertice : loader.LoadedVertices)
     {
-        Mesh::Vertex vertex{};
-        vertex.position = { LoadedVertice.Position.X, LoadedVertice.Position.Y, LoadedVertice.Position.Z };
-        vertex.normal = { LoadedVertice.Normal.X, LoadedVertice.Normal.Y, LoadedVertice.Normal.Z };
-        m->vertices.push_back(vertex);
+        objl::Loader loader;
+        loader.LoadFile("teapot.obj");
+        for (auto& LoadedVertice: loader.LoadedVertices)
+        {
+            Mesh::Vertex vertex{};
+            vertex.position = {LoadedVertice.Position.X, LoadedVertice.Position.Y, LoadedVertice.Position.Z};
+            vertex.normal = {LoadedVertice.Normal.X, LoadedVertice.Normal.Y, LoadedVertice.Normal.Z};
+            m->vertices.push_back(vertex);
+        }
+        for (unsigned int LoadedIndice: loader.LoadedIndices)
+        {
+            m->indices.push_back(LoadedIndice);
+        }
+        m->normalize();
     }
-    for (unsigned int LoadedIndice : loader.LoadedIndices)
-    {
-        m->indices.push_back(LoadedIndice);
-    }
-    m->normalize();
 
     Model model("teapot");
-//    model.setMesh(*m);
-    this->testModel = model;
 
     // Create a scene
     root = std::make_unique<SceneNode>("rootNode");
@@ -82,9 +81,13 @@ void EngineInstance::initialize()
 
 void EngineInstance::updateSimulation(float dt)
 {
-    std::cout << "Updating simulation (" << (dt * 1000.0f) << " ms)" << std::endl;
-    testModel.getTransform().rotate({ 0.06f, 0.25f, 0.1f });
+//    std::cout << "Updating simulation (" << (dt * 1000.0f) << " ms)" << std::endl;
 
+    // Currently we can update the scene graph nodes by retrieving them and updating their transforms
+    // We could set up a better system to store the nodes and update them in a more efficient way
+    // without having to traverse the entire scene graph every time we want to change a node's transform
+    // but for now this will do.
+    // Jonathan Richard 2024-02-14
     if (root)
     {
         root->getTransform().rotate(glm::angleAxis(glm::radians(1.0f), glm::vec3(0.0f, 0.0f, 1.0f)));
@@ -93,7 +96,7 @@ void EngineInstance::updateSimulation(float dt)
     auto* childNode = root->findNode("childNode");
     if (childNode)
     {
-        childNode->getTransform().rotate(glm::angleAxis(glm::radians(4.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
+        childNode->getTransform().rotate(glm::angleAxis(glm::radians(4.0f), glm::vec3(0.0f, 1.0f, -1.0f)));
     }
 
     // Update the scene graph
@@ -120,9 +123,7 @@ void EngineInstance::renderFrame()
 
     renderer.begin();
 
-//    MeshRenderer meshRenderer;
-//    meshRenderer.render(renderer, testModel.getMesh(), testModel.getTransform(), *activeCamera);
-
+    // Draw the scene
     if (root)
     {
         drawNode(root);
@@ -143,14 +144,18 @@ graphics::Renderer& EngineInstance::getRenderer()
 
 void EngineInstance::drawNode(const std::unique_ptr<SceneNode>& node)
 {
-    std::cout << "Entering DrawNode("<< node->getName() <<")" << std::endl;
+//    std::cout << "Entering DrawNode("<< node->getName() <<")" << std::endl;
     if (node->getMesh())
     {
         node->draw(renderer);
+        if (auto mesh = node->getMesh(); mesh)
+        {
+            meshRenderer.render(renderer, *mesh, node->getWorldTransform());
+        }
     }
     for (auto& child : node->getChildren())
     {
         drawNode(child);
     }
-    std::cout << "Done DrawNode("<< node->getName() <<")" << std::endl;
+//    std::cout << "Done DrawNode("<< node->getName() <<")" << std::endl;
 }

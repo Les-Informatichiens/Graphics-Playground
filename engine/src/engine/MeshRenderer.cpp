@@ -6,7 +6,7 @@
 #include "engine/Transform.h"
 #include "glm/gtc/matrix_transform.hpp"
 
-void MeshRenderer::render(graphics::Renderer& renderer, const Mesh& mesh, const Transform& transform, Camera& camera)
+void MeshRenderer::render(graphics::Renderer& renderer, const Mesh& mesh, const Transform& transform)
 {
 
     auto& device = renderer.getDevice();
@@ -44,14 +44,19 @@ void MeshRenderer::render(graphics::Renderer& renderer, const Mesh& mesh, const 
 
                 layout(binding = 1) uniform Constants {
                     vec3 lightDir;
+                    float shininess;
                 } constants;
 
                 void main() {
                     // shade the fragment based on the normal
-                    float intensity = max(dot(normalize(fragNormal), normalize(constants.lightDir)), 0.025);
-                    fragColor = vec4(intensity, intensity, intensity, 1.0);
+                    vec3 baseColor = vec3(0.6, 0.1, 0.1);
+                    vec3 shineColor = vec3(1.0);
 
-//                    fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+                    float intensity1 = pow(max(dot(normalize(fragNormal), normalize(constants.lightDir)) + 0.01, 0.025), constants.shininess);
+                    float intensity2 = min(pow(max(dot(normalize(fragNormal), normalize(constants.lightDir)), 0), 1.0), 1.0);
+                    float intensity = intensity1 + intensity2;
+                    vec3 finalColor = intensity1 * shineColor + intensity2 * baseColor;
+                    fragColor = vec4(finalColor, 1.0);
                 }
             )"
     });
@@ -102,6 +107,7 @@ void MeshRenderer::render(graphics::Renderer& renderer, const Mesh& mesh, const 
 
     struct Constants {
         glm::vec3 lightDir;
+        float shininess = 32.0f;
     };
 
     std::shared_ptr uniformBuffer = device.createBuffer({
@@ -128,7 +134,8 @@ void MeshRenderer::render(graphics::Renderer& renderer, const Mesh& mesh, const 
 
 
     Constants constants = {
-            .lightDir = glm::vec3(-0.7f, -0.5f, -0.5f)
+            .lightDir = glm::vec3(-0.7f, -0.5f, -0.5f),
+            .shininess = 320.0f
     };
 
     constantsUBO->data(&constants, sizeof(constants), 0);

@@ -32,7 +32,7 @@ void Renderer::begin()
             },
             .framebuffer = nullptr};
     activeCommandBuffer->beginRenderPass(renderPassBegin);
-    std::cout << "begin" << std::endl;
+//    std::cout << "begin" << std::endl;
 }
 
 void Renderer::draw(Renderable& renderable)
@@ -44,7 +44,7 @@ void Renderer::end()
 {
     activeCommandBuffer->endRenderPass();
     activeCommandPool->submitCommandBuffer(std::move(activeCommandBuffer));
-    std::cout << "end" << std::endl;
+//    std::cout << "end" << std::endl;
 }
 
 void Renderer::shutdown()

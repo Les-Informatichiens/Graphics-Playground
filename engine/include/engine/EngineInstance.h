@@ -4,6 +4,7 @@
 
 #include "Camera.h"
 #include "Mesh.h"
+#include "MeshRenderer.h"
 #include "Model.h"
 #include "TestRenderPass.h"
 #include "engine/graphics/Renderer.h"
@@ -35,9 +36,11 @@ private:
     graphics::Renderer renderer;
     TestRenderPass testRenderPass;
 
-    InstanceDesc desc;
+    // Utility class for rendering plain meshes,
+    // it could help to cache and reuse renderable data later
+    MeshRenderer meshRenderer{};
 
-    Model testModel;
+    InstanceDesc desc;
 
     std::shared_ptr<Camera> activeCamera;
     std::unique_ptr<SceneNode> root;

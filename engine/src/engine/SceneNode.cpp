@@ -30,19 +30,14 @@ void SceneNode::update(float dt)
     }
     for (auto& child: children)
     {
-        std::cout << child->name << std::endl;
+//        std::cout << child->name << std::endl;
         child->update(dt);
     }
-    std::cout << "DONE UPD" << std::endl;
+//    std::cout << "DONE UPD" << std::endl;
 }
 void SceneNode::draw(graphics::Renderer& renderer) const
 {
-    std::cout << "RENDERING " << this->name << std::endl;
-
-    if (mesh)
-    {
-        MeshRenderer meshRenderer;
-        meshRenderer.render(renderer, *mesh, worldTransform, renderer.getCamera());
-    }
-    std::cout << "DONE RENDERING " << this->name << std::endl;
+    // Maybe we can have custom rendering operations done here
+    // as of now we only render plain meshes.
+    // I prefer to keep the rendering logic in the MeshRenderer
 }

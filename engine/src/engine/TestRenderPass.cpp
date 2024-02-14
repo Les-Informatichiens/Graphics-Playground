@@ -229,7 +229,7 @@ void TestRenderPass::render(IDevice& device) {
     commandPool->submitCommandBuffer(std::move(commandBuffer));
 
 
-    std::cout << "Engine rendered" << std::endl;
+//    std::cout << "Engine rendered" << std::endl;
 }
 
 void TestRenderPass::createOffscreenFramebuffer(IDevice& device, uint32_t width, uint32_t height)

@@ -45,6 +45,8 @@ public:
     Transform& getTransform() { return transform; }
     [[nodiscard]] const Transform& getTransform() const { return transform; }
 
+    [[nodiscard]] const Transform& getWorldTransform() const { return worldTransform; }
+
     virtual void update(float dt);
     virtual void draw(graphics::Renderer& renderer) const;
 
