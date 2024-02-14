@@ -77,3 +77,33 @@ struct Triangle : public Shape{
         pList->AddTriangle(a, b, c, col, thickness);
     }
 };
+struct L : public Shape{
+    ImVec2 a, b, c;
+    ImU32 col;
+    float thickness;
+
+    L(ImVec2 a, ImVec2 b, ImVec2 c, ImU32 col, float thickness) : a(a), b(b), c(c), col(col), thickness(thickness) {};
+
+    void draw(ImDrawList *pList) const override {
+        ImVec2 c2 = ImVec2(a.x - glm::abs(c.x - a.x), c.y);
+        pList->AddTriangle(a, b, c, col, thickness);
+        pList->AddTriangle(a, c, c2, col, thickness);
+    }
+};
+struct Sploosh : public Shape{
+    ImVec2 center;
+    float radius;
+    ImU32 col;
+    int numSegments;
+
+    Sploosh(ImVec2 center, float radius, ImU32 col, int numSegments) : center(center), radius(radius), col(col), numSegments(numSegments) {};
+
+    void draw(ImDrawList *pList) const override {
+        pList->AddCircleFilled(center, radius, col, numSegments);
+        pList->AddCircleFilled(center, radius, col, numSegments);
+        pList->AddCircleFilled(center, radius, col, numSegments);
+
+    }
+};
+
+

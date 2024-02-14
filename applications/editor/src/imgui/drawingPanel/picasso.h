@@ -19,6 +19,8 @@ public:
         Rectangle,
         Triangle,
         Line,
+        Sploosh,
+        L,
         None
     };
 
@@ -52,6 +54,14 @@ public:
         else if (ImGui::Button("Draw triangle"))
         {
             this->setShape(picasso::Shapes::Triangle);
+        }
+        else if (ImGui::Button("Draw sploosh"))
+        {
+            this->setShape(picasso::Shapes::Sploosh);
+        }
+        else if (ImGui::Button("Draw L"))
+        {
+            this->setShape(picasso::Shapes::L);
         }
         else if (ImGui::Button("Stop drawing"))
         {
@@ -110,6 +120,18 @@ public:
             case Shapes::Line:
                 shapes.emplace_back(new Line(mousePos, finalPos, drawColor, thickness));
                 break;
+            case Shapes::Sploosh: {
+                ImVec2 center = ImVec2((mousePos.x + finalPos.x) / 2, (mousePos.y + finalPos.y) / 2);
+                float radius = glm::sqrt(glm::pow(finalPos.x - center.x, 2) + glm::pow(finalPos.y - center.y, 2));
+                shapes.emplace_back(new Sploosh(center, radius, drawColor, 50));
+                break;
+            }
+            case Shapes::L: {
+                ImVec2 c = ImVec2((mousePos.x + finalPos.x) / 2, finalPos.y);
+                shapes.emplace_back(new L(mousePos, finalPos, c,
+                                          drawColor, thickness));
+                break;
+            }
             case Shapes::None:
                 break;
         }
