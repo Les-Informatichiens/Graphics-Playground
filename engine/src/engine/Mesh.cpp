@@ -2,7 +2,7 @@
 // Created by Jonathan Richard on 2024-02-12.
 //
 
-#include "Mesh.h"
+#include "engine/Mesh.h"
 
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices)
     : vertices(std::move(vertices)), indices(std::move(indices))

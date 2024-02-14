@@ -27,6 +27,8 @@ public:
     void renderFrame();
     void shutdown();
 
+    void drawNode(const std::unique_ptr<SceneNode>& node);
+
     graphics::Renderer& getRenderer();
 
 private:
@@ -35,6 +37,8 @@ private:
 
     InstanceDesc desc;
 
-    Camera camera;
     Model testModel;
+
+    std::shared_ptr<Camera> activeCamera;
+    std::unique_ptr<SceneNode> root;
 };

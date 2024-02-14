@@ -15,6 +15,6 @@ class ICommandPool
 {
 public:
     virtual ~ICommandPool() = default;
-    virtual std::shared_ptr<ICommandBuffer> acquireCommandBuffer(const CommandBufferDesc& desc) = 0;
-    virtual void submitCommandBuffer(std::shared_ptr<ICommandBuffer> commandBuffer) = 0;
+    virtual std::unique_ptr<ICommandBuffer> acquireCommandBuffer(const CommandBufferDesc& desc) = 0;
+    virtual void submitCommandBuffer(std::unique_ptr<ICommandBuffer> commandBuffer) = 0;
 };

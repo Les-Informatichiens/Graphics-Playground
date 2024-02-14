@@ -7,6 +7,8 @@
 #include "Mesh.h"
 #include "Transform.h"
 #include <string>
+#include <list>
+#include <memory>
 
 class Model
 {
@@ -25,4 +27,7 @@ protected:
     std::string name;
     Transform transform;
     Mesh mesh;
+
+    Model* parent = nullptr;
+//    std::list<std::unique_ptr<Model>> children;
 };

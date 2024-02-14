@@ -2,7 +2,7 @@
 // Created by Jonathan Richard on 2024-02-13.
 //
 
-#include "Camera.h"
+#include "engine/Camera.h"
 #include "glm/ext/matrix_clip_space.hpp"
 
 Camera::Camera(const std::string& name)

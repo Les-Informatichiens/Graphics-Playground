@@ -3,6 +3,7 @@
 //
 
 #include "ImGuiRenderer.h"
+#include <iostream>
 
 namespace imgui {
 
@@ -172,7 +173,7 @@ void ImGuiRenderer::setupRenderState(ImDrawData* drawData, std::shared_ptr<IGrap
     }
 }
 
-void ImGuiRenderer::renderDrawData(ImDrawData* drawData, IDevice& device, std::shared_ptr<ICommandBuffer>& commandBuffer, std::shared_ptr<IGraphicsPipeline> pipeline_)
+void ImGuiRenderer::renderDrawData(ImDrawData* drawData, IDevice& device, ICommandBuffer& commandBuffer, std::shared_ptr<IGraphicsPipeline> pipeline_)
 {
     int fbWidth = (int)(drawData->DisplaySize.x * drawData->FramebufferScale.x);
     int fbHeight = (int)(drawData->DisplaySize.y * drawData->FramebufferScale.y);
@@ -180,7 +181,7 @@ void ImGuiRenderer::renderDrawData(ImDrawData* drawData, IDevice& device, std::s
         return;
 
     // Setup render state
-    setupRenderState(drawData, pipeline, *commandBuffer, fbWidth, fbHeight);
+    setupRenderState(drawData, pipeline, commandBuffer, fbWidth, fbHeight);
 
     Viewport viewport = {
             /*.x = */ 0.0,
@@ -204,7 +205,7 @@ void ImGuiRenderer::renderDrawData(ImDrawData* drawData, IDevice& device, std::s
         if (vertexBuffer == nullptr || vertexBuffer->getSize() < vertexBufferSize)
         {
             vertexBuffer = device.createBuffer(BufferDesc{ .type = BufferDesc::BufferTypeBits::Vertex, .data = nullptr, .size = static_cast<uint32_t>(vertexBufferSize), .storage = ResourceStorage::Shared});
-            commandBuffer->bindBuffer(0, vertexBuffer, 0);
+            commandBuffer.bindBuffer(0, vertexBuffer, 0);
         }
         if (indexBuffer == nullptr || indexBuffer->getSize() < indexBufferSize)
         {
@@ -241,18 +242,18 @@ void ImGuiRenderer::renderDrawData(ImDrawData* drawData, IDevice& device, std::s
                                                      : uint32_t(clipMin.y),
                                             uint32_t(clipMax.x - clipMin.x),
                                             uint32_t(clipMax.y - clipMin.y)};
-                commandBuffer->bindScissor(rect);
+                commandBuffer.bindScissor(rect);
 
                 // Bind texture
                 if (pcmd->TextureId != nullptr)
                 {
                     auto* texture = reinterpret_cast<ITexture*>(pcmd->TextureId);
                     auto res = textureMap.insert({pcmd->TextureId, texture->shared_from_this()});
-                    commandBuffer->bindTexture(1, BindTarget::BindTarget_Fragment, res.first->second);
+                    commandBuffer.bindTexture(1, BindTarget::BindTarget_Fragment, res.first->second);
                 }
 
                 // Draw
-                commandBuffer->drawIndexed(PrimitiveType::Triangle, pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? IndexFormat::UInt16 : IndexFormat::UInt32, *indexBuffer, pcmd->IdxOffset * sizeof(ImDrawIdx));
+                commandBuffer.drawIndexed(PrimitiveType::Triangle, pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? IndexFormat::UInt16 : IndexFormat::UInt32, *indexBuffer, pcmd->IdxOffset * sizeof(ImDrawIdx));
             }
         }
     }

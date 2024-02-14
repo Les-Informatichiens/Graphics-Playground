@@ -13,19 +13,21 @@ add_library(
         src/engine/graphics/Renderer.cpp
         include/engine/EngineInstance.h
         src/engine/EngineInstance.cpp
-        include/engine/MeshRenderer.cpp
+        src/engine/MeshRenderer.cpp
         include/engine/MeshRenderer.h
-        include/engine/graphics/Renderable.cpp
+        src/engine/graphics/Renderable.cpp
         include/engine/graphics/Renderable.h
-        include/engine/Mesh.cpp
+        src/engine/Mesh.cpp
         include/engine/Mesh.h
-        include/engine/Transform.cpp
+        src/engine/Transform.cpp
         include/engine/Transform.h
-        include/engine/Model.cpp
+        src/engine/Model.cpp
         include/engine/Model.h
-        include/engine/Camera.cpp
+        src/engine/Camera.cpp
         include/engine/Camera.h
         include/engine/stb_image.h
+        src/engine/SceneNode.cpp
+        include/engine/SceneNode.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)

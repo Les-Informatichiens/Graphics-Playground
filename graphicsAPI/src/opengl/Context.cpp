@@ -49,7 +49,7 @@ static void _glPrintErrors(const char* func, const char* file, const int line)
     }
 }
 
-//#   define glLog(x)  x; _glPrintErrors(#x, __FILE__, __LINE__); std::cout << #x << std::endl
+//#   define glLog(x)  x; _glPrintErrors(#x, __FILE__, __LINE__)//; std::cout << #x << std::endl
 //#else
 #   define glLog(x) x
 #endif

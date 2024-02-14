@@ -2,7 +2,7 @@
 // Created by Jonathan Richard on 2024-02-12.
 //
 
-#include "Renderable.h"
+#include "engine/graphics/Renderable.h"
 
 namespace graphics {
 
@@ -34,6 +34,7 @@ void Renderable::draw(IDevice& device, ICommandBuffer& cmdBuffer) const
     }
     cmdBuffer.drawIndexed(PrimitiveType::Triangle, elementCount, IndexFormat::UInt32, *indexBuffer, 0);
 }
+
 void Renderable::setElementCount(uint32_t count)
 {
     elementCount = count;

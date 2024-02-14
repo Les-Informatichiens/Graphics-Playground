@@ -9,6 +9,7 @@
 #include <type_traits>
 #include <limits>
 #include <stdexcept>
+#include <iostream>
 
 enum class DataType
 {

@@ -5,6 +5,8 @@
 #pragma once
 
 #include "Renderable.h"
+#include "engine/Camera.h"
+#include "engine/SceneNode.h"
 #include <graphicsAPI/common/Device.h>
 #include <memory>
 
@@ -29,13 +31,18 @@ public:
 
     void shutdown();
 
+    void setCamera(std::shared_ptr<Camera> camera);
+    [[nodiscard]] Camera& getCamera() const;
+
     [[nodiscard]] IDevice& getDevice() const;
     [[nodiscard]] bool isInitialized() const { return initialized; }
 
 private:
     std::unique_ptr<IDevice> device;
     std::shared_ptr<ICommandPool> activeCommandPool;
-    std::shared_ptr<ICommandBuffer> activeCommandBuffer;
+    std::unique_ptr<ICommandBuffer> activeCommandBuffer;
+
+    std::shared_ptr<Camera> activeCamera;
 
     bool initialized = false;
 };

@@ -157,7 +157,7 @@ void TestRenderPass::render(IDevice& device) {
 
 
     Ref<ICommandPool> commandPool = device.createCommandPool({});
-    Ref<ICommandBuffer> commandBuffer = commandPool->acquireCommandBuffer({});
+    std::unique_ptr<ICommandBuffer> commandBuffer = commandPool->acquireCommandBuffer({});
 
     // begin offscreen render pass
     commandBuffer->beginRenderPass({
@@ -226,7 +226,7 @@ void TestRenderPass::render(IDevice& device) {
     commandBuffer->drawIndexed(PrimitiveType::Triangle, indices.size(), IndexFormat::UInt32, *indexBuffer, 0);
     commandBuffer->endRenderPass();
 
-    commandPool->submitCommandBuffer(commandBuffer);
+    commandPool->submitCommandBuffer(std::move(commandBuffer));
 
 
     std::cout << "Engine rendered" << std::endl;

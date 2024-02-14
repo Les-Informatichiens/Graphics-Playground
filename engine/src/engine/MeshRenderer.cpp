@@ -2,8 +2,8 @@
 // Created by Jonathan Richard on 2024-02-12.
 //
 
-#include "MeshRenderer.h"
-#include "Transform.h"
+#include "engine/MeshRenderer.h"
+#include "engine/Transform.h"
 #include "glm/gtc/matrix_transform.hpp"
 
 void MeshRenderer::render(graphics::Renderer& renderer, const Mesh& mesh, const Transform& transform, Camera& camera)
@@ -116,10 +116,12 @@ void MeshRenderer::render(graphics::Renderer& renderer, const Mesh& mesh, const 
             .storage = ResourceStorage::Shared
     });
 
+    auto& activeCamera = renderer.getCamera();
+
     UniformBufferObject ubo = {
             .model = transform.getModel(),
-            .view = camera.getView(),
-            .proj = camera.getProjection()
+            .view = activeCamera.getView(),
+            .proj = activeCamera.getProjection()
     };
 
     uniformBuffer->data(&ubo, sizeof(ubo), 0);

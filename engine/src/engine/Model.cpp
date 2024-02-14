@@ -2,7 +2,7 @@
 // Created by Jonathan Richard on 2024-02-13.
 //
 
-#include "Model.h"
+#include "engine/Model.h"
 
 #include <utility>
 

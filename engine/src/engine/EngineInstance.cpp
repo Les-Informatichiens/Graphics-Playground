@@ -9,10 +9,12 @@
 //#include "assimp/postprocess.h"
 //#include <assimp/Importer.hpp>
 #include "engine/OBJ_Loader.h"
+#include <glm/gtc/quaternion.hpp>
 
 EngineInstance::EngineInstance(InstanceDesc desc)
-    : desc(desc), renderer(), camera("camera"), testModel("teapot")
+    : desc(desc), renderer(), testModel("teapot")
 {
+    activeCamera = std::make_unique<Camera>("camera");
 }
 
 EngineInstance::~EngineInstance()
@@ -24,7 +26,8 @@ void EngineInstance::updateDisplay(int width, int height)
     desc.width = width;
     desc.height = height;
 
-    camera.setProjectionConfig(45.0f, (float)desc.width / (float)desc.height, 0.1f, 100.0f);
+    if (activeCamera)
+        activeCamera->setProjectionConfig(45.0f, (float)desc.width / (float)desc.height, 0.1f, 100.0f);
 }
 
 void EngineInstance::initialize()
@@ -36,35 +39,68 @@ void EngineInstance::initialize()
     // ----------- Initializing scene objects ------------
 
     // Setup camera
-    camera.setProjectionConfig(45.0f, (float)desc.width / (float)desc.height, 0.1f, 100.0f);
-    camera.getTransform().setPosition({ 0.0f, 0.0f, 10.0f });
+    activeCamera->setProjectionConfig(45.0f, (float)desc.width / (float)desc.height, 0.1f, 100.0f);
+    activeCamera->getTransform().setPosition({ 0.0f, 0.0f, 20.0f });
+    renderer.setCamera(activeCamera);
 
     // Load teapot model
     objl::Loader loader;
     loader.LoadFile("teapot.obj");
-    Mesh m;
+    std::shared_ptr<Mesh> m = std::make_shared<Mesh>();
     for (auto & LoadedVertice : loader.LoadedVertices)
     {
         Mesh::Vertex vertex{};
         vertex.position = { LoadedVertice.Position.X, LoadedVertice.Position.Y, LoadedVertice.Position.Z };
         vertex.normal = { LoadedVertice.Normal.X, LoadedVertice.Normal.Y, LoadedVertice.Normal.Z };
-        m.vertices.push_back(vertex);
+        m->vertices.push_back(vertex);
     }
     for (unsigned int LoadedIndice : loader.LoadedIndices)
     {
-        m.indices.push_back(LoadedIndice);
+        m->indices.push_back(LoadedIndice);
     }
-    m.normalize();
+    m->normalize();
 
     Model model("teapot");
-    model.setMesh(m);
+//    model.setMesh(*m);
     this->testModel = model;
+
+    // Create a scene
+    root = std::make_unique<SceneNode>("rootNode");
+    root->setMesh(m);
+    root->getTransform().setPosition({ 0.0f, 0.0f, 0.0f });
+    root->getTransform().setScale({ 1.f, 1.f, 1.f });
+    root->getTransform().setRotation({ 0.0f, 0.0f, 0.0f });
+
+    // Create a child node
+    auto child = std::make_unique<SceneNode>("childNode");
+    child->setMesh(m);
+    child->getTransform().setPosition({ -7.0f, 0.0f, 0.0f });
+    child->getTransform().setScale({ 1.f, 1.f, 1.f });
+    child->getTransform().setRotation({ 0.0f, 0.0f, 0.0f });
+    root->addChild(std::move(child));
 }
 
 void EngineInstance::updateSimulation(float dt)
 {
     std::cout << "Updating simulation (" << (dt * 1000.0f) << " ms)" << std::endl;
     testModel.getTransform().rotate({ 0.06f, 0.25f, 0.1f });
+
+    if (root)
+    {
+        root->getTransform().rotate(glm::angleAxis(glm::radians(1.0f), glm::vec3(0.0f, 0.0f, 1.0f)));
+    }
+
+    auto* childNode = root->findNode("childNode");
+    if (childNode)
+    {
+        childNode->getTransform().rotate(glm::angleAxis(glm::radians(4.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
+    }
+
+    // Update the scene graph
+    if (root)
+    {
+        root->update(dt);
+    }
 }
 
 void EngineInstance::renderFrame()
@@ -84,9 +120,13 @@ void EngineInstance::renderFrame()
 
     renderer.begin();
 
-    MeshRenderer meshRenderer;
+//    MeshRenderer meshRenderer;
+//    meshRenderer.render(renderer, testModel.getMesh(), testModel.getTransform(), *activeCamera);
 
-    meshRenderer.render(renderer, testModel.getMesh(), testModel.getTransform(), camera);
+    if (root)
+    {
+        drawNode(root);
+    }
 
     renderer.end();
 }
@@ -99,4 +139,18 @@ void EngineInstance::shutdown()
 graphics::Renderer& EngineInstance::getRenderer()
 {
     return renderer;
+}
+
+void EngineInstance::drawNode(const std::unique_ptr<SceneNode>& node)
+{
+    std::cout << "Entering DrawNode("<< node->getName() <<")" << std::endl;
+    if (node->getMesh())
+    {
+        node->draw(renderer);
+    }
+    for (auto& child : node->getChildren())
+    {
+        drawNode(child);
+    }
+    std::cout << "Done DrawNode("<< node->getName() <<")" << std::endl;
 }
