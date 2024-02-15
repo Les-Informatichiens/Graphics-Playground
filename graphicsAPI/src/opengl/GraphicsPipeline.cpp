@@ -24,6 +24,11 @@ void GraphicsPipeline::initialize()
         throw std::runtime_error("GraphicsPipelineDesc::shaderStages is required");
     }
 
+    if (shaderStages->getProgram() == 0)
+    {
+        throw std::runtime_error("GraphicsPipelineDesc::shaderStages::program is required");
+    }
+
     reflection = std::make_shared<GraphicsPipelineReflection>(getContext(), *shaderStages);
 
     // Setup the vertex attributes
@@ -191,6 +196,7 @@ void GraphicsPipeline::bindVertexAttributes(size_t bufferIndex, size_t offset)
                     attrib.normalized,
                     attrib.stride,
                     reinterpret_cast<const char*>(attrib.offset) + offset);
+//            std::cout << "Enabling vertex attrib array: " << location << std::endl;
         }
     }
 }
@@ -199,6 +205,7 @@ void GraphicsPipeline::unbindVertexAttributes()
 {
     for (const auto& location : activeBindingAttribLocations)
     {
+//        std::cout << "Disabling vertex attrib array: " << location << std::endl;
         getContext().disableVertexAttribArray(location);
     }
     activeBindingAttribLocations.clear();

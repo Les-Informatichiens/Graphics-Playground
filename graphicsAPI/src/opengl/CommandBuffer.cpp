@@ -58,7 +58,10 @@ void CommandBuffer::beginRenderPass(const RenderPassBeginDesc& desc)
     scissorEnabled = context->isEnabled(GL_SCISSOR_TEST);
     context->disable(GL_SCISSOR_TEST);
 
-    activeVAO->bind();
+    if (activeVAO)
+    {
+        activeVAO->bind();
+    }
 
     if (desc.framebuffer)
     {
@@ -111,7 +114,8 @@ void CommandBuffer::endRenderPass()
         context->enable(GL_SCISSOR_TEST);
     }
 
-    if (activeGraphicsPipeline) {
+    if (activeGraphicsPipeline)
+    {
         activeGraphicsPipeline->unbindVertexAttributes();
     }
     activeGraphicsPipeline = nullptr;

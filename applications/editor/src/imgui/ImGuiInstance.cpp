@@ -41,7 +41,7 @@ void ImGuiInstance::endFrame()
     ImGui::EndFrame();
 }
 
-void ImGuiInstance::renderFrame(IDevice& device, std::shared_ptr<ICommandBuffer>& commandBuffer, std::shared_ptr<IGraphicsPipeline> pipeline, uint32_t fbWidth, uint32_t fbHeight)
+void ImGuiInstance::renderFrame(IDevice& device, ICommandBuffer& commandBuffer, std::shared_ptr<IGraphicsPipeline> pipeline, uint32_t fbWidth, uint32_t fbHeight)
 {
     ImGui::SetCurrentContext(context);
     ImGui::Render();

@@ -46,7 +46,7 @@ void ArrayBuffer::initialize(const BufferDesc& desc)
 
     if (!isDynamic_ && desc.data == nullptr)
     {
-        // cannot create a static buffer without data
+        throw std::runtime_error("Static buffers must have data at allocation time, use ResourceStorage::Shared instead");
         return;
     }
 
@@ -75,6 +75,7 @@ void ArrayBuffer::initialize(const BufferDesc& desc)
     }
     else
     {
+        throw std::runtime_error("Unknown buffer type");
         // err, unknown buffer type
         return;
     }
@@ -92,7 +93,7 @@ void ArrayBuffer::data(const void* data, uint32_t size, uint32_t offset) const
     if (!isDynamic_)
     {
         // err, static buffers should not be written to
-        return;
+        throw std::runtime_error("Static buffers should not be written to, use ResourceStorage::Shared instead");
     }
 
     savePreviousBuffer();
@@ -165,8 +166,26 @@ size_t ArrayBuffer::getSize() const
 
 void ArrayBuffer::savePreviousBuffer() const
 {
+    GLenum queryTarget;
+    switch (target_)
+    {
+        case GL_ARRAY_BUFFER:
+            queryTarget = GL_ARRAY_BUFFER_BINDING;
+            break;
+        case GL_ELEMENT_ARRAY_BUFFER:
+            queryTarget = GL_ELEMENT_ARRAY_BUFFER_BINDING;
+            break;
+        case GL_UNIFORM_BUFFER:
+            queryTarget = GL_UNIFORM_BUFFER_BINDING;
+            break;
+        case GL_SHADER_STORAGE_BUFFER:
+            queryTarget = GL_SHADER_STORAGE_BUFFER_BINDING;
+            break;
+        default:
+            throw std::runtime_error("Unknown buffer type");
+    }
     // this method is a wrap around getContext().bindBuffer(getTarget(), id_); to ensure we dont alter the current state
-    getContext().getIntegerv(target_, &lastBoundBuffer_);
+    getContext().getIntegerv(queryTarget, &lastBoundBuffer_);
 }
 
 void ArrayBuffer::restorePreviousBuffer() const

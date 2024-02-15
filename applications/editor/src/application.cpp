@@ -4,6 +4,7 @@
 
 #include "application.h"
 #include "backends/imgui_impl_glfw.h"
+#include <iostream>
 
 
 
@@ -187,9 +188,12 @@ void application::renderImGuiFrame()
 
     // Execute the imgui rendering commands
     commandBuffer->beginRenderPass(renderPassDesc);
-    imguiInstance.renderFrame(gameEngine.getRenderer().getDevice(), commandBuffer, nullptr, width, height);
+//    std::cout << "Beginning ImGui renderPass" << std::endl;
+
+    imguiInstance.renderFrame(gameEngine.getRenderer().getDevice(), *commandBuffer, nullptr, width, height);
+//    std::cout << "Ending ImGui renderPass" << std::endl;
     commandBuffer->endRenderPass();
-    commandPool->submitCommandBuffer(commandBuffer);
+    commandPool->submitCommandBuffer(std::move(commandBuffer));
 }
 
 void application::shutdownImGui()
