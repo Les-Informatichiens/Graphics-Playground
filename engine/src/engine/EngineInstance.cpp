@@ -46,7 +46,12 @@ void EngineInstance::initialize()
     std::shared_ptr<Mesh> m = std::make_shared<Mesh>();
     {
         objl::Loader loader;
-        loader.LoadFile("teapot.obj");
+        bool success = loader.LoadFile(desc.assetPath + "/test/teapot.obj");
+        if (!success)
+        {
+            std::cerr << "Failed to load model" << std::endl;
+            return;
+        }
         for (auto& LoadedVertice: loader.LoadedVertices)
         {
             Mesh::Vertex vertex{};

@@ -11,6 +11,7 @@
 
 struct InstanceDesc
 {
+    std::string assetPath;
     int width;
     int height;
 };

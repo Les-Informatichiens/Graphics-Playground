@@ -196,7 +196,7 @@ void GraphicsPipeline::bindVertexAttributes(size_t bufferIndex, size_t offset)
                     attrib.normalized,
                     attrib.stride,
                     reinterpret_cast<const char*>(attrib.offset) + offset);
-            std::cout << "Enabling vertex attrib array: " << location << std::endl;
+//            std::cout << "Enabling vertex attrib array: " << location << std::endl;
         }
     }
 }
@@ -205,7 +205,7 @@ void GraphicsPipeline::unbindVertexAttributes()
 {
     for (const auto& location : activeBindingAttribLocations)
     {
-        std::cout << "Disabling vertex attrib array: " << location << std::endl;
+//        std::cout << "Disabling vertex attrib array: " << location << std::endl;
         getContext().disableVertexAttribArray(location);
     }
     activeBindingAttribLocations.clear();

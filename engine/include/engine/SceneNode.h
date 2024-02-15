@@ -6,8 +6,10 @@
 
 #include "engine/Mesh.h"
 #include "engine/Transform.h"
+
 #include <memory>
 #include <vector>
+#include <string>
 
 namespace graphics {
 class Renderer;
