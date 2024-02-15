@@ -73,9 +73,9 @@ private:
     TextureStates fragTexturesCache;
 
     // std::shared_ptr<Framebuffer> activeFramebuffer;
-    std::shared_ptr<GraphicsPipeline> activeGraphicsPipeline;
-    std::shared_ptr<VertexArrayObject> activeVAO;
-    std::shared_ptr<DepthStencilState> activeDepthStencilState;
+    std::shared_ptr<GraphicsPipeline> activeGraphicsPipeline = nullptr;
+    std::shared_ptr<VertexArrayObject> activeVAO = nullptr;
+    std::shared_ptr<DepthStencilState> activeDepthStencilState = nullptr;
 
     UniformBinder uniformBinder;
 

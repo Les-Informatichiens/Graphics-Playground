@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.26)
 project(editor VERSION 0.1)
 
+include(cmake/Utils.cmake)
+init_output_directories()
+
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -117,3 +121,19 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_definitions(${PROJECT_NAME} PRIVATE __RELEASE__ PRIVATE __NDEBUG__)
 endif ()
 # =====================================================================================================
+
+
+# Copy resources to build directory ===================================================================
+set(
+        TestAssets
+        "assets/test/sphere.obj"
+        "assets/test/teapot.obj"
+        "assets/test/smooth-sphere.obj"
+)
+
+message("OUTPUT DIR IS: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+
+copy_assets(TestAssets "assets/test" "assets/test" CopiedTestAssets)
+
+set_source_files_properties(${CopiedTestAssets} PROPERTIES GENERATED TRUE)
+target_sources(${PROJECT_NAME} PRIVATE ${CopiedTestAssets})

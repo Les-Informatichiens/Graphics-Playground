@@ -5,7 +5,10 @@
 #pragma once
 
 #include "GL/glew.h"
-#include "graphicsAPI/common/Buffer.h"
+#include "graphicsAPI/common/CommandBuffer.h"
+
+#include <vector>
+#include <memory>
 
 namespace opengl {
 
@@ -15,6 +18,10 @@ public:
     Context() = default;
     ~Context() = default;
     void init();
+
+    auto& getCommandBufferPool() {
+        return commandBuffers;
+    }
 
 public: // OpenGL functions
     void clipControl(GLenum origin, GLenum depth);
@@ -130,6 +137,8 @@ public: // OpenGL functions
 
 private:
     bool isInit = false;
+
+    std::vector<std::unique_ptr<ICommandBuffer>> commandBuffers;
 };
 
 class WithContext {

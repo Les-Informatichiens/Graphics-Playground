@@ -22,7 +22,7 @@ public:
 
     void beginFrame();
     void endFrame();
-    void renderFrame(IDevice& device, std::shared_ptr<ICommandBuffer>& commandBuffer, std::shared_ptr<IGraphicsPipeline> pipeline, uint32_t fbWidth, uint32_t fbHeight);
+    void renderFrame(IDevice& device, ICommandBuffer& commandBuffer, std::shared_ptr<IGraphicsPipeline> pipeline, uint32_t fbWidth, uint32_t fbHeight);
 
     void shutdown();
 private:

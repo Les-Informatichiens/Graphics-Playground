@@ -28,7 +28,11 @@ int main(int argc, char* argv[])
 //    opengl::Device device(std::move(oglContext));
 
     // Engine init
-    InstanceDesc desc = {width, height};
+    InstanceDesc desc = {
+            .assetPath = "assets",
+            .width = width,
+            .height = height
+    };
     EngineInstance engine(desc);
 
     // Application init
