@@ -2,10 +2,9 @@
 // Created by Jonathan Richard on 2024-02-13.
 //
 
-#include "engine/SceneNode.h"
-#include "engine/MeshRenderer.h"
 #include "engine/graphics/Renderer.h"
 #include <iostream>
+#include "engine/SceneNode.h"
 
 SceneNode::SceneNode(std::string name)
     : name(std::move(name)), transform(), worldTransform(), parent(nullptr), children(), mesh(nullptr)

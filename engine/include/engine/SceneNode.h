@@ -13,7 +13,6 @@ namespace graphics {
 class Renderer;
 }
 
-class SceneNode;
 class SceneNode
 {
 public:
