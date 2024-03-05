@@ -32,6 +32,7 @@ public:
     void shutdown();
 
     graphics::Renderer& getRenderer();
+    Stage& getStage();
 
 private:
     graphics::Renderer renderer;

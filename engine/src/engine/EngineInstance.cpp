@@ -143,3 +143,8 @@ graphics::Renderer& EngineInstance::getRenderer()
 {
     return renderer;
 }
+
+Stage& EngineInstance::getStage()
+{
+    return stage;
+}
