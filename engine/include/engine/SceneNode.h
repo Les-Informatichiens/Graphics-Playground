@@ -4,12 +4,14 @@
 
 #pragma once
 
+#include "EntityView.h"
 #include "engine/Mesh.h"
 #include "engine/Transform.h"
+#include "entt/entt.hpp"
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace graphics {
 class Renderer;
@@ -17,32 +19,20 @@ class Renderer;
 
 class SceneNode
 {
+    friend class Scene;
 public:
-    explicit SceneNode(std::string name);
+    explicit SceneNode(const EntityView& entityView);
 
-    void addChild(std::unique_ptr<SceneNode> child);
+    void addChild(SceneNode* child);
+    [[nodiscard]] SceneNode* getParent() const { return parent; }
+    [[nodiscard]] bool hasParent() const { return parent != nullptr; }
 
-    [[nodiscard]] std::string getName() const { return name; }
+    [[nodiscard]] std::string getName() const;
 
     [[nodiscard]] std::shared_ptr<Mesh> getMesh() const { return mesh; }
     void setMesh(std::shared_ptr<Mesh> mesh_) { this->mesh = mesh_; }
 
-    SceneNode* findNode(const std::string& name)
-    {
-        if (this->name == name)
-        {
-            return this;
-        }
-        for (auto& child : children)
-        {
-            auto node = child->findNode(name);
-            if (node)
-            {
-                return node;
-            }
-        }
-        return nullptr;
-    }
+    SceneNode* findNode(const std::string& name);
 
     void setTransform(const Transform& transform_) { transform = transform_; }
     Transform& getTransform() { return transform; }
@@ -50,20 +40,32 @@ public:
 
     [[nodiscard]] const Transform& getWorldTransform() const { return worldTransform; }
 
+    [[nodiscard]] EntityView getEntityView() const { return ownEntityView; }
+
     virtual void update(float dt);
     virtual void draw(graphics::Renderer& renderer) const;
 
-    std::vector<std::unique_ptr<SceneNode>>::const_iterator begin() const { return children.begin(); }
-    std::vector<std::unique_ptr<SceneNode>>::const_iterator end() const { return children.end(); }
-    std::vector<std::unique_ptr<SceneNode>>& getChildren() { return children; }
+    [[nodiscard]] std::vector<SceneNode*>::const_iterator begin() const { return children.begin(); }
+    [[nodiscard]] std::vector<SceneNode*>::const_iterator end() const { return children.end(); }
+    std::vector<SceneNode*>& getChildren() { return children; }
 
 private:
-    std::string name;
 
     std::shared_ptr<Mesh> mesh;
     Transform transform;
     Transform worldTransform;
+    entt::handle entity;
+    EntityView ownEntityView;
 
-    SceneNode* parent;
-    std::vector<std::unique_ptr<SceneNode>> children;
+    SceneNode* parent = nullptr;
+    std::vector<SceneNode*> children;
+};
+
+// Ensure components are not relocated in memory. This allows us to use raw
+// pointers for them.
+template <>
+struct entt::component_traits<SceneNode> {
+    using type = SceneNode;
+    static constexpr bool in_place_delete = true;
+    static constexpr std::size_t page_size = entt::internal::page_size<SceneNode>::value;
 };
