@@ -35,13 +35,6 @@ void SceneNode::update(float dt)
 //    std::cout << "DONE UPD" << std::endl;
 }
 
-void SceneNode::draw(graphics::Renderer& renderer) const
-{
-    // Maybe we can have custom rendering operations done here
-    // as of now we only render plain meshes.
-    // I prefer to keep the rendering logic in the MeshRenderer
-}
-
 SceneNode* SceneNode::findNode(const std::string& name)
 {
     if (getName() == name)
@@ -57,6 +50,15 @@ SceneNode* SceneNode::findNode(const std::string& name)
         }
     }
     return nullptr;
+}
+
+void SceneNode::visit(SceneNode::VisitorCallback visitor)
+{
+    visitor(*this);
+    for (auto& child : children)
+    {
+        child->visit(visitor);
+    }
 }
 
 std::string SceneNode::getName() const

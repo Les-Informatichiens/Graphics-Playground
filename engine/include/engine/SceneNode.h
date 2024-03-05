@@ -20,6 +20,8 @@ class SceneNode
 {
     friend class Scene;
 public:
+    using VisitorCallback = std::function<void(SceneNode&)>;
+
     explicit SceneNode(const EntityView& entityView);
 
     void addChild(SceneNode* child);
@@ -29,6 +31,20 @@ public:
     [[nodiscard]] std::string getName() const;
 
     SceneNode* findNode(const std::string& name);
+    void visit(VisitorCallback callback);
+
+    template <typename T>
+    void visit(VisitorCallback callback)
+    {
+        if (ownEntityView.hasComponent<T>())
+        {
+            callback(*this);
+        }
+        for (auto* child : children)
+        {
+            child->visit<T>(callback);
+        }
+    }
 
     void setTransform(const Transform& transform_) { transform = transform_; }
     Transform& getTransform() { return transform; }
@@ -39,7 +55,6 @@ public:
     [[nodiscard]] EntityView getEntityView() const { return ownEntityView; }
 
     virtual void update(float dt);
-    virtual void draw(graphics::Renderer& renderer) const;
 
     [[nodiscard]] std::vector<SceneNode*>::const_iterator begin() const { return children.begin(); }
     [[nodiscard]] std::vector<SceneNode*>::const_iterator end() const { return children.end(); }
