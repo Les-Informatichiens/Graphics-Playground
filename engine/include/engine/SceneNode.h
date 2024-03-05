@@ -5,7 +5,6 @@
 #pragma once
 
 #include "EntityView.h"
-#include "engine/Mesh.h"
 #include "engine/Transform.h"
 #include "entt/entt.hpp"
 
@@ -29,9 +28,6 @@ public:
 
     [[nodiscard]] std::string getName() const;
 
-    [[nodiscard]] std::shared_ptr<Mesh> getMesh() const { return mesh; }
-    void setMesh(std::shared_ptr<Mesh> mesh_) { this->mesh = mesh_; }
-
     SceneNode* findNode(const std::string& name);
 
     void setTransform(const Transform& transform_) { transform = transform_; }
@@ -50,8 +46,6 @@ public:
     std::vector<SceneNode*>& getChildren() { return children; }
 
 private:
-
-    std::shared_ptr<Mesh> mesh;
     Transform transform;
     Transform worldTransform;
     entt::handle entity;

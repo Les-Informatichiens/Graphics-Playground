@@ -39,6 +39,8 @@ add_library(
         include/engine/EntityView.h
         include/engine/util/UUID.h
         src/engine/util/UUID.cpp
+        src/engine/components/MeshComponent.cpp
+        include/engine/components/MeshComponent.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)

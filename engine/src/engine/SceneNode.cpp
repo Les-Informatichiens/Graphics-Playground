@@ -7,7 +7,7 @@
 #include "engine/SceneNode.h"
 
 SceneNode::SceneNode(const EntityView& entityView)
-    : ownEntityView(std::move(entityView)), transform(), worldTransform(), parent(nullptr), children(), mesh(nullptr)
+    : ownEntityView(std::move(entityView)), transform(), worldTransform(), parent(nullptr), children()
 {
 }
 

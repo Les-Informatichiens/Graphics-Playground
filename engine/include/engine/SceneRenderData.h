@@ -18,4 +18,10 @@ struct MeshRenderData
 struct SceneRenderData
 {
     std::vector<MeshRenderData> meshRenderData;
+
+public:
+    void reset()
+    {
+        meshRenderData.clear();
+    }
 };

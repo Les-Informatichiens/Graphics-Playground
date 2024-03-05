@@ -4,8 +4,9 @@
 
 #include "engine/Scene.h"
 #include "engine/EntityView.h"
-#include "engine/SceneRenderData.h"
 #include "engine/SceneNode.h"
+#include "engine/SceneRenderData.h"
+#include "engine/components/MeshComponent.h"
 
 
 Scene::Scene()
@@ -29,21 +30,12 @@ void Scene::update(float dt)
 
 void Scene::getSceneRenderData(SceneRenderData& sceneRenderData) const
 {
-    sceneRenderData.meshRenderData.clear();
-    registry.view<SceneNode>().each([&sceneRenderData](const SceneNode& node)
-    {
-        if (auto mesh = node.getMesh())
-        {
-            sceneRenderData.meshRenderData.push_back({node.getWorldTransform().getModel(), mesh.get()});
-        }
+    sceneRenderData.reset();
+
+    // iterate over all entities with a SceneNode and MeshComponent
+    registry.view<SceneNode, MeshComponent>().each([&sceneRenderData](const SceneNode& node, const MeshComponent& mesh){
+        sceneRenderData.meshRenderData.push_back({node.getWorldTransform().getModel(), mesh.getMesh().get()});
     });
-//    for (const auto& node: nodes)
-//    {
-//        if (auto mesh = node->getMesh())
-//        {
-//            sceneRenderData.meshRenderData.push_back({node->getTransform().getModel(), mesh.get()});
-//        }
-//    }
 }
 
 void Scene::linkSceneNodeWithEntity(entt::registry& reg, entt::entity e)

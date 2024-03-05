@@ -3,11 +3,12 @@
 //
 
 #include "engine/EngineInstance.h"
+#include "engine/EntityView.h"
 #include "engine/MeshRenderer.h"
+#include "engine/OBJ_Loader.h"
+#include "engine/components/MeshComponent.h"
 #include <iostream>
 #include <utility>
-#include "engine/EntityView.h"
-#include "engine/OBJ_Loader.h"
 
 EngineInstance::EngineInstance(InstanceDesc desc)
     : desc(std::move(desc)), renderer(), stage(), sceneRenderer()
@@ -69,16 +70,17 @@ void EngineInstance::initialize()
     defaultScene = std::make_shared<Scene>();
     {
         EntityView root = defaultScene->createEntity("rootNode");
+        root.addComponent<MeshComponent>(m);
+
         auto& rootNode = root.getComponent<SceneNode>();
-        rootNode.setMesh(m);
         rootNode.getTransform().setPosition({0.0f, 0.0f, 0.0f});
         rootNode.getTransform().setScale({1.f, 1.f, 1.f});
         rootNode.getTransform().setRotation({0.0f, 0.0f, 0.0f});
 
         // Create a child node
         EntityView child = defaultScene->createEntity("childNode");
+        child.addComponent<MeshComponent>(m);
         auto& childNode = child.getComponent<SceneNode>();
-        childNode.setMesh(m);
         childNode.getTransform().setPosition({-7.0f, 0.0f, 0.0f});
         childNode.getTransform().setScale({1.f, 1.f, 1.f});
         childNode.getTransform().setRotation({0.0f, 0.0f, 0.0f});
