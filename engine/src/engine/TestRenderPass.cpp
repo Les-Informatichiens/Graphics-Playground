@@ -5,8 +5,7 @@
 #include "engine/TestRenderPass.h"
 #include "glm/glm.hpp"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "engine/stb_image.h"
+
 
 #include <iostream>
 
@@ -17,18 +16,18 @@ using Ref = std::shared_ptr<T>;
 void TestRenderPass::initialize(IDevice& device)
 {
 
-    // load and create a texture
-    {
-        int32_t texWidth = 0;
-        int32_t texHeight = 0;
-        int32_t channels = 0;
-        uint8_t* pixels = stbi_load("Windows_curtains_diff.png", &texWidth, &texHeight, &channels, STBI_rgb_alpha);
-
-        this->testLoadedTexture = device.createTexture(TextureDesc::new2D(TextureFormat::RGBA_UNorm8, texWidth, texHeight, TextureDesc::TextureUsageBits::Sampled));
-
-        this->testLoadedTexture->upload(pixels, TextureRangeDesc::new2D(0, 0, texWidth, texHeight));
-        stbi_image_free(pixels);
-    }
+//    // load and create a texture
+//    {
+//        int32_t texWidth = 0;
+//        int32_t texHeight = 0;
+//        int32_t channels = 0;
+//        uint8_t* pixels = stbi_load("Windows_curtains_diff.png", &texWidth, &texHeight, &channels, STBI_rgb_alpha);
+//
+//        this->testLoadedTexture = device.createTexture(TextureDesc::new2D(TextureFormat::RGBA_UNorm8, texWidth, texHeight, TextureDesc::TextureUsageBits::Sampled));
+//
+//        this->testLoadedTexture->upload(pixels, TextureRangeDesc::new2D(0, 0, texWidth, texHeight));
+//        stbi_image_free(pixels);
+//    }
 }
 
 void TestRenderPass::render(IDevice& device) {
