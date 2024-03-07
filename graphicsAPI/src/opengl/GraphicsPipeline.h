@@ -12,6 +12,7 @@
 
 #include <map>
 #include <array>
+#include <queue>
 
 namespace opengl
 {
@@ -36,6 +37,8 @@ public:
     void bind();
     void unbind();
     void bindTextureUnit(size_t unit, uint8_t bindTarget);
+    void bindTextureSamplerAndUnit(size_t location, uint8_t bindTarget);
+    void unbindTextureUnit(size_t location, uint8_t bindTarget);
 
     void bindVertexAttributes(size_t bufferIndex, size_t offset);
     void unbindVertexAttributes();

@@ -103,6 +103,11 @@ void CommandBuffer::beginRenderPass(const RenderPassBeginDesc& desc)
         }
     }
 
+    for (size_t i = 0; i < MAX_TEXTURE_UNITS; ++i)
+    {
+        freeTextureUnits.push(i);
+    }
+
     isRecordingRenderCommands = true;
 }
 
@@ -126,6 +131,8 @@ void CommandBuffer::endRenderPass()
 
     vertTexturesCache = {};
     fragTexturesCache = {};
+    freeTextureUnits = {};
+
     vertTexturesDirtyCache.reset();
     fragTexturesDirtyCache.reset();
     dirtyFlags = DirtyFlag::DirtyBits_None;
@@ -213,12 +220,16 @@ void CommandBuffer::prepareForDraw()
                 continue;
             }
             auto& textureState = vertTexturesCache[i];
-            if (auto& texture = textureState.first)
+            if (auto& texture = textureState.texture)
             {
-                activeGraphicsPipeline->bindTextureUnit(i, BindTarget::BindTarget_Vertex);
+//                activeGraphicsPipeline->bindTextureUnit(i, BindTarget::BindTarget_Vertex);
+                context->uniform1i(static_cast<GLint>(i), static_cast<GLint>(textureState.textureUnit));
+                context->activeTexture(GL_TEXTURE0 + textureState.textureUnit);
                 texture->bind();
+                freeTextureUnits.push(textureState.textureUnit);
+                textureState.textureUnit = -1;
 
-                if (auto& sampler = textureState.second)
+                if (auto& sampler = textureState.samplerState)
                 {
                     sampler->bind(texture);
                 }
@@ -232,12 +243,16 @@ void CommandBuffer::prepareForDraw()
                 continue;
             }
             auto& textureState = fragTexturesCache[i];
-            if (auto& texture = textureState.first)
+            if (auto& texture = textureState.texture)
             {
-                activeGraphicsPipeline->bindTextureUnit(i, BindTarget::BindTarget_Fragment);
+//                activeGraphicsPipeline->bindTextureUnit(i, BindTarget::BindTarget_Fragment);
+                context->uniform1i(static_cast<GLint>(i), static_cast<GLint>(textureState.textureUnit));
+                context->activeTexture(GL_TEXTURE0 + textureState.textureUnit);
                 texture->bind();
+                freeTextureUnits.push(textureState.textureUnit);
+                textureState.textureUnit = -1;
 
-                if (auto& sampler = textureState.second)
+                if (auto& sampler = textureState.samplerState)
                 {
                     sampler->bind(texture);
                 }
@@ -285,14 +300,26 @@ void CommandBuffer::bindScissor(const ScissorRect& scissor)
 
 void CommandBuffer::bindTexture(uint32_t index, uint8_t target, std::shared_ptr<ITexture> texture)
 {
+    if (freeTextureUnits.empty())
+    {
+        throw std::runtime_error("No free texture units available");
+    }
+    int unit = freeTextureUnits.front();
+//    std::cout << "Bound texture to unit: " << unit << std::endl;
     if ((target & BindTarget::BindTarget_Vertex) != 0)
     {
-        vertTexturesCache[index].first = std::static_pointer_cast<Texture>(texture);
+        auto& texState = vertTexturesCache[index];
+        texState.texture = std::static_pointer_cast<Texture>(texture);
+        texState.textureUnit = unit;
+        freeTextureUnits.pop();
         vertTexturesDirtyCache.set(index);
     }
     if ((target & BindTarget::BindTarget_Fragment) != 0)
     {
-        fragTexturesCache[index].first = std::static_pointer_cast<Texture>(texture);
+        auto& texState = fragTexturesCache[index];
+        texState.texture = std::static_pointer_cast<Texture>(texture);
+        texState.textureUnit = unit;
+        freeTextureUnits.pop();
         fragTexturesDirtyCache.set(index);
     }
 }
@@ -301,12 +328,12 @@ void CommandBuffer::bindSamplerState(uint32_t index, uint8_t target, std::shared
 {
     if ((target & BindTarget::BindTarget_Vertex) != 0)
     {
-        vertTexturesCache[index].second = std::static_pointer_cast<SamplerState>(samplerState);
+        vertTexturesCache[index].samplerState = std::static_pointer_cast<SamplerState>(samplerState);
         vertTexturesDirtyCache.set(index);
     }
     if ((target & BindTarget::BindTarget_Fragment) != 0)
     {
-        fragTexturesCache[index].second = std::static_pointer_cast<SamplerState>(samplerState);
+        fragTexturesCache[index].samplerState = std::static_pointer_cast<SamplerState>(samplerState);
         fragTexturesDirtyCache.set(index);
     }
 }
@@ -315,7 +342,6 @@ bool CommandBuffer::isDirty(opengl::CommandBuffer::DirtyFlag flag) const
 {
     return dirtyFlags & flag;
 }
-
 void CommandBuffer::setDirty(opengl::CommandBuffer::DirtyFlag flag)
 {
     dirtyFlags |= flag;

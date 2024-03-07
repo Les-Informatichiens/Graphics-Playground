@@ -129,6 +129,7 @@ public:
 using ScissorRect = Rect<uint32_t>;
 
 constexpr size_t MAX_TEXTURE_SAMPLERS = 16;
+constexpr size_t MAX_TEXTURE_UNITS = 16;
 
 // Get value of enum by stripping enum class type
 template<typename E>

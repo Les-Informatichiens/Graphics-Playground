@@ -168,6 +168,11 @@ void GraphicsPipeline::bindTextureUnit(const size_t unit, uint8_t bindTarget)
         getContext().uniform1i(samplerLocation, static_cast<GLint>(unit));
         getContext().activeTexture(GL_TEXTURE0 + unit);
     }
+    else
+    {
+        // log warning
+        std::cout << "Warning: No sampler found for texture unit: " << unit << std::endl;
+    }
 
 }
 
@@ -210,7 +215,6 @@ void GraphicsPipeline::unbindVertexAttributes()
     }
     activeBindingAttribLocations.clear();
 }
-
 GLenum GraphicsPipeline::convertBlendOp(BlendOp value) {
     // sets blending equation for both RGA and Alpha
     switch (value) {
@@ -227,7 +231,6 @@ GLenum GraphicsPipeline::convertBlendOp(BlendOp value) {
     }
     return GL_FUNC_ADD; // default for unsupported values
 }
-
 GLenum GraphicsPipeline::convertBlendFactor(BlendFactor value) {
     switch (value) {
         case BlendFactor::Zero:

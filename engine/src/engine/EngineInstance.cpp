@@ -44,69 +44,52 @@ void EngineInstance::initialize()
 
 
     {
-        auto vs = renderer.getDevice().createShaderModule({
-                .type = ShaderModuleType::Vertex,
-                .code = R"(
-                #version 450
-                layout(location = 0) in vec3 inPosition;
-                layout(location = 1) in vec3 inNormal;
-                layout(location = 2) in vec2 inTexCoord;
+        auto vs = R"(
+            #version 450
+            layout(location = 0) in vec3 inPosition;
+            layout(location = 1) in vec3 inNormal;
+            layout(location = 2) in vec2 inTexCoord;
 
-                layout(location = 0) out vec3 fragNormal;
+            layout(location = 0) out vec3 fragNormal;
 
-                layout(binding = 0) uniform UBO {
-                    mat4 model;
-                    mat4 view;
-                    mat4 proj;
-                } ubo;
+            layout(binding = 0) uniform UBO {
+                mat4 model;
+                mat4 view;
+                mat4 proj;
+            } ubo;
 
-                void main() {
-                    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
-                    mat3 normalMatrix = transpose(inverse(mat3(ubo.model)));
-                    fragNormal = normalMatrix * inNormal;
-                }
-            )"
-        });
+            void main() {
+                gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
+                mat3 normalMatrix = transpose(inverse(mat3(ubo.model)));
+                fragNormal = normalMatrix * inNormal;
+            }
+        )";
 
-        auto fs = renderer.getDevice().createShaderModule({
-                .type = ShaderModuleType::Fragment,
-                .code = R"(
-                #version 450
-                layout(location = 0) in vec3 fragNormal;
-                out vec4 fragColor;
+        auto fs = R"(
+            #version 450
+            layout(location = 0) in vec3 fragNormal;
+            out vec4 fragColor;
 
-                layout(binding = 1) uniform Constants {
-                    vec3 lightDir;
-                    float shininess;
-                } constants;
+            layout(binding = 1) uniform Constants {
+                vec3 lightDir;
+                float shininess;
+            } constants;
 
-                void main() {
-                    // shade the fragment based on the normal
-                    vec3 baseColor = vec3(0.6, 0.1, 0.1);
-                    vec3 shineColor = vec3(1.0);
+            void main() {
+                // shade the fragment based on the normal
+                vec3 baseColor = vec3(0.6, 0.1, 0.1);
+                vec3 shineColor = vec3(1.0);
 
-                    float intensity1 = pow(max(dot(normalize(fragNormal), normalize(constants.lightDir)) + 0.01, 0.025), constants.shininess);
-                    float intensity2 = min(pow(max(dot(normalize(fragNormal), normalize(constants.lightDir)), 0), 1.0), 1.0);
-                    float intensity = intensity1 + intensity2;
-                    vec3 finalColor = intensity1 * shineColor + intensity2 * baseColor;
-                    fragColor = vec4(finalColor, 1.0);
-                }
-            )"
-        });
+                float intensity1 = pow(max(dot(normalize(fragNormal), normalize(constants.lightDir)) + 0.01, 0.025), constants.shininess);
+                float intensity2 = min(pow(max(dot(normalize(fragNormal), normalize(constants.lightDir)), 0), 1.0), 1.0);
+                float intensity = intensity1 + intensity2;
+                vec3 finalColor = intensity1 * shineColor + intensity2 * baseColor;
+                fragColor = vec4(finalColor, 1.0);
+            }
+        )";
 
-
-        auto vertexInputState = renderer.getDevice().createVertexInputState(
-                VertexInputStateDescBuilder()
-                        .beginBinding(0)
-                        .addVertexAttribute(VertexAttributeFormat::Float3, "inPosition", 0)
-                        .addVertexAttribute(VertexAttributeFormat::Float3, "inNormal", 1)
-                        .addVertexAttribute(VertexAttributeFormat::Float2, "inTexCoord", 2)
-                        .endBinding()
-                        .build());
-
-        auto shaderProgram = std::make_shared<graphics::ShaderProgram>(renderer.getDevice(), vs, fs, vertexInputState);
-
-        testMaterial = std::make_shared<graphics::Material>(renderer.getDevice(), shaderProgram);
+        auto shaderProgram = renderer.createShaderProgram(vs, fs);
+        testMaterial = renderer.createMaterial(shaderProgram);
     }
 
     // Load teapot model

@@ -49,6 +49,10 @@ add_library(
         include/engine/graphics/Material.h
         src/engine/graphics/ShaderProgram.cpp
         include/engine/graphics/ShaderProgram.h
+        src/engine/graphics/VertexData.cpp
+        include/engine/graphics/VertexData.h
+        src/engine/graphics/VertexDataLayout.cpp
+        include/engine/graphics/VertexDataLayout.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)

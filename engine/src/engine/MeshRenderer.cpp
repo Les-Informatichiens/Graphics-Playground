@@ -3,27 +3,11 @@
 //
 
 #include "engine/MeshRenderer.h"
-#include "engine/Transform.h"
 #include "engine/graphics/ShaderProgram.h"
-#include "glm/gtc/matrix_transform.hpp"
+#include "engine/graphics/VertexDataLayout.h"
 
 void MeshRenderer::render(graphics::Renderer& renderer, const Mesh& mesh, const std::shared_ptr<graphics::Material>& material, const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection)
 {
-    auto& device = renderer.getDevice();
-
-    std::shared_ptr vertexBuffer = device.createBuffer({
-            .type = BufferDesc::BufferTypeBits::Vertex,
-            .data = mesh.vertices.data(),
-            .size = static_cast<uint32_t>(mesh.vertices.size() * sizeof(Mesh::Vertex)),
-            .storage = ResourceStorage::Shared
-    });
-    std::shared_ptr indexBuffer = device.createBuffer({
-            .type = BufferDesc::BufferTypeBits::Index,
-            .data = mesh.indices.data(),
-            .size = static_cast<uint32_t>(mesh.indices.size() * sizeof(uint32_t)),
-            .storage = ResourceStorage::Shared
-    });
-
     struct UniformBufferObject {
         glm::mat4 model;
         glm::mat4 view;
@@ -37,12 +21,22 @@ void MeshRenderer::render(graphics::Renderer& renderer, const Mesh& mesh, const 
 
     material->setUniformBytes("ubo", &ubo, sizeof(ubo), 0);
     material->setUniformBytes("constants", &constants, sizeof(constants), 1);
-    material->setCullMode(CullMode::Back);
+    material->setCullMode(CullMode::None);
     material->setBlendMode(graphics::BlendMode::Opaque());
     material->setDepthTestConfig(graphics::DepthTestConfig::Enable);
 
-    graphics::Renderable meshRenderable(material);
-    meshRenderable.setVertexData(vertexBuffer, indexBuffer, mesh.indices.size());
+    graphics::VertexDataLayout attribLayout({
+            { "inPosition", 0, VertexAttributeFormat::Float3 },
+            { "inNormal", 1, VertexAttributeFormat::Float3 },
+            { "inTexCoords", 2, VertexAttributeFormat::Float2 }
+    });
+
+    auto vertexData = renderer.createIndexedVertexData(attribLayout, IndexFormat::UInt32, mesh.vertices.size(), mesh.indices.size());
+
+    vertexData->pushVertices(mesh.vertices);
+    vertexData->pushIndices(mesh.indices);
+
+    graphics::Renderable meshRenderable(material, vertexData);
 
     renderer.draw(meshRenderable);
 }

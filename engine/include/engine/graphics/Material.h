@@ -171,8 +171,11 @@ public:
 
     void bind(IDevice& device, ICommandBuffer& commandBuffer)
     {
+        // build the pipeline if it's not built yet
+//        build(device);
+
         // bind the shader program
-        commandBuffer.bindGraphicsPipeline(shaderProgram->getPipeline());
+//        commandBuffer.bindGraphicsPipeline(cachedPipeline);
 
         // bind the uniform buffers
         for (const auto& [name, bufferDesc] : uniformBuffers)
@@ -206,11 +209,42 @@ public:
         commandBuffer.bindDepthStencilState(depthStencilDesc.depthStencilState);
     }
 
+    void preparePipelineDesc(GraphicsPipelineDesc& desc) const
+    {
+        if (!desc.colorBlendAttachmentStates.empty())
+        {
+            auto& colorBlendAttachmentState = desc.colorBlendAttachmentStates[0];
+            colorBlendAttachmentState.blendEnabled = (blendMode != BlendMode::Opaque());
+            colorBlendAttachmentState.srcColorBlendFactor = blendMode.srcRGB;
+            colorBlendAttachmentState.dstColorBlendFactor = blendMode.dstRGB;
+            colorBlendAttachmentState.colorBlendOp = blendMode.opRGB;
+            colorBlendAttachmentState.srcAlphaBlendFactor = blendMode.srcAlpha;
+            colorBlendAttachmentState.dstAlphaBlendFactor = blendMode.dstAlpha;
+            colorBlendAttachmentState.alphaBlendOp = blendMode.opAlpha;
+        }
+
+        auto& rasterizationState = desc.rasterizationState;
+        rasterizationState.cullMode = cullMode;
+
+        shaderProgram->preparePipelineDesc(desc);
+    }
+//
+//    void build(IDevice& device)
+//    {
+//        GraphicsPipelineDesc desc;
+//        preparePipelineDesc(desc);
+//        if (GraphicsPipelineDescHash{}(desc) != GraphicsPipelineDescHash{}(pipelineDesc))
+//        {
+//            pipelineDesc = desc;
+//            cachedPipeline = device.createGraphicsPipeline(pipelineDesc);
+//        }
+//    }
+
 private:
     std::string name = "default";
 
     BlendMode blendMode = BlendMode::Opaque();
-    CullMode cullMode = CullMode::Back;
+    CullMode cullMode = CullMode::None;
     DepthTestConfig depthTestConfig = DepthTestConfig::Enable;
 
     std::shared_ptr<graphics::ShaderProgram> shaderProgram;
@@ -219,6 +253,12 @@ private:
     std::unordered_map<std::string, TextureSamplerDesc> textureSamplers;
 
     DepthStencilDesc depthStencilDesc = {};
+
+    std::unordered_map<size_t, std::string> fragmentUnitSamplerMap;
+
+    //Pipeline
+//    GraphicsPipelineDesc pipelineDesc;
+//    std::shared_ptr<IGraphicsPipeline> cachedPipeline;
 
 };
 

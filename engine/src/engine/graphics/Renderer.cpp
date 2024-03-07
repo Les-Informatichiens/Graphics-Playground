@@ -65,6 +65,9 @@ void Renderer::begin(const graphics::RenderTarget& renderTarget)
 
 void Renderer::draw(Renderable& renderable)
 {
+    auto pipelineDesc = renderable.buildGraphicsPipelineDesc();
+    auto pipeline = acquireGraphicsPipeline(pipelineDesc);
+    renderable.injectGraphicsPipeline(pipeline);
     renderable.draw(*device, *activeCommandBuffer);
 }
 
@@ -93,6 +96,44 @@ IDevice& Renderer::getDevice() const
 void Renderer::bindViewport(const Viewport& viewport)
 {
     this->activeCommandBuffer->bindViewport(viewport);
+}
+
+std::shared_ptr<ShaderProgram> Renderer::createShaderProgram(const std::string& vertexShaderSource, const std::string& fragmentShaderSource)
+{
+    auto vertexShader = device->createShaderModule({
+            .type = ShaderModuleType::Vertex,
+            .code = vertexShaderSource,
+            .entryPoint = "main"
+    });
+    auto fragmentShader = device->createShaderModule({
+            .type = ShaderModuleType::Fragment,
+            .code = fragmentShaderSource,
+            .entryPoint = "main"
+    });
+    auto vis = device->createVertexInputState({});
+
+    return std::make_shared<ShaderProgram>(getDevice(), fragmentShader, vertexShader, vis);
+}
+
+std::shared_ptr<IGraphicsPipeline> Renderer::acquireGraphicsPipeline(const GraphicsPipelineDesc& desc)
+{
+    auto hash = GraphicsPipelineDescHash{}(desc);
+    auto it = graphicsPipelines.find(hash);
+    if (it != graphicsPipelines.end())
+    {
+        return it->second;
+    }
+    else
+    {
+        auto pipeline = device->createGraphicsPipeline(desc);
+        graphicsPipelines[hash] = pipeline;
+        return pipeline;
+    }
+}
+std::shared_ptr<Material> Renderer::createMaterial(const std::shared_ptr<ShaderProgram>& shaderProgram)
+{
+    auto material = std::make_shared<Material>(getDevice(), shaderProgram);
+    return material;
 }
 
 }// namespace graphics

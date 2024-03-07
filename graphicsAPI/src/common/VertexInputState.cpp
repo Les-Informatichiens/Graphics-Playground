@@ -4,7 +4,7 @@
 
 #include "graphicsAPI/common/VertexInputState.h"
 
-static uint32_t getVertexAttributeFormatSize(VertexAttributeFormat format)
+uint32_t getVertexAttributeFormatSize(VertexAttributeFormat format)
 {
     /*
      *  * Float = 0,

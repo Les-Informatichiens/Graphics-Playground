@@ -16,7 +16,13 @@ void ShaderProgram::initialize(IDevice& device, const std::shared_ptr<IShaderMod
     shaderStages = device.createPipelineShaderStages(PipelineShaderStagesDesc::fromRenderModules(vertexShader, fragmentShader));
     pipelineDesc.shaderStages = shaderStages;
     pipelineDesc.vertexInputState = std::move(vertexInputState);
-    cachedPipeline = device.createGraphicsPipeline(pipelineDesc);
+//    cachedPipeline = device.createGraphicsPipeline(pipelineDesc);
+}
+
+void ShaderProgram::preparePipelineDesc(GraphicsPipelineDesc& desc) const
+{
+    desc.shaderStages = pipelineDesc.shaderStages;
+//    desc.vertexInputState = pipelineDesc.vertexInputState;
 }
 
 }// namespace graphics
