@@ -14,7 +14,7 @@ class MeshRenderer
 public:
     MeshRenderer() = default;
 
-    void render(graphics::Renderer& renderer, const Mesh& mesh, const Transform& transform);
+    void render(graphics::Renderer& renderer, const Mesh& mesh, const std::shared_ptr<graphics::Material>&, const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection);
 
 private:
     std::shared_ptr<graphics::Renderable> meshRenderable;

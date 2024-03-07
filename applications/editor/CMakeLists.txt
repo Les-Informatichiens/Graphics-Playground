@@ -5,7 +5,7 @@ include(cmake/Utils.cmake)
 init_output_directories()
 
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -135,6 +135,8 @@ set(
         "assets/test/sphere.obj"
         "assets/test/teapot.obj"
         "assets/test/smooth-sphere.obj"
+        "assets/test/blocking_spider.fbx"
+        "assets/test/Patte_avant_tex_meshv2.fbx"
 )
 
 message("OUTPUT DIR IS: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")

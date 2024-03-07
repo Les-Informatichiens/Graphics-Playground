@@ -29,7 +29,7 @@ SamplerState::SamplerState(Context& context, const SamplerStateDesc& desc)
 {
     (void) mipLodMin_;
     (void) mipLodMax_;
-    std::hash<SamplerStateDesc> h;
+    SamplerStateDescHash h;
     hash_ = h(desc);
 }
 

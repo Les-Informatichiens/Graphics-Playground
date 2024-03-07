@@ -4,6 +4,7 @@
 
 #include "application.h"
 #include "backends/imgui_impl_glfw.h"
+#include "engine/components/CameraComponent.h"
 #include <iostream>
 
 //implement the application class here
@@ -93,6 +94,17 @@ void application::run()
                 ImGui::End();
             }
         }
+
+        ImGui::Begin("Camera");
+        auto cameraEntity = gameEngine.getStage().getScene()->getEntityByName("teapotPOV");
+        if (cameraEntity)
+        {
+            auto& camera = cameraEntity->getComponent<CameraComponent>();
+            // allow the image to scale according to the window size
+            ImGui::Image((ImTextureID)camera.getRenderTarget().colorTexture.get(), ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y));
+        }
+        ImGui::End();
+
 
         // ImGui UI calls should always be done between begin and end frame
         endImGuiFrame();

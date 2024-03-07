@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "RenderTarget.h"
 #include "Renderable.h"
 #include "engine/Camera.h"
 #include "engine/SceneNode.h"
@@ -25,14 +26,13 @@ public:
 
     void initialize(RendererDesc desc);
 
+    void begin(const RenderTarget& renderTarget);
     void begin();
+    void bindViewport(const Viewport& viewport);
     void draw(Renderable& renderable);
     void end();
 
     void shutdown();
-
-    void setCamera(std::shared_ptr<Camera> camera);
-    [[nodiscard]] Camera& getCamera() const;
 
     [[nodiscard]] IDevice& getDevice() const;
     [[nodiscard]] bool isInitialized() const { return initialized; }
@@ -41,8 +41,7 @@ private:
     std::unique_ptr<IDevice> device;
     std::shared_ptr<ICommandPool> activeCommandPool;
     std::unique_ptr<ICommandBuffer> activeCommandBuffer;
-
-    std::shared_ptr<Camera> activeCamera;
+    std::shared_ptr<IFramebuffer> activeFramebuffer;
 
     bool initialized = false;
 };

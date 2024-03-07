@@ -28,6 +28,7 @@ public:
     void reset();
 
     [[nodiscard]] glm::mat4 getLookAt(const glm::vec3 &target, const glm::vec3 &up) const;
+    void lookAt(const glm::vec3 &target, const glm::vec3 &up);
 
     [[nodiscard]] glm::mat4 getModel() const;
 

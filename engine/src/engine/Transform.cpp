@@ -99,3 +99,9 @@ Transform Transform::operator*(const Transform& other) const
 
     return result;
 }
+
+void Transform::lookAt(const glm::vec3& target, const glm::vec3& up)
+{
+    glm::vec3 direction = glm::normalize(target - this->position_);
+    this->rotation_ = glm::quatLookAt(direction, up);
+}

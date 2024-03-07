@@ -6,6 +6,7 @@
 #include "engine/EntityView.h"
 #include "engine/SceneNode.h"
 #include "engine/SceneRenderData.h"
+#include "engine/components/CameraComponent.h"
 #include "engine/components/MeshComponent.h"
 
 
@@ -34,7 +35,7 @@ void Scene::getSceneRenderData(SceneRenderData& sceneRenderData) const
 
     // iterate over all entities with a SceneNode and MeshComponent
     registry.view<SceneNode, MeshComponent>().each([&sceneRenderData](const SceneNode& node, const MeshComponent& mesh){
-        sceneRenderData.meshRenderData.push_back({node.getWorldTransform().getModel(), mesh.getMesh().get()});
+        sceneRenderData.meshRenderData.push_back({node.getWorldTransform().getModel(), mesh.getMesh().get(), mesh.getMaterial()});
     });
 }
 
@@ -111,4 +112,13 @@ std::string& Scene::getEntityName(util::UUID uuid)
         return it->second.name;
     }
     throw std::runtime_error("Entity not found");
+}
+
+std::vector<SceneNode*> Scene::getCameraNodes()
+{
+    std::vector<SceneNode*> cameraNodes;
+    registry.view<SceneNode, CameraComponent>().each([&cameraNodes](SceneNode& node, CameraComponent& camera){
+        cameraNodes.push_back(&node);
+    });
+    return cameraNodes;
 }

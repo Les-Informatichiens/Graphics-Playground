@@ -45,7 +45,9 @@
       "name": "gcc",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "g++"
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_EXE_LINKER_FLAGS": "-static-libgcc -static-libstdc++"
       }
     },
     {

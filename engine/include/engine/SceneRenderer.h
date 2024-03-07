@@ -8,6 +8,11 @@
 #include "SceneRenderData.h"
 #include "engine/graphics/Renderer.h"
 
+struct SceneCameraDesc
+{
+    glm::mat4 view;
+    glm::mat4 projection;
+};
 
 class SceneRenderer
 {
@@ -15,5 +20,5 @@ public:
     SceneRenderer() = default;
     ~SceneRenderer() = default;
 
-    void render(graphics::Renderer& renderer, SceneRenderData& sceneData);
+    void render(graphics::Renderer& renderer, const SceneRenderData& sceneData, const SceneCameraDesc& cameraDesc);
 };

@@ -32,7 +32,35 @@ void Renderer::begin()
             },
             .framebuffer = nullptr};
     activeCommandBuffer->beginRenderPass(renderPassBegin);
-//    std::cout << "begin" << std::endl;
+    //    std::cout << "begin" << std::endl;
+}
+
+void Renderer::begin(const graphics::RenderTarget& renderTarget)
+{
+    activeCommandBuffer = activeCommandPool->acquireCommandBuffer({});
+
+    // create default depth texture
+    auto depthAttachment = device->createTexture(TextureDesc::new2D(
+            TextureFormat::Z_UNorm24,
+            renderTarget.colorTexture->getWidth(),
+            renderTarget.colorTexture->getHeight(),
+            TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled));
+
+    activeFramebuffer = device->createFramebuffer({
+            .colorAttachments = {{0, {renderTarget.colorTexture, nullptr}}},
+            .depthAttachment = {depthAttachment, nullptr}
+    });
+
+    RenderPassBeginDesc renderPassBegin = {
+            .renderPass = {
+                    .colorAttachments = {
+                            {renderTarget.clear ? LoadAction::Clear : LoadAction::Load, StoreAction::Store, renderTarget.clearColor}},
+                    .depthAttachment = RenderPassDesc::DepthAttachmentDesc{LoadAction::Clear, StoreAction::Store, 0, 0, 1.0f},
+
+            },
+            .framebuffer = activeFramebuffer
+    };
+    activeCommandBuffer->beginRenderPass(renderPassBegin);
 }
 
 void Renderer::draw(Renderable& renderable)
@@ -44,7 +72,10 @@ void Renderer::end()
 {
     activeCommandBuffer->endRenderPass();
     activeCommandPool->submitCommandBuffer(std::move(activeCommandBuffer));
-//    std::cout << "end" << std::endl;
+
+    activeFramebuffer.reset();
+
+    //    std::cout << "end" << std::endl;
 }
 
 void Renderer::shutdown()
@@ -59,19 +90,9 @@ IDevice& Renderer::getDevice() const
     }
     return *this->device;
 }
-
-void Renderer::setCamera(std::shared_ptr<Camera> camera)
+void Renderer::bindViewport(const Viewport& viewport)
 {
-    this->activeCamera = std::move(camera);
-}
-
-Camera& Renderer::getCamera() const
-{
-    if (this->activeCamera == nullptr)
-    {
-        throw std::runtime_error("No camera has been set");
-    }
-    return *this->activeCamera;
+    this->activeCommandBuffer->bindViewport(viewport);
 }
 
 }// namespace graphics
