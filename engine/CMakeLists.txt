@@ -57,6 +57,8 @@ add_library(
         src/engine/LineRenderer.h
         src/engine/util/Math.cpp
         include/engine/util/Math.h
+        src/engine/Bounds.cpp
+        include/engine/Bounds.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)

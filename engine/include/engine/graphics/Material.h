@@ -189,7 +189,7 @@ public:
                     .storage = ResourceStorage::Shared,
                 };
                 bufferDesc.buffer = device.createBuffer(newBufferDesc);
-                std::cout << "Created new uniform buffer: " << name << std::endl;
+//                std::cout << "Created new uniform buffer: " << name << std::endl;
 
             }
             commandBuffer.bindBuffer(bufferDesc.bindingPoint, bufferDesc.buffer, 0);

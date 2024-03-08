@@ -255,6 +255,7 @@ void EngineInstance::initialize()
             m->indices.push_back(LoadedIndice);
         }
         m->normalize();
+        m->recalculateBounds();
     }
 
     // Create a scene
@@ -277,7 +278,7 @@ void EngineInstance::initialize()
 
         // Create a child node
         EntityView child = defaultScene->createEntity("childTeapot");
-
+        child.getSceneNode().setShowBoundingBox(true);
 
         child.addComponent<MeshComponent>(m, testMaterial);
         auto& childNode = child.getSceneNode();
@@ -455,7 +456,7 @@ void EngineInstance::renderFrame()
             SceneRenderData sceneRenderData;
             activeScene->getSceneRenderData(sceneRenderData);
             renderer.begin(camera.getRenderTarget());
-            sceneRenderer.render(renderer, sceneRenderData, {glm::inverse(cameraNode->getWorldTransform().getModel()), camera.getCamera()->getProjection()});
+            sceneRenderer.render(renderer, sceneRenderData, {glm::inverse(cameraNode->getWorldTransform().getModel()), camera.getCamera()->getProjection(), camera.getCamera()->getViewportWidth(), camera.getCamera()->getViewportHeight()});
             renderer.end();
         }
 
@@ -466,35 +467,7 @@ void EngineInstance::renderFrame()
             activeScene->getSceneRenderData(sceneRenderData);
             renderer.begin();
             renderer.bindViewport({0,0, static_cast<float>(desc.width), static_cast<float>(desc.height)});
-            sceneRenderer.render(renderer, sceneRenderData, {glm::inverse(mainCamera->getWorldTransform().getModel()), camera.getCamera()->getProjection()});
-
-            LineRenderer lineRenderer;
-            lineRenderer.setVP(glm::inverse(mainCamera->getWorldTransform().getModel()), camera.getCamera()->getProjection());
-
-//            // draw sine wave line of 100 points
-//            int numPoints = 2;
-//            float distanceSpan = 50.0f;
-//            std::vector<glm::vec3> points;
-//            for (int i = 0; i < numPoints; i++)
-//            {
-//                float x = (i / (float)numPoints) * distanceSpan;
-//                float y = 4.0f;
-//                points.push_back({x, y, 0.0f});
-//            }
-//            std::vector<glm::vec3> points = {
-//                    { 0, -1, 0 }, { 1, -1, 0 },
-//                    { 0, 0, 0 }, { 1, 0, 0 },
-//                    { 0.25, -0.75, 0 }
-//            };
-
-            lineRenderer.setLineWidth(0.01f);
-            lineRenderer.setMiter(1);
-
-
-            lineRenderer.setAspect((float)desc.width / (float)desc.height);
-            lineRenderer.drawLines(renderer, points);
-
-
+            sceneRenderer.render(renderer, sceneRenderData, {glm::inverse(mainCamera->getWorldTransform().getModel()), camera.getCamera()->getProjection(), camera.getCamera()->getViewportWidth(), camera.getCamera()->getViewportHeight()});
             renderer.end();
         }
     }

@@ -127,6 +127,7 @@ std::shared_ptr<IGraphicsPipeline> Renderer::acquireGraphicsPipeline(const Graph
     {
         auto pipeline = device->createGraphicsPipeline(desc);
         graphicsPipelines[hash] = pipeline;
+        std::cout << "Created new pipeline: " << hash << std::endl;
         return pipeline;
     }
 }

@@ -36,26 +36,10 @@ public:
     };
 
     void drawLine(graphics::Renderer& renderer, const glm::vec3& start, const glm::vec3& end);
+
     void drawLines(graphics::Renderer& renderer, const std::vector<glm::vec3>& lines);
 
 private:
-    /*
-     * module.exports.createIndices = function createIndices(length) {
-let indices = new Uint16Array(length * 6)
-let c = 0, index = 0
-for (let j=0; j<length; j++) {
-  let i = index
-  indices[c++] = i + 0
-  indices[c++] = i + 1
-  indices[c++] = i + 2
-  indices[c++] = i + 2
-  indices[c++] = i + 1
-  indices[c++] = i + 3
-  index += 2
-}
-return indices
-}
-     */
     std::vector<uint16_t> createIndices(uint32_t length);
 
 private:
@@ -65,8 +49,8 @@ private:
     std::vector<glm::vec3> lineVertices;
     std::vector<glm::vec3> lineColors;
     std::vector<uint16_t> lineIndices;
-    std::shared_ptr<graphics::VertexData> lineVertexData;
-    std::shared_ptr<graphics::Material> lineMaterial;
+    static std::shared_ptr<graphics::VertexData> lineVertexData;
+    static std::shared_ptr<graphics::Material> lineMaterial;
 
     LineSettings settings{};
 };

@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <engine/Bounds.h>
+
 #include "glm/glm.hpp"
 #include <vector>
 #include <memory>
@@ -27,6 +29,9 @@ public:
     static std::shared_ptr<Mesh> createCube(float size = 1.0f);
     static std::shared_ptr<Mesh> createQuad(float size = 1.0f);
 
+    void recalculateBounds() const;
+
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
+    mutable Bounds bounds = Bounds(glm::vec3(0.0f), glm::vec3(0.0f));
 };

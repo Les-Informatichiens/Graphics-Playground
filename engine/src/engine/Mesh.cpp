@@ -5,8 +5,9 @@
 #include "engine/Mesh.h"
 
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices)
-    : vertices(std::move(vertices)), indices(std::move(indices))
+    : vertices(std::move(vertices)), indices(std::move(indices)), bounds(glm::vec3(0.0f), glm::vec3(0.0f))
 {
+    recalculateBounds();
 }
 
 // pseudo C code :
@@ -125,4 +126,20 @@ std::shared_ptr<Mesh> Mesh::createCube(float size)
     };
 
     return std::make_shared<Mesh>(vertices, indices);
+}
+
+void Mesh::recalculateBounds() const
+{
+    glm::vec3 center = glm::vec3(0.0f);
+    glm::vec3 min = vertices[0].position;
+    glm::vec3 max = vertices[0].position;
+    for (const auto& vertex: vertices)
+    {
+        min = glm::min(min, vertex.position);
+        max = glm::max(max, vertex.position);
+    }
+
+    center = (min + max) / 2.0f;
+
+    bounds = Bounds(center, max - min);
 }

@@ -60,6 +60,9 @@ public:
     [[nodiscard]] std::vector<SceneNode*>::const_iterator end() const { return children.end(); }
     std::vector<SceneNode*>& getChildren() { return children; }
 
+    void setShowBoundingBox(bool show) { showBoundingBox = show; }
+    [[nodiscard]] bool getShowBoundingBox() const { return showBoundingBox; }
+
 private:
     Transform transform;
     Transform worldTransform;
@@ -68,6 +71,7 @@ private:
 
     SceneNode* parent = nullptr;
     std::vector<SceneNode*> children;
+    bool showBoundingBox = false;
 };
 
 // Ensure components are not relocated in memory. This allows us to use raw

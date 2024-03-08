@@ -32,5 +32,16 @@ void Camera::setProjectionConfig(float fov, float aspectRatio, float nearClip, f
     this->aspectRatio = aspectRatio;
     this->nearClip = nearClip;
     this->farClip = farClip;
+    this->viewportWidth = static_cast<int>(2.0f * this->farClip * glm::tan(glm::radians(this->fov / 2.0f)));
+    this->viewportHeight = static_cast<int>(2.0f * this->farClip * glm::tan(glm::radians(this->fov / 2.0f)));
     this->updateProjectionMatrix();
+}
+int Camera::getViewportWidth() const
+{
+    return this->viewportWidth;
+}
+
+int Camera::getViewportHeight() const
+{
+    return this->viewportHeight;
 }

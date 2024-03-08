@@ -23,6 +23,8 @@ public:
 
     [[nodiscard]] glm::mat4 getView();
     [[nodiscard]] const glm::mat4& getProjection() const;
+    [[nodiscard]] int getViewportWidth() const;
+    [[nodiscard]] int getViewportHeight() const;
 private:
     void updateProjectionMatrix();
 
@@ -30,6 +32,8 @@ private:
     float aspectRatio = 16.0f / 9.0f;
     float nearClip = 0.1f;
     float farClip = 1000.0f;
+    int viewportWidth = 1920;
+    int viewportHeight = 1080;
 
     ProjectionType projectionType = ProjectionType::Perspective;
 

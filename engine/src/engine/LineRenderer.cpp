@@ -6,6 +6,10 @@
 #include "engine/util/Math.h"
 #include <algorithm>
 
+// declare static member
+std::shared_ptr<graphics::Material> LineRenderer::lineMaterial;
+std::shared_ptr<graphics::VertexData> LineRenderer::lineVertexData;
+
 void LineRenderer::drawLine(graphics::Renderer& renderer, const glm::vec3& start, const glm::vec3& end)
 {
     std::vector<glm::vec3> lines = {start, end};
@@ -17,12 +21,14 @@ void LineRenderer::drawLine(graphics::Renderer& renderer, const glm::vec3& start
  */
 void LineRenderer::drawLines(graphics::Renderer& renderer, const std::vector<glm::vec3>& lines)
 {
-    lineVertices.clear();
-    lineIndices.clear();
+//    lineVertices.clear();
+//    lineIndices.clear();
+//
+//    lineVertices.reserve(lines.size());
+//    lineIndices.reserve(lines.size());
 
-    lineVertices.reserve(lines.size());
-    lineIndices.reserve(lines.size());
-
+    if (!LineRenderer::lineMaterial)
+    {
     // Create line material
     auto vs = R"(
         #version 450 core
@@ -66,6 +72,7 @@ void LineRenderer::drawLines(graphics::Renderer& renderer, const std::vector<glm
             float len = constants.thickness;
             float orientation = direction;
 
+            float miterLimit = 1.0;
             //starting point uses (next - current)
             vec2 dir = vec2(0.0);
             if (currentScreen == previousScreen) {
@@ -79,19 +86,28 @@ void LineRenderer::drawLines(graphics::Renderer& renderer, const std::vector<glm
             else {
               //get directions from (C - B) and (B - A)
               vec2 dirA = normalize((currentScreen - previousScreen));
-              if (constants.miter == 1) {
-                vec2 dirB = normalize((nextScreen - currentScreen));
-                //now compute the miter join normal and length
-                vec2 tangent = normalize(dirA + dirB);
-                vec2 perp = vec2(-dirA.y, dirA.x);
-                vec2 miter = vec2(-tangent.y, tangent.x);
-                dir = tangent;
-                len = constants.thickness / dot(miter, perp);
-              } else {
-                dir = dirA;
-              }
+                if (constants.miter == 1) {
+                    vec2 dirB = normalize((nextScreen - currentScreen));
+                    //now compute the miter join normal and length
+                    vec2 tangent = normalize(dirA + dirB);
+                    vec2 perp = vec2(-dirA.y, dirA.x);
+                    vec2 miter = vec2(-tangent.y, tangent.x);
+                    dir = tangent;
+                    float dotProduct = dot(miter, perp);
+                    if (abs(dotProduct) > 0.0001) { // Add this check
+                        float potentialMiterLength = constants.thickness / dotProduct;
+                        if (potentialMiterLength > miterLimit) {
+                            len = constants.thickness;
+                        } else {
+                            len = potentialMiterLength;
+                        }
+                    } else {
+                        len = constants.thickness;
+                    }
+                } else {
+                    dir = dirA;
+                }
             }
-
             len *= currentProjected.w;
             vec2 normal = vec2(-dir.y, dir.x);
             normal *= len/2.0;
@@ -122,11 +138,14 @@ void LineRenderer::drawLines(graphics::Renderer& renderer, const std::vector<glm
         }
     )";
 
-    auto shaderProgram = renderer.createShaderProgram(vs, fs);
-    lineMaterial = renderer.createMaterial(shaderProgram);
 
-    lineMaterial->setCullMode(CullMode::None);
-    lineMaterial->setDepthTestConfig(graphics::DepthTestConfig::Enable);
+        auto shaderProgram = renderer.createShaderProgram(vs, fs);
+        LineRenderer::lineMaterial = renderer.createMaterial(shaderProgram);
+
+    }
+
+    LineRenderer::lineMaterial->setCullMode(CullMode::None);
+    LineRenderer::lineMaterial->setDepthTestConfig(graphics::DepthTestConfig::Enable);
 
     struct Constants
     {
@@ -165,11 +184,6 @@ void LineRenderer::drawLines(graphics::Renderer& renderer, const std::vector<glm
 
     auto indices = createIndices(lines.size());
 
-    lineVertexData = renderer.createIndexedVertexData(attribLayout, IndexFormat::UInt16, lines.size(), indices.size());
-
-
-    lineVertexData->pushIndices(indices);
-
     struct LineVertex
     {
         glm::vec3 position = glm::vec3(0.0f);
@@ -207,10 +221,19 @@ void LineRenderer::drawLines(graphics::Renderer& renderer, const std::vector<glm
         vertices.push_back(v1);
         vertices.push_back(v2);
     }
-    lineVertexData->allocateVertexBuffer(renderer.getDevice(), vertices.size());
+    if (!lineVertexData)
+    {
+        lineVertexData = renderer.createIndexedVertexData(attribLayout, IndexFormat::UInt16, vertices.size(), indices.size());
+    }
+    else
+    {
+        lineVertexData->allocateVertexBuffer(renderer.getDevice(), vertices.size());
+        lineVertexData->allocateIndexBuffer(renderer.getDevice(), indices.size());
+    }
+    lineVertexData->pushIndices(indices);
     lineVertexData->pushVertices(vertices);
 
-    graphics::Renderable lineRenderable(lineMaterial, lineVertexData);
+    graphics::Renderable lineRenderable(LineRenderer::lineMaterial, lineVertexData);
     lineRenderable.setElementCount((lines.size()-1)*6);
     renderer.draw(lineRenderable);
 
