@@ -5,6 +5,7 @@
 #pragma once
 
 #include <utility>
+#include <algorithm>
 
 #include "ShaderProgram.h"
 #include "graphicsAPI/common/ShaderStage.h"
@@ -154,7 +155,7 @@ public:
         {
             // create a new buffer desc and copy the data into a temporary vector
             auto tempData = std::vector<uint8_t>(size);
-            memcpy(tempData.data(), data, size);
+            std::copy(static_cast<const uint8_t*>(data), static_cast<const uint8_t*>(data) + size, tempData.begin());
             uniformBuffers[name] = {size, tempData, nullptr, bindingPoint};
 //            std::cout << "Created new uniform buffer: " << name << std::endl;
         }
