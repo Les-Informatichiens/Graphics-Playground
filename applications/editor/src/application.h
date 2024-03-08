@@ -79,48 +79,4 @@ private:
     std::string selectedImagePath;
     ImageData imageData;
     std::shared_ptr<ITexture> imageTexture;
-//
-//    static unsigned char* loadImage(const std::string&
-//                                     filename,
-//                             int*
-//                                     width,
-//                             int*
-//                                     height,
-//                             int*
-//                                     channels);
-//    static void saveImage(const char*
-//                           filename,
-//                   int
-//                           width,
-//                   int
-//                           height,
-//                   int
-//                           channels,
-//                   const unsigned char*
-//                           data);
-//    void calculateAndDrawHistogram(const unsigned char*
-//                                           imageData,
-//                                   int
-//                                           width,
-//                                   int
-//                                           height,
-//                                   int
-//                                           channels);
-//    void importImage();
-//    void exportImage(const unsigned char*
-//                             imageData,
-//                     int
-//                             width,
-//                     int
-//                             height,
-//                     int
-//                             channels);
-//    const char* openFileDialog();
-//    const char* saveFileDialog();
-//    const char* fileDialog(bool
-//                                   isOpenFileDialog);
-//    void loadImportedImage(const std::string&
-//                                   imagePath);
-//    void loadImage(const std::string&
-//                           imagePath);
 };
