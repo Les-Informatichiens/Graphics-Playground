@@ -103,6 +103,17 @@ target_sources(${PROJECT_NAME} PRIVATE ${imgui_SOURCE_DIR}/backends/imgui_impl_g
 target_link_libraries(${PROJECT_NAME} PRIVATE imgui::imgui)
 # ======================================================================================================
 
+# ImGuiFileDialog ======================================================================================
+CPMFindPackage(
+        NAME "ImGuiFileDialog"
+        GITHUB_REPOSITORY "aiekick/ImGuiFileDialog"
+        VERSION "0.6.7"
+)
+target_link_libraries(${PROJECT_NAME} PRIVATE ImGuiFileDialog)
+
+target_link_libraries(ImGuiFileDialog PRIVATE imgui::imgui)
+# ======================================================================================================
+
 # engine ===============================================================================================
 
 target_link_libraries(${PROJECT_NAME} PRIVATE engine)
