@@ -6,6 +6,11 @@
 #include "backends/imgui_impl_glfw.h"
 #include <iostream>
 
+
+
+
+
+
 //implement the application class here
 void application::init()
 {
@@ -35,11 +40,11 @@ void application::init()
 
     // Initialize the ImGui context
     initImGui();
+    vectorDrawer = picasso();
 }
 
 void application::run()
 {
-
     while (!windowShouldClose)
     {
         // We will update the simulation and render the frame before rendering the ImGui frame
@@ -49,6 +54,8 @@ void application::run()
         gameEngine.renderFrame();
 
         beginImGuiFrame();
+        //add custom drawlist to imgui background draw list
+
 
         // Here we can have some ImGui code that would let the user
         // control some state in the application.
@@ -65,7 +72,7 @@ void application::run()
             ImGui::Text("This is some useful text."); // Display some text (you can use a format strings too)
 
             ImGui::Checkbox("Demo Window", &show_demo_window); // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
+            ImGui::Checkbox("Vector drawing window", &show_another_window);
 
             ImGui::SliderFloat("float", &f, 0.0f, 1.0f); // Edit 1 float using a slider from 0.0f to 1.0f
             ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
@@ -86,10 +93,8 @@ void application::run()
 
             if (show_another_window)
             {
-                ImGui::Begin("Another Window", &show_another_window);
-                ImGui::Text("Hello from another window!");
-                if (ImGui::Button("Close Me"))
-                    show_another_window = false;
+                ImGui::Begin("Vector drawing window", &show_another_window);
+                vectorDrawer.draw(ImGui::GetBackgroundDrawList());
                 ImGui::End();
             }
         }
@@ -197,3 +202,4 @@ void application::shutdownImGui()
     ImGui_ImplGlfw_Shutdown();
     imguiInstance.shutdown();
 }
+

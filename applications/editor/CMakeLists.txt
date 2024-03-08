@@ -18,6 +18,9 @@ add_executable(
         src/imgui/ImGuiRenderer.h
         src/imgui/ImGuiInstance.cpp
         src/imgui/ImGuiInstance.h
+        src/imgui/drawingPanel/shape.h
+        src/imgui/drawingPanel/picasso.h
+        src/imgui/ImGuiContextAdapter.cpp
 )
 
 target_include_directories(
