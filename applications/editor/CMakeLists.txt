@@ -127,6 +127,12 @@ endif ()
 
 
 # Copy resources to build directory ===================================================================
+
+set(
+        RootFiles
+        "root.config"
+)
+
 set(
         TestAssets
         "assets/test/sphere.obj"
@@ -136,7 +142,8 @@ set(
 
 message("OUTPUT DIR IS: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
+copy_assets(RootFiles "." "." CopiedRootFiles)
 copy_assets(TestAssets "assets/test" "assets/test" CopiedTestAssets)
 
 set_source_files_properties(${CopiedTestAssets} PROPERTIES GENERATED TRUE)
-target_sources(${PROJECT_NAME} PRIVATE ${CopiedTestAssets})
+target_sources(${PROJECT_NAME} PRIVATE ${CopiedRootFiles} ${CopiedTestAssets})

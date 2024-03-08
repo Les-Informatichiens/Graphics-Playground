@@ -6,6 +6,8 @@
 #include "Mesh.h"
 #include "MeshRenderer.h"
 #include "Model.h"
+#include "SceneRenderer.h"
+#include "Stage.h"
 #include "TestRenderPass.h"
 #include "engine/graphics/Renderer.h"
 
@@ -29,20 +31,19 @@ public:
     void renderFrame();
     void shutdown();
 
-    void drawNode(const std::unique_ptr<SceneNode>& node);
-
     graphics::Renderer& getRenderer();
+    Stage& getStage();
 
 private:
     graphics::Renderer renderer;
     TestRenderPass testRenderPass;
 
-    // Utility class for rendering plain meshes,
-    // it could help to cache and reuse renderable data later
-    MeshRenderer meshRenderer{};
-
     InstanceDesc desc;
 
     std::shared_ptr<Camera> activeCamera;
-    std::unique_ptr<SceneNode> root;
+
+    Stage stage;
+    std::shared_ptr<Scene> defaultScene;
+
+    SceneRenderer sceneRenderer;
 };

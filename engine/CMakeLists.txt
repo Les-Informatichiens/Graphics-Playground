@@ -28,6 +28,19 @@ add_library(
         include/engine/stb_image.h
         src/engine/SceneNode.cpp
         include/engine/SceneNode.h
+        src/engine/Stage.cpp
+        include/engine/Stage.h
+        src/engine/Scene.cpp
+        include/engine/Scene.h
+        src/engine/SceneRenderer.cpp
+        include/engine/SceneRenderer.h
+        include/engine/SceneRenderData.h
+        src/engine/Entity.cpp
+        include/engine/EntityView.h
+        include/engine/util/UUID.h
+        src/engine/util/UUID.cpp
+        src/engine/components/MeshComponent.cpp
+        include/engine/components/MeshComponent.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
@@ -44,6 +57,31 @@ CPMAddPackage(
 )
 
 target_link_libraries(${PROJECT_NAME} PUBLIC glm::glm)
+# =====================================================================================================
+
+# nlohmann_json ========================================================================================
+CPMAddPackage(
+        NAME "nlohmann_json"
+        GITHUB_REPOSITORY "nlohmann/json"
+        GIT_TAG "v3.11.3"
+)
+target_link_libraries(${PROJECT_NAME} PUBLIC nlohmann_json::nlohmann_json)
+# =====================================================================================================
+
+# EnTT ================================================================================================
+CPMAddPackage(
+        NAME EnTT
+        VERSION 3.13.1
+        GITHUB_REPOSITORY skypjack/entt
+        # EnTT's CMakeLists screws with configuration options
+        DOWNLOAD_ONLY True
+)
+
+if (EnTT_ADDED)
+    add_library(EnTT INTERFACE)
+    target_include_directories(EnTT INTERFACE ${EnTT_SOURCE_DIR}/src)
+    target_link_libraries(${PROJECT_NAME} PUBLIC EnTT)
+endif()
 # =====================================================================================================
 
 ## assimp ===============================================================================================
