@@ -14,6 +14,7 @@
 
 #include <memory>
 
+
 struct PixelColor
 {
     uint8_t r;
@@ -26,18 +27,15 @@ struct ImageData
     int w;
     int h;
     int comp;
+    int originalComp;
     unsigned char* pixels;
 
     PixelColor getPixel(int x, int y)
     {
-        PixelColor color{};
-        int index = (y * w + x) * comp;
-        color.r = pixels[index];
-        color.g = pixels[index + 1];
-        color.b = pixels[index + 2];
-        color.a = comp == 4 ? pixels[index + 3] : 255;
-        return color;
+        int i = y * this->w + x;
+        return PixelColor { .r = this->pixels[i], .g = this->pixels[i + 1], .b = this->pixels[i + 2], .a = this->pixels[i + 3] };
     }
+
 
     void setPixel(int x, int y, PixelColor color)
     {

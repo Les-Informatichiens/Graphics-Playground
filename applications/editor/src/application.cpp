@@ -98,7 +98,8 @@ void application::run()
                 {
                     ImGui::InputText("File path", const_cast<char*>(selectedImagePath.c_str()) + 2, selectedImagePath.size(), ImGuiInputTextFlags_None);
 
-                    imageData.pixels = stbi_load(selectedImagePath.c_str(), &imageData.w, &imageData.h, &imageData.comp, STBI_rgb_alpha);
+                    imageData.comp = STBI_rgb_alpha;
+                    imageData.pixels = stbi_load(selectedImagePath.c_str(), &imageData.w, &imageData.h, &imageData.originalComp, STBI_rgb_alpha);
                     auto texDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, imageData.w, imageData.h, TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled);
                     imageTexture = gameEngine.getRenderer().getDevice().createTexture(texDesc);
                     imageTexture->upload(imageData.pixels, TextureRangeDesc::new2D(0, 0, imageData.w, imageData.h));
@@ -168,19 +169,39 @@ void application::run()
 
                 // INVERT COLORS
                 if (ImGui::Button("Invert Colors")) {
-                    // Inversez les composantes RVB de chaque pixel de l'image
-                    for (int y = 0; y < imageData.h; ++y)
+                    if (imageData.pixels != nullptr)
                     {
-                        for (int x = 0; x < imageData.w; ++x)
+                        for (int y = 0; y < imageData.h; ++y)
                         {
-                            int pixelIndex = (y * imageData.w + x) * imageData.comp;
+                            for (int x = 0; x < imageData.w; ++x)
+                            {
+                                // Obtenir l'index du pixel dans les données d'image
+                                int pixelIndex = (y * imageData.w + x) * imageData.comp;
 
-                            // Inversez les composantes RVB en soustrayant chaque composante de 255
-                            imageData.pixels[pixelIndex] = 255 - imageData.pixels[pixelIndex];     // Rouge
-                            imageData.pixels[pixelIndex + 1] = 255 - imageData.pixels[pixelIndex + 1]; // Vert
-                            imageData.pixels[pixelIndex + 2] = 255 - imageData.pixels[pixelIndex + 2]; // Bleu
+                                // Vérifier s'il y a un canal alpha dans l'image
+                                bool hasAlpha = imageData.comp == 4;
+
+                                // Appliquer l'inversion des couleurs RVB
+                                imageData.pixels[pixelIndex] = 255 - imageData.pixels[pixelIndex];         // Rouge
+                                imageData.pixels[pixelIndex + 1] = 255 - imageData.pixels[pixelIndex + 1]; // Vert
+                                imageData.pixels[pixelIndex + 2] = 255 - imageData.pixels[pixelIndex + 2]; // Bleu
+
+                                // Assurer que les valeurs restent dans la plage valide (0-255)
+                                imageData.pixels[pixelIndex] = std::clamp(imageData.pixels[pixelIndex], uint8_t(0), uint8_t(255));
+                                imageData.pixels[pixelIndex+1] = std::clamp(imageData.pixels[pixelIndex+1], uint8_t(0), uint8_t(255));
+                                imageData.pixels[pixelIndex+2] = std::clamp(imageData.pixels[pixelIndex+2], uint8_t(0), uint8_t(255));
+
+//                                // Ignorer l'inversion du canal alpha s'il est présent
+//                                if (!hasAlpha)
+//                                {
+//                                    imageData.pixels[pixelIndex + 3] = 255 - imageData.pixels[pixelIndex + 3]; // Alpha
+//                                    if (imageData.pixels[pixelIndex + 3] > 255)
+//                                        imageData.pixels[pixelIndex + 3] = 255;
+//                                }
+                            }
                         }
                     }
+
                     imageTexture->upload(imageData.pixels, TextureRangeDesc::new2D(0, 0, imageData.w, imageData.h));
                 }
 
