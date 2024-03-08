@@ -86,10 +86,10 @@ Transform Transform::operator*(const Transform& other) const
     Transform result;
 
     // Rotate the position vector of the other transform by the rotation of the current transform
-    glm::vec3 rotatedPosition = this->rotation_ * other.position_;
+    glm::vec3 rotatedPosition = glm::rotate(other.rotation_, this->position_);
 
     // Calculate the resulting position considering the scale and rotation of both transforms
-    result.position_ = this->position_ + rotatedPosition * this->scale_;
+    result.position_ = other.position_ + rotatedPosition;
 
     // Combine the rotations of both transforms
     result.rotation_ = other.rotation_ * this->rotation_;
@@ -104,4 +104,12 @@ void Transform::lookAt(const glm::vec3& target, const glm::vec3& up)
 {
     glm::vec3 direction = glm::normalize(target - this->position_);
     this->rotation_ = glm::quatLookAt(direction, up);
+}
+
+Transform& Transform::operator=(const Transform& other)
+{
+    this->position_ = other.position_;
+    this->rotation_ = other.rotation_;
+    this->scale_ = other.scale_;
+    return *this;
 }

@@ -226,6 +226,11 @@ public:
         auto& rasterizationState = desc.rasterizationState;
         rasterizationState.cullMode = cullMode;
 
+        for (const auto& [name, textureSampler] : textureSamplers)
+        {
+            desc.fragmentUnitSamplerMap[textureSampler.index] = name;
+        }
+
         shaderProgram->preparePipelineDesc(desc);
     }
 //
@@ -253,8 +258,6 @@ private:
     std::unordered_map<std::string, TextureSamplerDesc> textureSamplers;
 
     DepthStencilDesc depthStencilDesc = {};
-
-    std::unordered_map<size_t, std::string> fragmentUnitSamplerMap;
 
     //Pipeline
 //    GraphicsPipelineDesc pipelineDesc;

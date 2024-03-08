@@ -222,9 +222,9 @@ void CommandBuffer::prepareForDraw()
             auto& textureState = vertTexturesCache[i];
             if (auto& texture = textureState.texture)
             {
-//                activeGraphicsPipeline->bindTextureUnit(i, BindTarget::BindTarget_Vertex);
-                context->uniform1i(static_cast<GLint>(i), static_cast<GLint>(textureState.textureUnit));
-                context->activeTexture(GL_TEXTURE0 + textureState.textureUnit);
+                activeGraphicsPipeline->bindTextureUnit(i, BindTarget::BindTarget_Vertex);
+//                context->uniform1i(static_cast<GLint>(i), static_cast<GLint>(textureState.textureUnit));
+//                context->activeTexture(GL_TEXTURE0 + textureState.textureUnit);
                 texture->bind();
                 freeTextureUnits.push(textureState.textureUnit);
                 textureState.textureUnit = -1;
@@ -245,9 +245,9 @@ void CommandBuffer::prepareForDraw()
             auto& textureState = fragTexturesCache[i];
             if (auto& texture = textureState.texture)
             {
-//                activeGraphicsPipeline->bindTextureUnit(i, BindTarget::BindTarget_Fragment);
-                context->uniform1i(static_cast<GLint>(i), static_cast<GLint>(textureState.textureUnit));
-                context->activeTexture(GL_TEXTURE0 + textureState.textureUnit);
+                activeGraphicsPipeline->bindTextureUnit(i, BindTarget::BindTarget_Fragment);
+//                context->uniform1i(static_cast<GLint>(i), static_cast<GLint>(textureState.textureUnit));
+//                context->activeTexture(GL_TEXTURE0 + textureState.textureUnit);
                 texture->bind();
                 freeTextureUnits.push(textureState.textureUnit);
                 textureState.textureUnit = -1;
@@ -304,22 +304,22 @@ void CommandBuffer::bindTexture(uint32_t index, uint8_t target, std::shared_ptr<
     {
         throw std::runtime_error("No free texture units available");
     }
-    int unit = freeTextureUnits.front();
+//    int unit = freeTextureUnits.front();
 //    std::cout << "Bound texture to unit: " << unit << std::endl;
     if ((target & BindTarget::BindTarget_Vertex) != 0)
     {
         auto& texState = vertTexturesCache[index];
         texState.texture = std::static_pointer_cast<Texture>(texture);
-        texState.textureUnit = unit;
-        freeTextureUnits.pop();
+        texState.textureUnit = index;//unit;
+//        freeTextureUnits.pop();
         vertTexturesDirtyCache.set(index);
     }
     if ((target & BindTarget::BindTarget_Fragment) != 0)
     {
         auto& texState = fragTexturesCache[index];
         texState.texture = std::static_pointer_cast<Texture>(texture);
-        texState.textureUnit = unit;
-        freeTextureUnits.pop();
+        texState.textureUnit = index;//unit;
+//        freeTextureUnits.pop();
         fragTexturesDirtyCache.set(index);
     }
 }

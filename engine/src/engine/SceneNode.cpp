@@ -21,7 +21,7 @@ void SceneNode::update(float dt)
 {
     if (parent)
     {
-        worldTransform = parent->worldTransform * transform;
+        worldTransform = transform * parent->worldTransform;
     }
     else
     {

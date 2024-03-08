@@ -66,7 +66,7 @@ void ImGuiRenderer::initialize(IDevice& device, uint32_t width, uint32_t height)
                     layout(location = 0) in vec2 vTex;
                     layout(location = 1) in vec4 vColor;
                     layout(location = 0) out vec4 FragColor;
-                    layout(location = 1) uniform sampler2D tex;
+                    layout(binding = 1) uniform sampler2D tex;
                     void main()
                     {
                         FragColor = vColor * texture(tex, vTex.st);
@@ -106,9 +106,9 @@ void ImGuiRenderer::initialize(IDevice& device, uint32_t width, uint32_t height)
                         .frontFace = FrontFace::CounterClockwise,
                         .polygonFillMode = PolygonFillMode::Fill,
                 },
-//                .fragmentUnitSamplerMap = {
-//                        {1, "tex"}
-//                },
+                .fragmentUnitSamplerMap = {
+                        {1, "tex"}
+                },
         });
     }
 

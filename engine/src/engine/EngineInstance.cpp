@@ -27,7 +27,7 @@ void EngineInstance::updateDisplay(int width, int height)
     desc.height = height;
 
     if (activeCamera)
-        activeCamera->setProjectionConfig(45.0f, (float)desc.width / (float)desc.height, 0.1f, 100.0f);
+        activeCamera->setProjectionConfig(90.0f, (float)desc.width / (float)desc.height, 0.1f, 100.0f);
 }
 
 void EngineInstance::initialize()
@@ -39,10 +39,51 @@ void EngineInstance::initialize()
     // ----------- Initializing scene objects ------------
 
     // Setup camera
-    activeCamera->setProjectionConfig(45.0f, (float)desc.width / (float)desc.height, 0.1f, 100.0f);
+    activeCamera->setProjectionConfig(90.0f, (float)desc.width / (float)desc.height, 0.1f, 100.0f);
 //    activeCamera->getTransform().setPosition({ 0.0f, 0.0f, 20.0f });
 
 
+    // Create materials
+
+    // normal material
+    {
+        // plain color material
+        auto vs = R"(
+            #version 450
+            layout(location = 0) in vec3 inPosition;
+            layout(location = 1) in vec3 inNormal;
+            layout(location = 2) in vec2 inTexCoord;
+
+            layout(location = 0) out vec3 fragNormal;
+
+            layout(binding = 0) uniform UBO {
+                mat4 model;
+                mat4 view;
+                mat4 proj;
+            } ubo;
+
+            void main() {
+                gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
+                mat3 normalMatrix = transpose(inverse(mat3(ubo.model)));
+                fragNormal = normalMatrix * inNormal;
+            }
+        )";
+
+        auto fs = R"(
+            #version 450
+            layout(location = 0) in vec3 fragNormal;
+            out vec4 fragColor;
+
+            void main() {
+                fragColor = vec4(fragNormal * 0.5 + 0.5, 1.0);
+            }
+        )";
+
+        auto shaderProgram = renderer.createShaderProgram(vs, fs);
+        normalMaterial = renderer.createMaterial(shaderProgram);
+    }
+
+    // test teapot material
     {
         auto vs = R"(
             #version 450
@@ -92,6 +133,105 @@ void EngineInstance::initialize()
         testMaterial = renderer.createMaterial(shaderProgram);
     }
 
+    // floor material with checkered pattern
+    {
+        auto vs = R"(
+            #version 450
+            layout(location = 0) in vec3 inPosition;
+            layout(location = 1) in vec3 inNormal;
+            layout(location = 2) in vec2 inTexCoord;
+
+            layout(location = 0) out vec3 fragNormal;
+            layout(location = 1) out vec2 fragTexCoord;
+
+            layout(binding = 0) uniform UBO {
+                mat4 model;
+                mat4 view;
+                mat4 proj;
+            } ubo;
+
+            void main() {
+                gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
+                mat3 normalMatrix = transpose(inverse(mat3(ubo.model)));
+                fragNormal = normalMatrix * inNormal;
+                fragTexCoord = inTexCoord;
+            }
+        )";
+
+        auto fs = R"(
+            #version 450
+            layout(location = 0) in vec3 fragNormal;
+            layout(location = 1) in vec2 fragTexCoord;
+            out vec4 fragColor;
+
+            void main() {
+                vec2 uv = fragTexCoord * 20.0;
+                vec3 color = vec3(1.0);
+                if (mod(int(uv.x) + int(uv.y), 2) == 0) {
+                    color = vec3(0.0);
+                }
+                fragColor = vec4(color, 1.0);
+            }
+        )";
+
+        auto shaderProgram = renderer.createShaderProgram(vs, fs);
+        floorMaterial = renderer.createMaterial(shaderProgram);
+
+        floorMaterial->setCullMode(CullMode::None);
+    }
+
+    // portal material: usage will be a simple textured mesh
+    {
+        auto vs = R"(
+            #version 450
+            layout(location = 0) in vec3 inPosition;
+            layout(location = 1) in vec3 inNormal;
+            layout(location = 2) in vec2 inTexCoord;
+
+            layout(location = 0) out vec3 fragNormal;
+            layout(location = 1) out vec2 fragTexCoord;
+
+            layout(binding = 0) uniform UBO {
+                mat4 model;
+                mat4 view;
+                mat4 proj;
+            } ubo;
+
+            void main() {
+                gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
+                mat3 normalMatrix = transpose(inverse(mat3(ubo.model)));
+                fragNormal = normalMatrix * inNormal;
+                fragTexCoord = inTexCoord;
+            }
+        )";
+
+        auto fs = R"(
+            #version 450
+            layout(location = 0) in vec3 fragNormal;
+            layout(location = 1) in vec2 fragTexCoord;
+            out vec4 fragColor;
+
+            layout(binding = 1) uniform sampler2D tex;
+
+            void main() {
+                fragColor = texture(tex, fragTexCoord);
+            }
+        )";
+
+        auto shaderProgram = renderer.createShaderProgram(vs, fs);
+        portalMaterial = renderer.createMaterial(shaderProgram);
+    }
+
+    // Portal Mesh
+    auto portalMesh = Mesh::createQuad();
+    portalMesh->vertices[0].texCoords = {0.0f, 0.0f};
+    portalMesh->vertices[1].texCoords = {1.0f, 0.0f};
+    portalMesh->vertices[2].texCoords = {1.0f, 1.0f};
+    portalMesh->vertices[3].texCoords = {0.0f, 1.0f};
+
+
+
+
     // Load teapot model
     std::shared_ptr<Mesh> m = std::make_shared<Mesh>();
     {
@@ -118,10 +258,13 @@ void EngineInstance::initialize()
 
     // Create a scene
     defaultScene = std::make_shared<Scene>();
+
+    // teapot gobbledygook
     {
         EntityView viewer = defaultScene->createEntity("viewer");
         viewer.addComponent<CameraComponent>(activeCamera);
-        viewer.getSceneNode().getTransform().setPosition({0.0f, 0.0f, 20.0f});
+        viewer.getSceneNode().getTransform().setPosition({0.0f, 6.0f, 20.0f});
+        viewer.getSceneNode().getTransform().setRotation({glm::radians(-20.0f), 0, 0.0f});
 
         EntityView root = defaultScene->createEntity("teapot");
         root.addComponent<MeshComponent>(m, testMaterial);
@@ -160,6 +303,75 @@ void EngineInstance::initialize()
         childNode.addChild(&teapotPOVNode);
 
         rootNode.addChild(&childNode);
+
+        viewer.getSceneNode().getTransform().lookAt(rootNode.getTransform().getPosition(), {0.0f, 1.0f, 0.0f});
+    }
+
+    // floor
+    {
+        auto floor = defaultScene->createEntity("floor");
+        floor.addComponent<MeshComponent>(Mesh::createQuad(10.0f), floorMaterial);
+        {
+            auto& floorNode = floor.getSceneNode();
+            floorNode.getTransform().setPosition({0.0f, -5.0f, 0.0f});
+            floorNode.getTransform().setScale({10.0f, 10.0f, 1.0f});
+            floorNode.getTransform().setRotation({glm::radians(90.0f), 0.0f, 0.0f});
+        }
+    }
+
+    // portal and its frame
+    {
+        auto portal = defaultScene->createEntity("portal");
+        portal.addComponent<MeshComponent>(portalMesh, portalMaterial);
+        {
+            auto& portalNode = portal.getSceneNode();
+            portalNode.getTransform().setPosition({0.0f, 0.0f, 0.0f});
+            portalNode.getTransform().setScale({5.0f, 5.0f, 1.0f});
+            portalNode.getTransform().setRotation({glm::radians(90.0f), 0.0f, 0.0f});
+
+            auto& portalMaterialComponent = portal.getComponent<MeshComponent>();
+            auto& portalMaterial = portalMaterialComponent.getMaterial();
+            auto samplerState = renderer.getDevice().createSamplerState(SamplerStateDesc::newLinear());
+            portalMaterial->setTextureSampler("tex", testRenderTexture, samplerState, 0);
+        }
+
+        // create a rectangular frame around the portal made of 4 cubes stretched to be a frame
+        auto portalFrame = defaultScene->createEntity("portalFrame");
+
+        // transform the frame pieces according to i
+        for (int i = 0; i < 4; i++)
+        {
+            auto framePart = defaultScene->createEntity("framePart" + std::to_string(i));
+            framePart.addComponent<MeshComponent>(Mesh::createCube(1.0f), normalMaterial);
+            auto& framePartNode = framePart.getSceneNode();
+
+            // transform the frame part according to i, add a scale parameter for the thickness, and the transformations are TRS
+            switch (i)
+            {
+                case 0:
+                    framePartNode.getTransform().setPosition({0.0f, 0.0f, -5.0f});
+                    framePartNode.getTransform().setScale({5.0f, 0.1f, 0.1f});
+                    break;
+                case 1:
+                    framePartNode.getTransform().setPosition({0.0f, 0.0f, 5.0f});
+                    framePartNode.getTransform().setScale({5.0f, 0.1f, 0.1f});
+                    break;
+                case 2:
+                    framePartNode.getTransform().setPosition({-5.0f, 0.0f, 0.0f});
+                    framePartNode.getTransform().setScale({0.1f, 0.1f, 5.0f});
+                    break;
+                case 3:
+                    framePartNode.getTransform().setPosition({5.0f, 0.0f, 0.0f});
+                    framePartNode.getTransform().setScale({0.1f, 0.1f, 5.0f});
+                    break;
+            }
+
+            portalFrame.getSceneNode().addChild(&framePartNode);
+            portalFrame.getSceneNode().getTransform().setRotation({glm::radians(90.0f), 0.0f, 0.0f});
+        }
+        portalFrame.getSceneNode().addChild(&portal.getSceneNode());
+        portalFrame.getSceneNode().getTransform().setPosition({6.0f, 0.0f, 0.0f});
+//        portal.getSceneNode().addChild(&portalFrame.getSceneNode());
     }
 
     stage.setScene(defaultScene);
@@ -184,6 +396,19 @@ void EngineInstance::updateSimulation(float dt)
                 childNode.getTransform().rotate(glm::angleAxis(glm::radians(4.0f), glm::vec3(0.0f, 1.0f, -1.0f)));
             }
         }
+    }
+
+    // slowly rotating portal
+    {
+        std::optional<EntityView> portalFrame_ = defaultScene->getEntityByName("portalFrame");
+        if (portalFrame_)
+        {
+            auto& portalFrameNode = portalFrame_->getSceneNode();
+            portalFrameNode.getTransform().rotate(glm::angleAxis(glm::radians(0.5f), glm::vec3(0.0f, 1.0f, 0.0f)));
+        }
+
+//        auto portal = defaultScene->getEntityByName("portal");
+//        portal->getSceneNode().getTransform().rotate(glm::angleAxis(glm::radians(0.5f), glm::vec3(1.0f, 0.0f, 0.0f)));
     }
 
     stage.update(dt);
