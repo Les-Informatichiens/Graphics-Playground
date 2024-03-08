@@ -253,7 +253,7 @@ void ImGuiRenderer::renderDrawData(ImDrawData* drawData, IDevice& device, IComma
                 }
 
                 // Draw
-                commandBuffer.drawIndexed(PrimitiveType::Triangle, pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? IndexFormat::UInt16 : IndexFormat::UInt32, *indexBuffer, pcmd->IdxOffset * sizeof(ImDrawIdx));
+//                commandBuffer.drawIndexed(PrimitiveType::Triangle, pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? IndexFormat::UInt16 : IndexFormat::UInt32, *indexBuffer, pcmd->IdxOffset * sizeof(ImDrawIdx));
             }
         }
     }

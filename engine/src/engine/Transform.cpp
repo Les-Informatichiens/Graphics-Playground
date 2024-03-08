@@ -5,6 +5,7 @@
 #include "engine/Transform.h"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/gtx/matrix_decompose.hpp"
+#include "glm/gtx/string_cast.hpp"
 #include <iostream>
 
 Transform::Transform(const glm::vec3& position, const glm::vec3& rotation, const glm::vec3& scale)
@@ -12,12 +13,17 @@ Transform::Transform(const glm::vec3& position, const glm::vec3& rotation, const
 {
 }
 
-Transform::Transform(const glm::mat4& modelMatrix)
+Transform::Transform(const glm::vec3& position, const glm::quat& rotation, const glm::vec3& scale)
+    : position_(position), rotation_(rotation), scale_(scale)
 {
-    glm::vec3 skew;
-    glm::vec4 perspective;
-    glm::decompose(modelMatrix, this->scale_, this->rotation_, this->position_, skew, perspective);
 }
+
+//Transform::Transform(const glm::mat4& modelMatrix)
+//{
+//    glm::vec3 skew;
+//    glm::vec4 perspective;
+//    glm::decompose(modelMatrix, this->scale_, this->rotation_, this->position_, skew, perspective);
+//}
 
 void Transform::translate(const glm::vec3& translation)
 {
@@ -68,7 +74,8 @@ void Transform::reset()
 
 glm::mat4 Transform::getModel() const
 {
-    glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 model = glm::identity<glm::mat4>();
+
     model = glm::translate(model, this->position_);
     model = model * glm::mat4_cast(this->rotation_);
     model = glm::scale(model, this->scale_);

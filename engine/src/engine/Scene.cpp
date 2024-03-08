@@ -8,6 +8,7 @@
 #include "engine/SceneRenderData.h"
 #include "engine/components/CameraComponent.h"
 #include "engine/components/MeshComponent.h"
+#include "glm/gtx/string_cast.hpp"
 
 
 Scene::Scene()
@@ -51,7 +52,9 @@ EntityView Scene::createEntity(const std::string& name)
     entityMap.emplace(uuid, EntityData{ name, uuid, registry.create() });
 
     EntityView entity = {uuid, this};
-    entity.addComponent<SceneNode>(EntityView{uuid, this});
+    auto& a = entity.addComponent<SceneNode>(EntityView{uuid, this});
+    std::cout << glm::to_string(a.getTransform().getModel()) << std::endl;
+
 
     return entity;
 }

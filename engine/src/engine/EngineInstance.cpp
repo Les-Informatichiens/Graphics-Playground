@@ -8,6 +8,8 @@
 #include "engine/OBJ_Loader.h"
 #include "engine/components/CameraComponent.h"
 #include "engine/components/MeshComponent.h"
+#include "glm/gtx/string_cast.hpp"
+
 #include <iostream>
 #include <utility>
 
@@ -445,6 +447,8 @@ void EngineInstance::renderFrame()
             SceneRenderData sceneRenderData;
             activeScene->getSceneRenderData(sceneRenderData);
             renderer.begin(camera.getRenderTarget());
+            //print camera model mat
+//            std::cout << "camera model mat: " << glm::to_string(cameraNode->getWorldTransform().getModel()) << std::endl;
             sceneRenderer.render(renderer, sceneRenderData, {glm::inverse(cameraNode->getWorldTransform().getModel()), camera.getCamera()->getProjection()});
             renderer.end();
         }

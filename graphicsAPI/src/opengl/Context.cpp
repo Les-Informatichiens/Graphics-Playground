@@ -7,7 +7,7 @@
 #include <iostream>
 
 // Macro to print which line has an error
-#ifndef Debug
+#ifdef Debug
 
 // X MACRO to define all of the OpenGL errors
 #define _LIST_OF_OPENGL_ERRORS           \
@@ -49,8 +49,8 @@ static void _glPrintErrors(const char* func, const char* file, const int line)
     }
 }
 
-//#   define glLog(x)  x; _glPrintErrors(#x, __FILE__, __LINE__)//; std::cout << #x << std::endl
-//#else
+#   define glLog(x)  x; _glPrintErrors(#x, __FILE__, __LINE__)//; std::cout << #x << std::endl
+#else
 #   define glLog(x) x
 #endif
 
@@ -132,6 +132,8 @@ void Context::drawArrays(GLenum mode, GLint first, GLsizei count)
 void Context::drawElements(GLenum mode, GLsizei count, GLenum type, const void* indices)
 {
     glLog(glDrawElements(mode, count, type, indices));
+    std::cout << "Renderer " << std::endl;
+
 }
 
 void Context::useProgram(GLuint program)

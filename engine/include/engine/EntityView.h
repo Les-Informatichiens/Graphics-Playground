@@ -66,8 +66,8 @@ private:
 private:
 //    class Impl;
 //    std::unique_ptr<Impl> pimpl;
-    util::UUID uuid;
-    entt::entity entityHandle;
+    util::UUID uuid = util::UUID(0);
+    entt::entity entityHandle = entt::null;
     Scene* scene = nullptr;
     SceneNode* sceneNode = nullptr;
 };

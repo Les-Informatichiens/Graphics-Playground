@@ -10,9 +10,14 @@
 class Transform
 {
 public:
+    static Transform identity()
+    {
+        return Transform(glm::vec3(0.0f), glm::identity<glm::quat>(), glm::vec3(1.0f));
+    }
     Transform() = default;
     Transform(const glm::vec3 &position, const glm::vec3 &rotation, const glm::vec3 &scale);
-    Transform(const glm::mat4& modelMatrix);
+    Transform(const glm::vec3 &position, const glm::quat &rotation, const glm::vec3 &scale);
+//    Transform(const glm::mat4& modelMatrix);
     ~Transform() = default;
 
     void translate(const glm::vec3 &translation);
@@ -41,5 +46,5 @@ public:
 
     glm::vec3 position_ = glm::vec3(0.0f);
     glm::quat rotation_ = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-    glm::vec3 scale_ = glm::vec3(1.0f);
+    glm::vec3 scale_ = glm::vec3(1.0f,  1.0f, 1.0f);
 };

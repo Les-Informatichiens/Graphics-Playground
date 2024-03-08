@@ -2,12 +2,13 @@
 // Created by Jonathan Richard on 2024-02-13.
 //
 
-#include "engine/graphics/Renderer.h"
-#include <iostream>
 #include "engine/SceneNode.h"
+#include "engine/graphics/Renderer.h"
+#include "glm/gtx/string_cast.hpp"
+#include <iostream>
 
 SceneNode::SceneNode(const EntityView& entityView)
-    : ownEntityView(std::move(entityView)), transform(), worldTransform(), parent(nullptr), children()
+    : ownEntityView(entityView), transform(), worldTransform(), parent(nullptr), children()
 {
 }
 

@@ -61,8 +61,8 @@ public:
     std::vector<SceneNode*>& getChildren() { return children; }
 
 private:
-    Transform transform;
-    Transform worldTransform;
+    Transform transform = Transform::identity();
+    Transform worldTransform = Transform::identity();
     entt::handle entity;
     EntityView ownEntityView;
 
