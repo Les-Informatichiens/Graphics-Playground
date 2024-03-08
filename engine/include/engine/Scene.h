@@ -8,6 +8,7 @@
 
 #include "entt/entt.hpp"
 
+#include <vector>
 #include <memory>
 #include <unordered_map>
 #include <vector>
