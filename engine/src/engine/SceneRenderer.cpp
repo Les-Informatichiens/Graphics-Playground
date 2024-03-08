@@ -6,11 +6,11 @@
 #include "engine/MeshRenderer.h"
 
 
-void SceneRenderer::render(graphics::Renderer& renderer, SceneRenderData& sceneData)
+void SceneRenderer::render(graphics::Renderer& renderer, const SceneRenderData& sceneData, const SceneCameraDesc& cameraDesc)
 {
     MeshRenderer meshRenderer;
-    for (auto& meshRenderData: sceneData.meshRenderData)
+    for (const auto& meshRenderData: sceneData.meshRenderData)
     {
-        meshRenderer.render(renderer, *meshRenderData.mesh, meshRenderData.modelMatrix);
+        meshRenderer.render(renderer, *meshRenderData.mesh, meshRenderData.material, meshRenderData.modelMatrix, cameraDesc.view, cameraDesc.projection);
     }
 }

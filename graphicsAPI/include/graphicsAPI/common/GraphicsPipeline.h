@@ -83,7 +83,7 @@ struct ColorBlendAttachmentStateDesc
 struct RasterizationStateDesc
 {
     CullMode cullMode = CullMode::None;
-    FrontFace frontFace = FrontFace::Clockwise;
+    FrontFace frontFace = FrontFace::CounterClockwise;
     PolygonFillMode polygonFillMode = PolygonFillMode::Fill;
 };
 
@@ -102,6 +102,68 @@ struct GraphicsPipelineDesc
    */
     std::unordered_map<size_t, std::string> vertexUnitSamplerMap;
     std::unordered_map<size_t, std::string> fragmentUnitSamplerMap;
+};
+
+template <class T>
+inline void hash_combine(std::size_t& seed, const T& v)
+{
+    std::hash<T> hasher;
+    seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+}
+
+struct ColorBlendAttachmentStateDescHash
+{
+    size_t operator()(const ColorBlendAttachmentStateDesc& desc) const
+    {
+        size_t hash = 0;
+        hash_combine(hash, std::hash<bool>{}(desc.blendEnabled));
+        hash_combine(hash, std::hash<BlendFactor>{}(desc.srcColorBlendFactor));
+        hash_combine(hash, std::hash<BlendFactor>{}(desc.dstColorBlendFactor));
+        hash_combine(hash, std::hash<BlendOp>{}(desc.colorBlendOp));
+        hash_combine(hash, std::hash<BlendFactor>{}(desc.srcAlphaBlendFactor));
+        hash_combine(hash, std::hash<BlendFactor>{}(desc.dstAlphaBlendFactor));
+        hash_combine(hash, std::hash<BlendOp>{}(desc.alphaBlendOp));
+        hash_combine(hash, std::hash<ColorWriteMask>{}(desc.colorWriteMask));
+        return hash;
+    }
+};
+
+struct RasterizationStateDescHash
+{
+    size_t operator()(const RasterizationStateDesc& desc) const
+    {
+        size_t hash = 0;
+        hash_combine(hash, std::hash<CullMode>{}(desc.cullMode));
+        hash_combine(hash, std::hash<FrontFace>{}(desc.frontFace));
+        hash_combine(hash, std::hash<PolygonFillMode>{}(desc.polygonFillMode));
+        return hash;
+    }
+};
+
+struct GraphicsPipelineDescHash
+{
+    size_t operator()(const GraphicsPipelineDesc& desc) const
+    {
+        size_t hash = 0;
+        hash_combine(hash, std::hash<std::shared_ptr<IPipelineShaderStages>>{}(desc.shaderStages));
+        hash_combine(hash, std::hash<std::shared_ptr<IVertexInputState>>{}(desc.vertexInputState));
+        for (const auto& colorBlendAttachmentState : desc.colorBlendAttachmentStates)
+        {
+            hash_combine(hash, ColorBlendAttachmentStateDescHash{}(colorBlendAttachmentState));
+        }
+        hash_combine(hash, RasterizationStateDescHash{}(desc.rasterizationState));
+        for (const auto& [unit, sampler] : desc.vertexUnitSamplerMap)
+        {
+            hash_combine(hash, unit);
+            hash_combine(hash, sampler);
+        }
+        for (const auto& [unit, sampler] : desc.fragmentUnitSamplerMap)
+        {
+            hash_combine(hash, unit);
+            hash_combine(hash, sampler);
+        }
+        return hash;
+    }
 };
 
 class IGraphicsPipeline

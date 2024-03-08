@@ -45,5 +45,12 @@ private:
     Stage stage;
     std::shared_ptr<Scene> defaultScene;
 
+    std::shared_ptr<ITexture> testRenderTexture;
+
     SceneRenderer sceneRenderer;
+
+    std::shared_ptr<graphics::Material> normalMaterial;
+    std::shared_ptr<graphics::Material> testMaterial;
+    std::shared_ptr<graphics::Material> floorMaterial;
+    std::shared_ptr<graphics::Material> portalMaterial;
 };

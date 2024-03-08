@@ -11,10 +11,12 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
+#include <vector>
 #include <optional>
 
 struct SceneRenderData;
 class EntityView;
+class SceneNode;
 
 class Scene
 {
@@ -32,6 +34,9 @@ public:
 
     std::optional<EntityView> getEntity(util::UUID uuid);
     std::optional<EntityView> getEntityByName(const std::string& name);
+
+    // retrieve all camera entities
+    std::vector<SceneNode*> getCameraNodes();
 
     void getSceneRenderData(SceneRenderData& sceneRenderData) const;
 

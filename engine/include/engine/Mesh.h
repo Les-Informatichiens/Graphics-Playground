@@ -6,6 +6,7 @@
 
 #include "glm/glm.hpp"
 #include <vector>
+#include <memory>
 
 class Mesh {
 public:
@@ -22,6 +23,9 @@ public:
     Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices);
 
     void normalize();
+
+    static std::shared_ptr<Mesh> createCube(float size = 1.0f);
+    static std::shared_ptr<Mesh> createQuad(float size = 1.0f);
 
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;

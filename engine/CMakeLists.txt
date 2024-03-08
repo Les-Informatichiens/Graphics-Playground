@@ -35,12 +35,24 @@ add_library(
         src/engine/SceneRenderer.cpp
         include/engine/SceneRenderer.h
         include/engine/SceneRenderData.h
-        src/engine/Entity.cpp
+        src/engine/EntityView.cpp
         include/engine/EntityView.h
         include/engine/util/UUID.h
         src/engine/util/UUID.cpp
         src/engine/components/MeshComponent.cpp
         include/engine/components/MeshComponent.h
+        src/engine/components/CameraComponent.cpp
+        include/engine/components/CameraComponent.h
+        src/engine/graphics/RenderTarget.cpp
+        include/engine/graphics/RenderTarget.h
+        src/engine/graphics/Material.cpp
+        include/engine/graphics/Material.h
+        src/engine/graphics/ShaderProgram.cpp
+        include/engine/graphics/ShaderProgram.h
+        src/engine/graphics/VertexData.cpp
+        include/engine/graphics/VertexData.h
+        src/engine/graphics/VertexDataLayout.cpp
+        include/engine/graphics/VertexDataLayout.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)

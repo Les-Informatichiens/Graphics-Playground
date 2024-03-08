@@ -158,17 +158,6 @@ public:
     virtual ~ISamplerState() = default;
 };
 
-/**
- * @brief Provides a hash function for igl::SamplerStateDesc.
- */
-namespace std {
-template<>
-struct hash<SamplerStateDesc> {
-    /**
-   * @brief Computes a hash value for igl::SamplerStateDesc.
-   *
-   * The hash value is based on all properties in the igl::SamplerStateDesc;
-   */
-    size_t operator()(SamplerStateDesc const& /*key*/) const;
+struct SamplerStateDescHash {
+    size_t operator()(const SamplerStateDesc& samplerStateDesc) const;
 };
-} // namespace std

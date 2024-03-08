@@ -65,3 +65,64 @@ void Mesh::normalize()
         vertex.normal = glm::normalize(vertex.normal);
     }
 }
+
+std::shared_ptr<Mesh> Mesh::createQuad(float size)
+{
+    std::vector<Vertex> vertices = {
+        {{-size, -size, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},
+        {{size, -size, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},
+        {{size, size, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+        {{-size, size, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+    };
+
+    std::vector<uint32_t> indices = {
+        0, 1, 2, 2, 3, 0,
+    };
+
+    return std::make_shared<Mesh>(vertices, indices);
+}
+std::shared_ptr<Mesh> Mesh::createCube(float size)
+{
+    std::vector<Vertex> vertices = {
+        {{-size, -size, -size}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}},
+        {{size, -size, -size}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f}},
+        {{size, size, -size}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}},
+        {{-size, size, -size}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f}},
+
+        {{-size, -size, size}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},
+        {{size, -size, size}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},
+        {{size, size, size}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+        {{-size, size, size}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+
+        {{-size, -size, -size}, {-1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+        {{-size, size, -size}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+        {{-size, size, size}, {-1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}},
+        {{-size, -size, size}, {-1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}},
+
+        {{size, -size, -size}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+        {{size, size, -size}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+        {{size, size, size}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}},
+        {{size, -size, size}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}},
+
+        {{-size, -size, -size}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},
+        {{-size, -size, size}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
+        {{size, -size, size}, {0.0f, -1.0f, 0.0f}, {1.0f, 1.0f}},
+        {{size, -size, -size}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f}},
+
+        {{-size, size, -size}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+        {{-size, size, size}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+        {{size, size, size}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
+        {{size, size, -size}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
+    };
+
+    std::vector<uint32_t> indices = {
+        0, 1, 2, 2, 3, 0,
+        4, 5, 6, 6, 7, 4,
+        8, 9, 10, 10, 11, 8,
+        12, 13, 14, 14, 15, 12,
+        16, 17, 18, 18, 19, 16,
+        20, 21, 22, 22, 23, 20,
+    };
+
+    return std::make_shared<Mesh>(vertices, indices);
+}

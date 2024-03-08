@@ -9,6 +9,7 @@
 #include "util/UUID.h"
 
 class Scene;
+class SceneNode;
 
 class EntityView
 {
@@ -33,13 +34,6 @@ public:
     }
 
     template<typename T>
-    T& getComponent() const
-    {
-        return scene->registry.get<T>(entityHandle);
-    }
-
-
-    template<typename T>
     bool hasComponent()
     {
         return scene->registry.any_of<T>(entityHandle);
@@ -50,6 +44,8 @@ public:
     {
         scene->registry.remove<T>(entityHandle);
     }
+
+    [[nodiscard]] SceneNode& getSceneNode();
 
     [[nodiscard]] const util::UUID& getUUID() const
     {
@@ -72,5 +68,6 @@ private:
 //    std::unique_ptr<Impl> pimpl;
     util::UUID uuid;
     entt::entity entityHandle;
-    Scene* scene;
+    Scene* scene = nullptr;
+    SceneNode* sceneNode = nullptr;
 };

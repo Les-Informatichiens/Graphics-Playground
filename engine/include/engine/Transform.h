@@ -28,10 +28,16 @@ public:
     void reset();
 
     [[nodiscard]] glm::mat4 getLookAt(const glm::vec3 &target, const glm::vec3 &up) const;
+    void lookAt(const glm::vec3 &target, const glm::vec3 &up);
 
     [[nodiscard]] glm::mat4 getModel() const;
 
     Transform operator*(const Transform &other) const;
+    Transform& operator=(const Transform &other);
+
+    [[nodiscard]] glm::vec3 getPosition() const { return position_; }
+    [[nodiscard]] glm::quat getRotation() const { return rotation_; }
+    [[nodiscard]] glm::vec3 getScale() const { return scale_; }
 
     glm::vec3 position_ = glm::vec3(0.0f);
     glm::quat rotation_ = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
