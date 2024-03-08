@@ -117,55 +117,73 @@ void application::run()
             if (ImGui::BeginTabItem("Color Spaces"))
             {
                 static ImVec4 color = ImVec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
-                static bool alpha_preview = true;
-                static bool alpha_half_preview = false;
-                static bool drag_and_drop = true;
-                static bool options_menu = true;
-                static bool hdr = false;
-                ImGuiColorEditFlags misc_flags = (hdr ? ImGuiColorEditFlags_HDR : 0) | (drag_and_drop ? 0 : ImGuiColorEditFlags_NoDragDrop) | (alpha_half_preview ? ImGuiColorEditFlags_AlphaPreviewHalf : (alpha_preview ? ImGuiColorEditFlags_AlphaPreview : 0)) | (options_menu ? 0 : ImGuiColorEditFlags_NoOptions);
+                static bool filter_enable = false;
 
-                ImGui::SeparatorText("Color picker");
-                static bool alpha = true;
-                static bool alpha_bar = true;
-                static bool side_preview = true;
-                static bool ref_color = false;
-                static ImVec4 ref_color_v(1.0f, 0.0f, 1.0f, 0.5f);
-                static int display_mode = 0;
-                static int picker_mode = 0;
-                ImGui::Checkbox("With Alpha", &alpha);
-                ImGui::Checkbox("With Alpha Bar", &alpha_bar);
-                ImGui::Checkbox("With Side Preview", &side_preview);
-                if (side_preview)
+                //COLOR FILTER
+                ImGui::Checkbox("Color filter", &filter_enable);
+
+                if (filter_enable)
                 {
-                    ImGui::SameLine();
-                    ImGui::Checkbox("With Ref Color", &ref_color);
-                    if (ref_color)
+                    ImGuiColorEditFlags flags = ImGuiColorEditFlags_AlphaBar
+                                                | ImGuiColorEditFlags_PickerHueBar
+                                                | ImGuiColorEditFlags_DisplayRGB
+                                                | ImGuiColorEditFlags_DisplayHSV
+                                                | ImGuiColorEditFlags_DisplayHex;
+
+                    ImGui::SetNextWindowSizeConstraints(ImVec2(100, 100), ImVec2(300, 300));
+                    ImGui::ColorPicker4("MyColor##4", (float*)&color, flags, NULL);
+
+                    // Appliquer le filtre de couleur à l'image lorsque la couleur est sélectionnée
+                    if (imageData.pixels != nullptr)
                     {
-                        ImGui::SameLine();
-                        ImGui::ColorEdit4("##RefColor", &ref_color_v.x, ImGuiColorEditFlags_NoInputs | misc_flags);
+                        // Parcourir tous les pixels de l'image
+                        for (int y = 0; y < imageData.h; ++y)
+                        {
+                            for (int x = 0; x < imageData.w; ++x)
+                            {
+                                // Obtenir l'index du pixel dans les données d'image
+                                int pixelIndex = (y * imageData.w + x) * imageData.comp;
+
+                                // Appliquer la couleur sélectionnée à chaque canal de couleur du pixel
+                                imageData.pixels[pixelIndex] = static_cast<unsigned char>(imageData.pixels[pixelIndex] * color.x); // Rouge
+                                imageData.pixels[pixelIndex + 1] = static_cast<unsigned char>(imageData.pixels[pixelIndex + 1] * color.y); // Vert
+                                imageData.pixels[pixelIndex + 2] = static_cast<unsigned char>(imageData.pixels[pixelIndex + 2] * color.z); // Bleu
+
+
+                                // Assurer que les valeurs restent dans la plage valide (0-255)
+                                if (imageData.pixels[pixelIndex] > 255)
+                                    imageData.pixels[pixelIndex] = 255;
+                                if (imageData.pixels[pixelIndex + 1] > 255)
+                                    imageData.pixels[pixelIndex + 1] = 255;
+                                if (imageData.pixels[pixelIndex + 2] > 255)
+                                    imageData.pixels[pixelIndex + 2] = 255;
+                                if (imageData.pixels[pixelIndex + 3] > 255)
+                                    imageData.pixels[pixelIndex + 3] = 255;
+                            }
+                        }
                     }
+
+
                 }
-                ImGui::Combo("Display Mode", &display_mode, "Auto/Current\0None\0RGB Only\0HSV Only\0Hex Only\0");
 
-                ImGui::Text("Set defaults in code:");
-                if (ImGui::Button("Default: Uint8 + HSV + Hue Bar"))
-                    ImGui::SetColorEditOptions(ImGuiColorEditFlags_Uint8 | ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_PickerHueBar);
-                if (ImGui::Button("Default: Float + HDR + Hue Wheel"))
-                    ImGui::SetColorEditOptions(ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_PickerHueWheel);
+                // INVERT COLORS
+                if (ImGui::Button("Invert Colors")) {
+                    // Inversez les composantes RVB de chaque pixel de l'image
+                    for (int y = 0; y < imageData.h; ++y)
+                    {
+                        for (int x = 0; x < imageData.w; ++x)
+                        {
+                            int pixelIndex = (y * imageData.w + x) * imageData.comp;
 
-                ImGuiColorEditFlags flags = misc_flags;
-                if (!alpha) flags |= ImGuiColorEditFlags_NoAlpha;// This is by default if you call ColorPicker3() instead of ColorPicker4()
-                if (alpha_bar) flags |= ImGuiColorEditFlags_AlphaBar;
-                if (!side_preview) flags |= ImGuiColorEditFlags_NoSidePreview;
-                if (picker_mode == 1) flags |= ImGuiColorEditFlags_PickerHueBar;
-                if (picker_mode == 2) flags |= ImGuiColorEditFlags_PickerHueWheel;
-                if (display_mode == 1) flags |= ImGuiColorEditFlags_NoInputs;  // Disable all RGB/HSV/Hex displays
-                if (display_mode == 2) flags |= ImGuiColorEditFlags_DisplayRGB;// Override display mode
-                if (display_mode == 3) flags |= ImGuiColorEditFlags_DisplayHSV;
-                if (display_mode == 4) flags |= ImGuiColorEditFlags_DisplayHex;
+                            // Inversez les composantes RVB en soustrayant chaque composante de 255
+                            imageData.pixels[pixelIndex] = 255 - imageData.pixels[pixelIndex];     // Rouge
+                            imageData.pixels[pixelIndex + 1] = 255 - imageData.pixels[pixelIndex + 1]; // Vert
+                            imageData.pixels[pixelIndex + 2] = 255 - imageData.pixels[pixelIndex + 2]; // Bleu
+                        }
+                    }
+                    imageTexture->upload(imageData.pixels, TextureRangeDesc::new2D(0, 0, imageData.w, imageData.h));
+                }
 
-                ImGui::SetNextWindowSizeConstraints(ImVec2(100, 100), ImVec2(300, 300));
-                ImGui::ColorPicker4("MyColor##4", (float*) &color, flags, ref_color ? &ref_color_v.x : NULL);
 
                 ImGui::EndTabItem();
             }
@@ -173,11 +191,50 @@ void application::run()
             // Third tab: Histogram
             if (ImGui::BeginTabItem("Histogram"))
             {
-                ImGui::Text("Histogram:");
 
-                if (ImGui::Button("Calculate and display histogram"))
-                {
-                }
+
+//                // Vérifiez d'abord si une image a été sélectionnée
+//                if (!selectedImagePath.empty() && imageData.pixels != nullptr)
+//                {
+//                    // Réinitialisation des bins
+//                    std::vector<int> binsRed(6, 0);
+//                    std::vector<int> binsGreen(6, 0);
+//                    std::vector<int> binsBlue(6, 0);
+//
+//                    // Parcours de l'image pour calculer l'histogramme
+//                    for (int y = 0; y < imageData.h; ++y)
+//                    {
+//                        for (int x = 0; x < imageData.w; ++x)
+//                        {
+//                            PixelColor color = imageData.getPixel(x, y);
+//                            binsRed[color.r / 42]++;
+//                            binsGreen[color.g / 42]++;
+//                            binsBlue[color.b / 42]++;
+//                        }
+//                    }
+//
+//                    // Affichage de l'histogramme
+//                    for (int i = 0; i < 6; ++i)
+//                    {
+//                        ImGui::Text("Bin %d:", i + 1);
+//
+//                        // Création d'un tableau pour stocker les valeurs des bins pour chaque canal de couleur
+//                        float values[3] = {
+//                                binsRed[i] / static_cast<float>(imageData.w * imageData.h),
+//                                binsGreen[i] / static_cast<float>(imageData.w * imageData.h),
+//                                binsBlue[i] / static_cast<float>(imageData.w * imageData.h)
+//                        };
+//
+//                        // Affichage de l'histogramme pour chaque canal de couleur
+//                        ImGui::PlotHistogram("Histogram", values, IM_ARRAYSIZE(values), 0, nullptr, 0.0f, 1.0f, ImVec2(0, 40));
+//
+//                    }
+//                }
+//                else
+//                {
+//                    ImGui::Text("No image is loaded.");
+//                }
+
 
                 ImGui::EndTabItem();
             }
@@ -195,6 +252,14 @@ void application::run()
         else
         {
             ImGui::Text("No image is loaded.");
+        }
+
+        if (ImGui::Button("Update image")){
+            if (imageTexture)
+            {
+                // Mettre à jour la texture de l'image avec les nouveaux pixels modifiés
+                imageTexture->upload(imageData.pixels, TextureRangeDesc::new2D(0, 0, imageData.w, imageData.h));
+            }
         }
 
         // End of column layout
@@ -258,7 +323,12 @@ void application::run()
         glfwPollEvents();
         windowShouldClose = glfwWindowShouldClose(window);
     }
+
+
 }
+
+
+
 
 application::~application()
 {
@@ -350,3 +420,6 @@ void application::shutdownImGui()
     ImGui_ImplGlfw_Shutdown();
     imguiInstance.shutdown();
 }
+
+
+

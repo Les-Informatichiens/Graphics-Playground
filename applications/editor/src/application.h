@@ -30,12 +30,23 @@ struct ImageData
 
     PixelColor getPixel(int x, int y)
     {
-        // implement get pixel at position x and y
+        PixelColor color{};
+        int index = (y * w + x) * comp;
+        color.r = pixels[index];
+        color.g = pixels[index + 1];
+        color.b = pixels[index + 2];
+        color.a = comp == 4 ? pixels[index + 3] : 255;
+        return color;
     }
 
     void setPixel(int x, int y, PixelColor color)
     {
-        // implement set pixel color at position x and y
+        int index = (y * w + x) * comp;
+        pixels[index] = color.r;
+        pixels[index + 1] = color.g;
+        pixels[index + 2] = color.b;
+        if (comp == 4)
+            pixels[index + 3] = color.a;
     }
 };
 
@@ -43,8 +54,8 @@ class application
 {
 public:
 
-    application(EngineInstance& engine, GLFWwindow *window)
-        : gameEngine(engine), window(window), imguiInstance({}) {};
+    application(EngineInstance& engine, GLFWwindow* window)
+        : gameEngine(engine), window(window), imguiInstance({}), imageData({}), imageTexture(nullptr) {};
 
     void init();
 
@@ -79,4 +90,6 @@ private:
     std::string selectedImagePath;
     ImageData imageData;
     std::shared_ptr<ITexture> imageTexture;
+    void calculateAndDisplayHistogram();
+    void histogram();
 };
