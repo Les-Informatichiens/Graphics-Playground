@@ -26,9 +26,12 @@ public:
 
     [[nodiscard]] std::shared_ptr<IGraphicsPipeline> getGraphicsPipeline() const { return graphicsPipeline; }
 
+    void setElementCount(uint32_t count) { elementCount = count; }
 private:
     std::shared_ptr<Material> material;
     std::shared_ptr<IVertexData> vertexData;
+
+    int elementCount = 0;
 
     std::shared_ptr<IGraphicsPipeline> graphicsPipeline;
 };

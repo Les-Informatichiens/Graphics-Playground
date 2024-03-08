@@ -41,6 +41,12 @@ public:
         return std::make_shared<VertexData>(getDevice(), layout, indexFormat, vertexCount, indexCount);
     }
 
+    std::shared_ptr<VertexData> createVertexData(const VertexDataLayout& layout, uint32_t vertexCount = 0) const
+    {
+        return std::make_shared<VertexData>(getDevice(), layout, IndexFormat::UInt32, vertexCount, 0);
+    }
+
+
     std::shared_ptr<IGraphicsPipeline> acquireGraphicsPipeline(const GraphicsPipelineDesc& desc);
 
     void shutdown();

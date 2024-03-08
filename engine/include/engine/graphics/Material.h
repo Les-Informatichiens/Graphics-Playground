@@ -156,7 +156,7 @@ public:
             auto tempData = std::vector<uint8_t>(size);
             memcpy(tempData.data(), data, size);
             uniformBuffers[name] = {size, tempData, nullptr, bindingPoint};
-            std::cout << "Created new uniform buffer: " << name << std::endl;
+//            std::cout << "Created new uniform buffer: " << name << std::endl;
         }
         else
         {
@@ -189,6 +189,8 @@ public:
                     .storage = ResourceStorage::Shared,
                 };
                 bufferDesc.buffer = device.createBuffer(newBufferDesc);
+                std::cout << "Created new uniform buffer: " << name << std::endl;
+
             }
             commandBuffer.bindBuffer(bufferDesc.bindingPoint, bufferDesc.buffer, 0);
         }
