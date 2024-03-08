@@ -2,16 +2,21 @@
 // Created by jeang on 2024-01-25.
 //
 
-
 #include "application.h"
 #include "backends/imgui_impl_glfw.h"
 #include <iostream>
+
+#include "ImGuiFileDialog.h"
+
 #define STB_IMAGE_IMPLEMENTATION
+#include "engine/stb_image.h"
+
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "engine/stb_image_write.h"
 
 
-//implement the application class here
-void application::init()
+        //implement the application class here
+        void application::init()
 {
     // Set the user pointer of the window to the application object
     // This is needed so that we can access "this" pointer in glfw callbacks
@@ -54,177 +59,206 @@ void application::run()
 
         beginImGuiFrame();
 
-        ImGui::Begin("Fenêtre ImGui");
+        ImGui::SetNextWindowSizeConstraints(ImVec2(1250, 650), ImVec2(FLT_MAX, FLT_MAX));
+        ImGui::Begin("Fenêtre Image",nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
-        if (ImGui::BeginTabBar("Tabs"))
+        // Début de la disposition en colonnes
+        ImGui::Columns(2, "MyColumns", false);
+        ImGui::SetColumnWidth(0, 550);
+
+
+        if (ImGui::BeginTabBar("Tabs", ImGuiTabBarFlags_None))
         {
             // Premier onglet : Importation et Exportation
             if (ImGui::BeginTabItem("Importation/Exportation"))
             {
-                ImGui::Text("Importation d’images :");
+
+                ImGui::Text("Importation d’image :");
                 if (ImGui::Button("Importer une image"))
                 {
-
+                    // Afficher le file dialog pour sélectionner une image
+                    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choisir une image", ".png,.jpg,.bmp");
                 }
 
-                ImGui::Text("Exportation d’images :");
-                if (ImGui::Button("Exporter l'image actuelle"))
+                // Vérifier si un fichier a été sélectionné dans le file dialog
+                if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
                 {
-//                    if (strlen(imagePath) > 0)
-//                    {
-//                        // Récupérer les données de l'image actuellement affichée dans votre scène
-//                        // Assurez-vous de remplacer ces valeurs par les bonnes données de votre application
-//                        int imageWidth = 640; // Largeur de l'image
-//                        int imageHeight = 480; // Hauteur de l'image
-//                        int channels = 4; // Nombre de canaux de couleur (par exemple, RGBA)
-//
-//                        // Récupérer les données de l'image actuellement affichée dans votre scène
-//                        unsigned char* imageData = ...; // Remplacez cette ligne par le code pour récupérer les données de votre image actuelle
-//
-//                        // Exporter l'image dans un fichier
-//                        saveImage(imagePath, imageWidth, imageHeight, channels, imageData);
-//                    }
-//                    else
-//                    {
-//                        // Afficher un message d'erreur si aucun fichier image n'a été sélectionné
-//                        // Vous pouvez utiliser ImGui::Text ou d'autres fonctions ImGui pour afficher le message
-//                    }
-                }
-
-                ImGui::EndTabItem();
-            }
-
-            // Deuxième onglet : Espaces de couleur
-            if (ImGui::BeginTabItem("Espaces de couleur"))
-
-
-            {
-                static ImVec4 color = ImVec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
-                static bool alpha_preview = true;
-                static bool alpha_half_preview = false;
-                static bool drag_and_drop = true;
-                static bool options_menu = true;
-                static bool hdr = false;
-                ImGuiColorEditFlags misc_flags = (hdr ? ImGuiColorEditFlags_HDR : 0) | (drag_and_drop ? 0 : ImGuiColorEditFlags_NoDragDrop) | (alpha_half_preview ? ImGuiColorEditFlags_AlphaPreviewHalf : (alpha_preview ? ImGuiColorEditFlags_AlphaPreview : 0)) | (options_menu ? 0 : ImGuiColorEditFlags_NoOptions);
-
-                ImGui::SeparatorText("Color picker");
-                static bool alpha = true;
-                static bool alpha_bar = true;
-                static bool side_preview = true;
-                static bool ref_color = false;
-                static ImVec4 ref_color_v(1.0f, 0.0f, 1.0f, 0.5f);
-                static int display_mode = 0;
-                static int picker_mode = 0;
-                ImGui::Checkbox("With Alpha", &alpha);
-                ImGui::Checkbox("With Alpha Bar", &alpha_bar);
-                ImGui::Checkbox("With Side Preview", &side_preview);
-                if (side_preview)
-                {
-                    ImGui::SameLine();
-                    ImGui::Checkbox("With Ref Color", &ref_color);
-                    if (ref_color)
+                    if (ImGuiFileDialog::Instance()->IsOk())
                     {
-                        ImGui::SameLine();
-                        ImGui::ColorEdit4("##RefColor", &ref_color_v.x, ImGuiColorEditFlags_NoInputs | misc_flags);
+                        // Récupérer le chemin de l'image sélectionnée
+                        selectedImagePath = ImGuiFileDialog::Instance()->GetFilePathName();
+
+                        // Fermer le file dialog
+                        ImGuiFileDialog::Instance()->Close();
                     }
                 }
-                ImGui::Combo("Display Mode", &display_mode, "Auto/Current\0None\0RGB Only\0HSV Only\0Hex Only\0");
 
-                ImGui::Text("Set defaults in code:");
-                if (ImGui::Button("Default: Uint8 + HSV + Hue Bar"))
-                    ImGui::SetColorEditOptions(ImGuiColorEditFlags_Uint8 | ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_PickerHueBar);
-                if (ImGui::Button("Default: Float + HDR + Hue Wheel"))
-                    ImGui::SetColorEditOptions(ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_PickerHueWheel);
-
-                ImGuiColorEditFlags flags = misc_flags;
-                if (!alpha)            flags |= ImGuiColorEditFlags_NoAlpha;        // This is by default if you call ColorPicker3() instead of ColorPicker4()
-                if (alpha_bar)         flags |= ImGuiColorEditFlags_AlphaBar;
-                if (!side_preview)     flags |= ImGuiColorEditFlags_NoSidePreview;
-                if (picker_mode == 1)  flags |= ImGuiColorEditFlags_PickerHueBar;
-                if (picker_mode == 2)  flags |= ImGuiColorEditFlags_PickerHueWheel;
-                if (display_mode == 1) flags |= ImGuiColorEditFlags_NoInputs;       // Disable all RGB/HSV/Hex displays
-                if (display_mode == 2) flags |= ImGuiColorEditFlags_DisplayRGB;     // Override display mode
-                if (display_mode == 3) flags |= ImGuiColorEditFlags_DisplayHSV;
-                if (display_mode == 4) flags |= ImGuiColorEditFlags_DisplayHex;
-
-                ImGui::SetNextWindowSizeConstraints(ImVec2(100, 100), ImVec2(300, 300));
-                ImGui::ColorPicker4("MyColor##4", (float*)&color, flags, ref_color ? &ref_color_v.x : nullptr);
-
-                ImGui::EndTabItem();
-            }
-
-            // Troisième onglet : Histogramme
-            if (ImGui::BeginTabItem("Histogramme"))
-            {
-                ImGui::Text("Histogramme :");
-                if (ImGui::Button("Calculer et afficher l'histogramme"))
+                // Afficher l'image sélectionnée dans la fenêtre "Fenêtre Image"
+                if (!selectedImagePath.empty())
                 {
-                    // Code pour calculer et afficher l'histogramme de l'image
-                }
+                    ImGui::InputText("File path", const_cast<char*>(selectedImagePath.c_str()), selectedImagePath.size(), ImGuiInputTextFlags_None);
 
-                ImGui::EndTabItem();
+                    imageData.pixels = stbi_load(selectedImagePath.c_str(), &imageData.w, &imageData.h, &imageData.comp, STBI_rgb_alpha);
+                    auto texDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, imageData.w, imageData.h, TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled);
+                    imageTexture = gameEngine.getRenderer().getDevice().createTexture(texDesc);
+                    imageTexture->upload(imageData.pixels, TextureRangeDesc::new2D(0, 0, imageData.w, imageData.h));
+                }
             }
 
-            ImGui::EndTabBar();
+            ImGui::Text("Exportation d’images :");
+            if (ImGui::Button("Exporter l'image actuelle"))
+            {
+
+            }
+
+            ImGui::EndTabItem();
         }
 
-        ImGui::End(); // End of ImGui window
+        // Deuxième onglet : Espaces de couleur
+        if (ImGui::BeginTabItem("Espaces de couleur"))
 
-        // Here we can have some ImGui code that would let the user
-        // control some state in the application.
-        // We can later put this in a better place, like separate classes
-        // that would handle the ImGui code for different parts of the application
-        // Jonathan Richard 2024-02-10
 
         {
-            static float f = 0.0f;
-            static int counter = 0;
+            static ImVec4 color = ImVec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
+            static bool alpha_preview = true;
+            static bool alpha_half_preview = false;
+            static bool drag_and_drop = true;
+            static bool options_menu = true;
+            static bool hdr = false;
+            ImGuiColorEditFlags misc_flags = (hdr ? ImGuiColorEditFlags_HDR : 0) | (drag_and_drop ? 0 : ImGuiColorEditFlags_NoDragDrop) | (alpha_half_preview ? ImGuiColorEditFlags_AlphaPreviewHalf : (alpha_preview ? ImGuiColorEditFlags_AlphaPreview : 0)) | (options_menu ? 0 : ImGuiColorEditFlags_NoOptions);
 
-            ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and append into it.
-
-            ImGui::Text("This is some useful text."); // Display some text (you can use a format strings too)
-
-            ImGui::Checkbox("Demo Window", &show_demo_window); // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
-
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f); // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-            if (ImGui::Button("Button")) // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
-
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-
-            ImGui::End();
-
-            if (show_demo_window)
+            ImGui::SeparatorText("Color picker");
+            static bool alpha = true;
+            static bool alpha_bar = true;
+            static bool side_preview = true;
+            static bool ref_color = false;
+            static ImVec4 ref_color_v(1.0f, 0.0f, 1.0f, 0.5f);
+            static int display_mode = 0;
+            static int picker_mode = 0;
+            ImGui::Checkbox("With Alpha", &alpha);
+            ImGui::Checkbox("With Alpha Bar", &alpha_bar);
+            ImGui::Checkbox("With Side Preview", &side_preview);
+            if (side_preview)
             {
-                ImGui::ShowDemoWindow(&show_demo_window);
+                ImGui::SameLine();
+                ImGui::Checkbox("With Ref Color", &ref_color);
+                if (ref_color)
+                {
+                    ImGui::SameLine();
+                    ImGui::ColorEdit4("##RefColor", &ref_color_v.x, ImGuiColorEditFlags_NoInputs | misc_flags);
+                }
             }
+            ImGui::Combo("Display Mode", &display_mode, "Auto/Current\0None\0RGB Only\0HSV Only\0Hex Only\0");
 
-            if (show_another_window)
-            {
-                ImGui::Begin("Another Window", &show_another_window);
-                ImGui::Text("Hello from another window!");
-                if (ImGui::Button("Close Me"))
-                    show_another_window = false;
-                ImGui::End();
-            }
+            ImGui::Text("Set defaults in code:");
+            if (ImGui::Button("Default: Uint8 + HSV + Hue Bar"))
+                ImGui::SetColorEditOptions(ImGuiColorEditFlags_Uint8 | ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_PickerHueBar);
+            if (ImGui::Button("Default: Float + HDR + Hue Wheel"))
+                ImGui::SetColorEditOptions(ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_PickerHueWheel);
+
+            ImGuiColorEditFlags flags = misc_flags;
+            if (!alpha)            flags |= ImGuiColorEditFlags_NoAlpha;        // This is by default if you call ColorPicker3() instead of ColorPicker4()
+            if (alpha_bar)         flags |= ImGuiColorEditFlags_AlphaBar;
+            if (!side_preview)     flags |= ImGuiColorEditFlags_NoSidePreview;
+            if (picker_mode == 1)  flags |= ImGuiColorEditFlags_PickerHueBar;
+            if (picker_mode == 2)  flags |= ImGuiColorEditFlags_PickerHueWheel;
+            if (display_mode == 1) flags |= ImGuiColorEditFlags_NoInputs;       // Disable all RGB/HSV/Hex displays
+            if (display_mode == 2) flags |= ImGuiColorEditFlags_DisplayRGB;     // Override display mode
+            if (display_mode == 3) flags |= ImGuiColorEditFlags_DisplayHSV;
+            if (display_mode == 4) flags |= ImGuiColorEditFlags_DisplayHex;
+
+            ImGui::SetNextWindowSizeConstraints(ImVec2(100, 100), ImVec2(300, 300));
+            ImGui::ColorPicker4("MyColor##4", (float*)&color, flags, ref_color ? &ref_color_v.x : NULL);
+
+            ImGui::EndTabItem();
         }
 
-        // ImGui UI calls should always be done between begin and end frame
-        endImGuiFrame();
+        // Troisième onglet : Histogramme
+        if (ImGui::BeginTabItem("Histogramme"))
+        {
+            ImGui::Text("Histogramme :");
+            if (ImGui::Button("Calculer et afficher l'histogramme"))
+            {
+                // Code pour calculer et afficher l'histogramme de l'image
+            }
 
-        // After ending the ImGui frame, we render the ImGui frame onto the current frame
-        // Jonathan Richard 2024-02-10
-        renderImGuiFrame();
+            ImGui::EndTabItem();
+        }
 
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-        windowShouldClose = glfwWindowShouldClose(window);
+        ImGui::EndTabBar();
+
+    ImGui::NextColumn();
+    ImGui::Separator();
+    if (imageTexture)
+    {
+        ImGui::Text("Image :");
+        ImGui::Image((ImTextureID)imageTexture.get(), ImVec2(imageTexture->getWidth(), imageTexture->getHeight()));
     }
+    else
+    {
+        ImGui::Text("No image is loaded.");
+    }
+
+    // Fin de la disposition en colonnes
+    ImGui::Columns(1);
+
+    ImGui::End(); // End of ImGui window
+
+    // Here we can have some ImGui code that would let the user
+    // control some state in the application.
+    // We can later put this in a better place, like separate classes
+    // that would handle the ImGui code for different parts of the application
+    // Jonathan Richard 2024-02-10
+
+    {
+        static float f = 0.0f;
+        static int counter = 0;
+
+        ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and append into it.
+
+        ImGui::Text("This is some useful text."); // Display some text (you can use a format strings too)
+
+        ImGui::Checkbox("Demo Window", &show_demo_window); // Edit bools storing our window open/close state
+        ImGui::Checkbox("Another Window", &show_another_window);
+
+        ImGui::SliderFloat("float", &f, 0.0f, 1.0f); // Edit 1 float using a slider from 0.0f to 1.0f
+        ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+
+        if (ImGui::Button("Button")) // Buttons return true when clicked (most widgets return true when edited/activated)
+            counter++;
+        ImGui::SameLine();
+        ImGui::Text("counter = %d", counter);
+
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+        ImGui::End();
+
+        if (show_demo_window)
+        {
+            ImGui::ShowDemoWindow(&show_demo_window);
+        }
+
+        if (show_another_window)
+        {
+            ImGui::Begin("Another Window", &show_another_window);
+            ImGui::Text("Hello from another window!");
+            if (ImGui::Button("Close Me"))
+                show_another_window = false;
+            ImGui::End();
+        }
+    }
+
+    // ImGui UI calls should always be done between begin and end frame
+    endImGuiFrame();
+
+    // After ending the ImGui frame, we render the ImGui frame onto the current frame
+    // Jonathan Richard 2024-02-10
+    renderImGuiFrame();
+
+    glfwSwapBuffers(window);
+    glfwPollEvents();
+    windowShouldClose = glfwWindowShouldClose(window);
+}
 }
 
 application::~application()
@@ -303,10 +337,10 @@ void application::renderImGuiFrame()
 
     // Execute the imgui rendering commands
     commandBuffer->beginRenderPass(renderPassDesc);
-//    std::cout << "Beginning ImGui renderPass" << std::endl;
+    //    std::cout << "Beginning ImGui renderPass" << std::endl;
 
     imguiInstance.renderFrame(gameEngine.getRenderer().getDevice(), *commandBuffer, nullptr, width, height);
-//    std::cout << "Ending ImGui renderPass" << std::endl;
+    //    std::cout << "Ending ImGui renderPass" << std::endl;
     commandBuffer->endRenderPass();
     commandPool->submitCommandBuffer(std::move(commandBuffer));
 }
@@ -317,12 +351,3 @@ void application::shutdownImGui()
     ImGui_ImplGlfw_Shutdown();
     imguiInstance.shutdown();
 }
-
-unsigned char* application::loadImage(const char* filename, int* width, int* height, int* channels)
-{
-    return stbi_load(filename, width, height, channels, STBI_rgb_alpha);
-}
-
-//void application::saveImage(const char* filename, int width, int height, int channels, const unsigned char* data) {
-//    stbi_write_png(filename, width, height, channels, data, width * channels);
-//}
