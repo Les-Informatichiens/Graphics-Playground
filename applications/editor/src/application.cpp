@@ -51,6 +51,33 @@
 
 std::unique_ptr<unsigned char[]> originalImageData;
 
+
+void calculateRGBHistogram(unsigned char* pixels, int width, int height, float* histogram) {
+    int numBins = 256; // 256 bins for each RGB channel
+    int histogramSize = 3 * numBins; // 3 channels (RGB)
+    std::fill(histogram, histogram + histogramSize, 0.0f);
+
+    for (int y = 0; y < height; ++y)
+    {
+        for (int x = 0; x < width; ++x)
+        {
+            int pixelIndex = (y * width + x) * 4;
+            int r = pixels[pixelIndex];
+            int g = pixels[pixelIndex + 1];
+            int b = pixels[pixelIndex + 2];
+
+            histogram[r]++;
+            histogram[numBins + g]++;
+            histogram[2 * numBins + b]++;
+        }
+    }
+
+    float totalPixels = width * height;
+    for (int i = 0; i < histogramSize; ++i) {
+        histogram[i] /= totalPixels;
+    }
+}
+
 void application::run()
 {
 
@@ -63,8 +90,6 @@ void application::run()
         gameEngine.renderFrame();
 
         beginImGuiFrame();
-        //add custom drawlist to imgui background draw list
-
 
         ImGui::SetNextWindowSizeConstraints(ImVec2(1250, 650), ImVec2(FLT_MAX, FLT_MAX));
         ImGui::Begin("Image", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
@@ -256,63 +281,53 @@ void application::run()
 
                 if (imageData.pixels != nullptr)
                 {
-                    // Create a histogram of all the hues in the image
+                    int numBins = 256;
+                    int histogramSize = 3 * numBins; // 3 channels (RGB)
+                    float* histogram = new float[histogramSize];
 
-                    // Create an array to store the histogram
-                    float histogram[256];
-                    std::memset(histogram, 0, sizeof(histogram));
+                    calculateRGBHistogram(imageData.pixels, imageData.w, imageData.h, histogram);
 
-                    // Calculate the histogram
-                    for (int y = 0; y < imageData.h; ++y)
+                    // draw colored bands from imgui primitives
+                    ImGui::Text("Histogram:");
+                    ImDrawList* draw_list = ImGui::GetWindowDrawList();
+                    ImVec2 canvas_pos = ImGui::GetCursorScreenPos();
+                    ImVec2 canvas_size = ImVec2(256, 100);
+                    float histogramMax = 0.0f;
+                    for (int i = 0; i < histogramSize; ++i)
                     {
-                        for (int x = 0; x < imageData.w; ++x)
+                        if (histogram[i] > histogramMax)
                         {
-                            int pixelIndex = (y * imageData.w + x) * imageData.comp;
-                            float r = imageData.pixels[pixelIndex] / 255.0f;
-                            float g = imageData.pixels[pixelIndex + 1] / 255.0f;
-                            float b = imageData.pixels[pixelIndex + 2] / 255.0f;
-
-                            float max = std::max(r, std::max(g, b));
-                            float min = std::min(r, std::min(g, b));
-                            float delta = max - min;
-                            float hue = 0.0f;
-                            if (delta != 0.0f)
-                            {
-                                if (max == r)
-                                {
-                                    hue = 60.0f * (g - b) / delta;
-                                }
-                                else if (max == g)
-                                {
-                                    hue = 60.0f * (2 + (b - r) / delta);
-                                }
-                                else if (max == b)
-                                {
-                                    hue = 60.0f * (4 + (r - g) / delta);
-                                }
-                            }
-                            if (hue < 0.0f)
-                            {
-                                hue += 360.0f;
-                            }
-                            histogram[std::clamp(static_cast<int>(hue), 0, 255)]++;
+                            histogramMax = histogram[i];
                         }
                     }
-
-                    // Find the maximum value in the histogram
-                    int max = 0;
-                    for (int i = 0; i < 256; ++i)
+                    for (int i = 0; i < histogramSize; ++i)
                     {
-                        if (histogram[i] > max)
+                        ImVec4 bandColor;
+                        // put each colored section on a new line
+                        float value = histogram[i] / histogramMax;
+
+                        int yOffset = 0;
+                        if (i < numBins)
                         {
-                            max = histogram[i];
+                            bandColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); // Red
+                            yOffset = 0;
+                            draw_list->AddRectFilled(ImVec2(canvas_pos.x + i, canvas_pos.y + canvas_size.y * (1 - value) - yOffset), ImVec2(canvas_pos.x + i + 1, canvas_pos.y + canvas_size.y - yOffset), IM_COL32(255, 0, 0, 255));
                         }
+                        else if (i < 2 * numBins)
+                        {
+                            bandColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); // Green
+                            yOffset = -1 * 100;
+                            draw_list->AddRectFilled(ImVec2(canvas_pos.x + i - numBins, canvas_pos.y + canvas_size.y * (1 - value) - yOffset), ImVec2(canvas_pos.x + i - numBins + 1, canvas_pos.y + canvas_size.y - yOffset), IM_COL32(0, 255, 0, 255));
+                        }
+                        else
+                        {
+                            bandColor = ImVec4(0.0f, 0.0f, 1.0f, 1.0f); // Blue
+                            yOffset = -2 * 100;
+                            draw_list->AddRectFilled(ImVec2(canvas_pos.x + i - 2 * numBins, canvas_pos.y + canvas_size.y * (1 - value) - yOffset), ImVec2(canvas_pos.x + i - 2 * numBins + 1, canvas_pos.y + canvas_size.y - yOffset), IM_COL32(0, 0, 255, 255));
+                        }
+
                     }
 
-
-                    // Draw the histogram
-                    ImVec2 histogramSize(256, 100);
-                    ImGui::PlotHistogram("Histogram", histogram, 256, 0, NULL, 0, max, histogramSize);
 
                 }
 
@@ -351,7 +366,7 @@ void application::run()
             static float f = 0.0f;
             static int counter = 0;
 
-            ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and append into it.
+            ImGui::Begin("Menu"); // Create a window called "Hello, world!" and append into it.
 
             ImGui::Text("This is some useful text."); // Display some text (you can use a format strings too)
 
