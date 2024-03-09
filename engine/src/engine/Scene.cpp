@@ -35,6 +35,9 @@ void Scene::getSceneRenderData(SceneRenderData& sceneRenderData) const
 
     // iterate over all entities with a SceneNode and MeshComponent
     registry.view<SceneNode, MeshComponent>().each([&sceneRenderData](const SceneNode& node, const MeshComponent& mesh){
+        if (!node.isVisible())
+            return;
+
         sceneRenderData.meshRenderData.push_back({node.getWorldTransform().getModel(), mesh.getMesh().get(), mesh.getMaterial()});
 
         if (node.showBoundingBox)
@@ -43,9 +46,9 @@ void Scene::getSceneRenderData(SceneRenderData& sceneRenderData) const
             Bounds bounds = mesh.getMesh()->bounds;
 
             // create line segments for each edge of the bounding box, we can join the segments from the top and bottom of the box
-            glm::vec3 min = bounds.getMin() * node.getWorldTransform().getScale();
-            glm::vec3 max = bounds.getMax() * node.getWorldTransform().getScale();
-            glm::vec3 size = bounds.getSize() * node.getWorldTransform().getScale();
+            glm::vec3 min = bounds.getMin();
+            glm::vec3 max = bounds.getMax();
+            glm::vec3 size = bounds.getSize();
 
             std::vector<glm::vec3> points = {
                     min,
@@ -156,4 +159,16 @@ std::vector<SceneNode*> Scene::getCameraNodes()
         cameraNodes.push_back(&node);
     });
     return cameraNodes;
+}
+
+std::vector<EntityView> Scene::getRootEntities()
+{
+    std::vector<EntityView> rootEntities;
+    registry.view<SceneNode>().each([&rootEntities, this](entt::entity e, SceneNode& node){
+        if (!node.hasParent())
+        {
+            rootEntities.push_back(node.getEntityView());
+        }
+    });
+    return rootEntities;
 }

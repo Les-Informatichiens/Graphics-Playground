@@ -25,7 +25,23 @@ void application::init()
         {
             glfwSetWindowShouldClose(window, GLFW_TRUE);
         }
+        auto* app = (application*)glfwGetWindowUserPointer(window);
+        app->onKey(key, scancode, action, mods);
     });
+    glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods) {
+        auto* app = (application*)glfwGetWindowUserPointer(window);
+        app->onMouseButton(button, action, mods);
+    });
+    glfwSetCursorPosCallback(window, [](GLFWwindow* window, double xpos, double ypos) {
+        auto* app = (application*)glfwGetWindowUserPointer(window);
+        app->onMouseMove(xpos, ypos);
+    });
+
+    glfwSetScrollCallback(window, [](GLFWwindow* window, double xoffset, double yoffset) {
+        auto* app = (application*)glfwGetWindowUserPointer(window);
+        app->onMouseScroll(xoffset, yoffset);
+    });
+
     // add window resize callback and bind this object's pointer to it
     glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width_, int height_) {
         auto* app = (application*)glfwGetWindowUserPointer(window);
@@ -48,10 +64,46 @@ void application::run()
 {
     while (!windowShouldClose)
     {
+        //update engine input with glfw input
+        auto& input = gameEngine.getInput();
+
         // We will update the simulation and render the frame before rendering the ImGui frame
         // This is to simulate the game engine running and rendering a frame before the ImGui frame is rendered on top of it
         // Jonathan Richard 2024-02-10
         gameEngine.updateSimulation(0.0f);
+
+        if (auto scene = gameEngine.getStage().getScene())
+        {
+
+            auto viewer = scene->getEntityByName("viewer");
+            if (viewer)
+            {
+                auto& viewerNode = viewer->getSceneNode();
+                // make it turn in circles with system clock
+                if (cameraMotion)
+                    viewerNode.getTransform().setPosition({20.0f * glm::cos((float)clock()/1000.0f), 15.0f, 20.0f * glm::sin((float)clock()/1000.0f)});
+
+                if (lockCamOnSelected)
+                {
+                    auto selected = sceneEditor.getLastSelectedEntity();
+                    if (selected.first && scene->getEntity(selected.second)->getName() != "viewer")
+                    {
+                        auto& selectedNode = scene->getEntity(selected.second)->getSceneNode();
+                        viewerNode.getTransform().lookAt(selectedNode.getWorldTransform().getPosition(), glm::vec3(0.0f, 1.0f, 0.0f));
+                    }
+                    else
+                    {
+                        viewerNode.getTransform().lookAt({0.0f, 0.0f, 0.0f}, glm::vec3(0.0f, 1.0f, 0.0f));
+                    }
+                }
+                else
+                {
+                    viewerNode.getTransform().lookAt({0.0f, 0.0f, 0.0f}, glm::vec3(0.0f, 1.0f, 0.0f));
+                }
+            }
+        }
+
+
         gameEngine.renderFrame();
 
         beginImGuiFrame();
@@ -74,14 +126,10 @@ void application::run()
 
             ImGui::Checkbox("Demo Window", &show_demo_window); // Edit bools storing our window open/close state
             ImGui::Checkbox("Vector drawing window", &show_another_window);
-
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f); // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-            if (ImGui::Button("Button")) // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
+            ImGui::Checkbox("Scene Editor", &show_editor);
+            ImGui::Checkbox("Camera Render Texture", &show_pov_cam);
+            ImGui::Checkbox("Lock Camera on Selected", &lockCamOnSelected);
+            ImGui::Checkbox("Camera Motion", &cameraMotion);
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
@@ -98,18 +146,25 @@ void application::run()
                 vectorDrawer.draw(ImGui::GetBackgroundDrawList());
                 ImGui::End();
             }
-        }
 
-        ImGui::Begin("Camera");
-        auto cameraEntity = gameEngine.getStage().getScene()->getEntityByName("teapotPOV");
-        if (cameraEntity)
-        {
-            auto& camera = cameraEntity->getComponent<CameraComponent>();
-            // allow the image to scale according to the window size
-            ImGui::Image((ImTextureID)camera.getRenderTarget().colorTexture.get(), ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y));
-        }
-        ImGui::End();
+            if (show_editor)
+            {
+                sceneEditor.draw();
+            }
 
+            if (show_pov_cam)
+            {
+                ImGui::Begin("Camera", &show_pov_cam);
+                auto cameraEntity = gameEngine.getStage().getScene()->getEntityByName("teapotPOV");
+                if (cameraEntity)
+                {
+                    auto& camera = cameraEntity->getComponent<CameraComponent>();
+                    // allow the image to scale according to the window size
+                    ImGui::Image((ImTextureID) camera.getRenderTarget().colorTexture.get(), ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y));
+                }
+                ImGui::End();
+            }
+        }
 
         // ImGui UI calls should always be done between begin and end frame
         endImGuiFrame();
@@ -117,6 +172,9 @@ void application::run()
         // After ending the ImGui frame, we render the ImGui frame onto the current frame
         // Jonathan Richard 2024-02-10
         renderImGuiFrame();
+
+        input.update();
+
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -215,3 +273,24 @@ void application::shutdownImGui()
     imguiInstance.shutdown();
 }
 
+void application::onKey(int key, int scancode, int action, int mods)
+{
+    bool pressed = (action == GLFW_PRESS || action == GLFW_REPEAT) && action != GLFW_RELEASE;
+    gameEngine.getInput().setKeyPressed(key, pressed);
+}
+
+void application::onMouseButton(int button, int action, int mods)
+{
+    bool pressed = (action == GLFW_PRESS) && action != GLFW_RELEASE;
+    gameEngine.getInput().setMouseButtonPressed(button, pressed);
+}
+
+void application::onMouseMove(double xpos, double ypos)
+{
+    gameEngine.getInput().setMousePosition(xpos, ypos);
+}
+
+void application::onMouseScroll(double xoffset, double yoffset)
+{
+    gameEngine.getInput().setMouseWheel(yoffset);
+}

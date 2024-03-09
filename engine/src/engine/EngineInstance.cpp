@@ -12,8 +12,10 @@
 #include <iostream>
 #include <utility>
 
+#undef OBJL_CONSOLE_OUTPUT
+
 EngineInstance::EngineInstance(InstanceDesc desc)
-    : desc(std::move(desc)), renderer(), stage(), sceneRenderer()
+    : desc(std::move(desc)), renderer(), stage(), sceneRenderer(), input()
 {
     activeCamera = std::make_unique<Camera>("camera");
 }
@@ -232,7 +234,6 @@ void EngineInstance::initialize()
 
 
 
-
     // Load teapot model
     std::shared_ptr<Mesh> m = std::make_shared<Mesh>();
     {
@@ -258,6 +259,57 @@ void EngineInstance::initialize()
         m->recalculateBounds();
     }
 
+
+    // Load spider mesh
+    std::shared_ptr<Mesh> spiderMesh = std::make_shared<Mesh>();
+    {
+        objl::Loader loader;
+        bool success = loader.LoadFile(desc.assetPath + "/test/cow.obj");
+        if (!success)
+        {
+            std::cerr << "Failed to load model" << std::endl;
+            return;
+        }
+        for (auto& LoadedVertice: loader.LoadedVertices)
+        {
+            Mesh::Vertex vertex{};
+            vertex.position = {LoadedVertice.Position.X, LoadedVertice.Position.Y, LoadedVertice.Position.Z};
+            vertex.normal = {LoadedVertice.Normal.X, LoadedVertice.Normal.Y, LoadedVertice.Normal.Z};
+            spiderMesh->vertices.push_back(vertex);
+        }
+        for (unsigned int LoadedIndice: loader.LoadedIndices)
+        {
+            spiderMesh->indices.push_back(LoadedIndice);
+        }
+        spiderMesh->normalize();
+        spiderMesh->recalculateBounds();
+    }
+
+    // standford bunny mesh
+    std::shared_ptr<Mesh> bunnyMesh = std::make_shared<Mesh>();
+    {
+        objl::Loader loader;
+        bool success = loader.LoadFile(desc.assetPath + "/test/suzanne.obj");
+        if (!success)
+        {
+            std::cerr << "Failed to load model" << std::endl;
+            return;
+        }
+        for (auto& LoadedVertice: loader.LoadedVertices)
+        {
+            Mesh::Vertex vertex{};
+            vertex.position = {LoadedVertice.Position.X, LoadedVertice.Position.Y, LoadedVertice.Position.Z};
+            vertex.normal = {LoadedVertice.Normal.X, LoadedVertice.Normal.Y, LoadedVertice.Normal.Z};
+            bunnyMesh->vertices.push_back(vertex);
+        }
+        for (unsigned int LoadedIndice: loader.LoadedIndices)
+        {
+            bunnyMesh->indices.push_back(LoadedIndice);
+        }
+        bunnyMesh->normalize();
+        bunnyMesh->recalculateBounds();
+    }
+
     // Create a scene
     defaultScene = std::make_shared<Scene>();
 
@@ -268,17 +320,28 @@ void EngineInstance::initialize()
         viewer.getSceneNode().getTransform().setPosition({0.0f, 6.0f, 3.0f});
         viewer.getSceneNode().getTransform().setRotation({glm::radians(-20.0f), 0, 0.0f});
 
+        EntityView cow = defaultScene->createEntity("cow");
+        cow.addComponent<MeshComponent>(spiderMesh, testMaterial);
+        cow.getSceneNode().getTransform().setPosition({-7.0f, 0.0f, -4.0f});
+        cow.getSceneNode().getTransform().setScale(glm::vec3(1.0f));
+        cow.getSceneNode().getTransform().setRotation({0.0f, glm::radians(20.0f), 0.0f});
+
+        EntityView bunny = defaultScene->createEntity("bunny");
+        bunny.addComponent<MeshComponent>(bunnyMesh, testMaterial);
+        bunny.getSceneNode().getTransform().setPosition({0.0f, 0.0f, 0.0f});
+        bunny.getSceneNode().getTransform().setScale(glm::vec3(2.0f));
+        bunny.getSceneNode().getTransform().setRotation({0.0f, 3.0f, 0.0f});
+
         EntityView root = defaultScene->createEntity("teapot");
         root.addComponent<MeshComponent>(m, testMaterial);
 
         auto& rootNode = root.getSceneNode();
-        rootNode.getTransform().setPosition({0.0f, 0.0f, 0.0f});
+        rootNode.getTransform().setPosition({-3.0f, 0.0f, 10.0f});
         rootNode.getTransform().setScale({1.f, 1.f, 1.f});
         rootNode.getTransform().setRotation({0.0f, 0.0f, 0.0f});
 
         // Create a child node
         EntityView child = defaultScene->createEntity("childTeapot");
-        child.getSceneNode().setShowBoundingBox(true);
 
         child.addComponent<MeshComponent>(m, testMaterial);
         auto& childNode = child.getSceneNode();
@@ -306,18 +369,26 @@ void EngineInstance::initialize()
 
 
         // Create a child node
-        EntityView child2 = defaultScene->createEntity("child2");
+        EntityView spherePortal = defaultScene->createEntity("spherePortal");
 
-        child2.addComponent<MeshComponent>(Mesh::createSphere(2.f), testMaterial);
-        auto& childNode2 = child2.getSceneNode();
-        childNode2.getTransform().setPosition({10.0f, 0.0f, 0.0f});
-        childNode2.getTransform().setScale({1.f, 1.f, 1.f});
-        childNode2.getTransform().setRotation({0.0f, 0.0f, 0.0f});
+        spherePortal.addComponent<MeshComponent>(Mesh::createSphere(3.f), portalMaterial);
+        auto& spherePortalNode = spherePortal.getSceneNode();
+        spherePortalNode.getTransform().setPosition({10.0f, 3.0f, 10.0f});
+        spherePortalNode.getTransform().setScale({1.f, 1.f, 1.f});
+        spherePortalNode.getTransform().setRotation({0.0f, 0.0f, 0.0f});
 
-        childNode.addChild(&childNode2);
+        // Create a child node
+        EntityView sphere = defaultScene->createEntity("sphere");
+
+        sphere.addComponent<MeshComponent>(Mesh::createSphere(2.f), normalMaterial);
+        auto& sphereNode = sphere.getSceneNode();
+        sphereNode.getTransform().setPosition({10.0f, 0.0f, 0.0f});
+        sphereNode.getTransform().setScale({1.f, 1.f, 1.f});
+        sphereNode.getTransform().setRotation({0.0f, 0.0f, 0.0f});
+
+        childNode.addChild(&sphereNode);
 
 
-        rootNode.addChild(&childNode);
         rootNode.addChild(&childNode);
 
         viewer.getSceneNode().getTransform().lookAt(rootNode.getTransform().getPosition(), {0.0f, 1.0f, 0.0f});
@@ -386,7 +457,7 @@ void EngineInstance::initialize()
             portalFrame.getSceneNode().getTransform().setRotation({glm::radians(90.0f), 0.0f, 0.0f});
         }
         portalFrame.getSceneNode().addChild(&portal.getSceneNode());
-        portalFrame.getSceneNode().getTransform().setPosition({6.0f, 0.0f, 0.0f});
+        portalFrame.getSceneNode().getTransform().setPosition({20.0f, 0.0f, 0.0f});
 //        portal.getSceneNode().addChild(&portalFrame.getSceneNode());
     }
 
@@ -427,14 +498,32 @@ void EngineInstance::updateSimulation(float dt)
 //        portal->getSceneNode().getTransform().rotate(glm::angleAxis(glm::radians(0.5f), glm::vec3(1.0f, 0.0f, 0.0f)));
     }
 
-    auto viewer = defaultScene->getEntityByName("viewer");
-    if (viewer)
-    {
-        auto& viewerNode = viewer->getSceneNode();
-        // make it turn in circles with system clock
-        viewerNode.getTransform().setPosition({10.0f * glm::cos((float)clock()/1000.0f), 6.0f, 10.0f * glm::sin((float)clock()/1000.0f)});
-        viewerNode.getTransform().lookAt({0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f});
-    }
+//    auto viewer = defaultScene->getEntityByName("viewer");
+//    if (viewer)
+//    {
+//        auto& viewerNode = viewer->getSceneNode();
+//        // make it turn in circles with system clock
+//        viewerNode.getTransform().setPosition({10.0f * glm::cos((float)clock()/1000.0f), 6.0f, 10.0f * glm::sin((float)clock()/1000.0f)});
+//        viewerNode.getTransform().lookAt({0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f});
+//
+//
+////        if (input.isMouseDragging(0))
+////        {
+////            std::cout << "Mouse dragging" << std::endl;
+////            std::cout << "Mouse drag delta: " << input.getMouseDragDeltaX() << ", " << input.getMouseDragDeltaY() << std::endl;
+////            auto& transform = viewerNode.getTransform();
+////
+////            // Create quaternions representing the x and y rotations
+////            glm::quat xRotation = glm::angleAxis(input.getMouseDragDeltaY() * 0.01f, glm::vec3(1.0f, 0.0f, 0.0f));  // X rotation around the right axis
+////            glm::quat yRotation = glm::angleAxis(input.getMouseDragDeltaX() * 0.01f, glm::vec3(0.0f, 1.0f, 0.0f));  // Y rotation around the up axis
+////
+////            // Combine the rotations
+////            glm::quat newRotation = xRotation * yRotation;
+////
+////            // Apply the new rotation to the transform
+////        }
+//
+//    }
 
     stage.update(dt);
 }
@@ -504,4 +593,9 @@ graphics::Renderer& EngineInstance::getRenderer()
 Stage& EngineInstance::getStage()
 {
     return stage;
+}
+
+Input& EngineInstance::getInput()
+{
+    return input;
 }

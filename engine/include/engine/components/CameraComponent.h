@@ -12,6 +12,7 @@
 
 class CameraComponent
 {
+    friend class SceneEditor;
 public:
     CameraComponent(std::shared_ptr<Camera> camera);
     CameraComponent(std::shared_ptr<Camera> camera, const graphics::RenderTarget& renderTarget);

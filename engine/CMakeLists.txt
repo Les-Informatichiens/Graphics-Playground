@@ -59,6 +59,8 @@ add_library(
         include/engine/util/Math.h
         src/engine/Bounds.cpp
         include/engine/Bounds.h
+        src/engine/Input.cpp
+        include/engine/Input.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)

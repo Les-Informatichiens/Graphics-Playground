@@ -23,7 +23,21 @@ const glm::mat4& Camera::getProjection() const
 
 void Camera::updateProjectionMatrix()
 {
-    this->projectionMatrix = glm::perspective(glm::radians(this->fov), this->aspectRatio, this->nearClip, this->farClip);
+    // Check if aspect ratio is NaN or infinite
+    if (std::isnan(this->aspectRatio) || std::isinf(this->aspectRatio)) {
+        return;
+    }
+
+    if (this->projectionType == ProjectionType::Orthographic)
+    {
+        this->projectionMatrix = glm::ortho(-this->orthoSize_, this->orthoSize_, -this->orthoSize_ / this->aspectRatio, this->orthoSize_ / this->aspectRatio, this->nearClip, this->farClip);
+        return;
+    }
+    else if (this->projectionType == ProjectionType::Perspective)
+    {
+        this->projectionMatrix = glm::perspective(glm::radians(this->fov), this->aspectRatio, this->nearClip, this->farClip);
+        return;
+    }
 }
 
 void Camera::setProjectionConfig(float fov, float aspectRatio, float nearClip, float farClip)
@@ -44,4 +58,20 @@ int Camera::getViewportWidth() const
 int Camera::getViewportHeight() const
 {
     return this->viewportHeight;
+}
+
+void Camera::setProjectionType(Camera::ProjectionType type)
+{
+    this->projectionType = type;
+    this->updateProjectionMatrix();
+}
+
+void Camera::setProjectionConfigVP(float fov, float viewportWidth, float viewportHeight, float nearClip, float farClip)
+{
+    this->viewportWidth = static_cast<int>(viewportWidth);
+    this->viewportHeight = static_cast<int>(viewportHeight);
+    this->aspectRatio = viewportWidth / viewportHeight;
+    this->nearClip = nearClip;
+    this->farClip = farClip;
+    this->updateProjectionMatrix();
 }

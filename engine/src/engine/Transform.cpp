@@ -70,7 +70,7 @@ glm::mat4 Transform::getModel() const
 {
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, this->position_);
-    model = model * glm::mat4_cast(this->rotation_);
+    model = model * glm::toMat4(this->rotation_);
     model = glm::scale(model, this->scale_);
     return model;
 }
@@ -112,4 +112,40 @@ Transform& Transform::operator=(const Transform& other)
     this->rotation_ = other.rotation_;
     this->scale_ = other.scale_;
     return *this;
+}
+
+/*
+public void rotate(Vec3 amount, float sensitivity)
+{
+    // apply mouse sensitivity
+    amount.mult(sensitivity);
+
+// create orientation vectors
+Vec3 up = Vec3.up();
+Vec3 lookat = getForward();
+Vec3 forward = new Vec3(lookat.x, 0, lookat.z).normalized();
+Vec3 side = Vec3.cross(up, forward);
+
+// rotate camera with quaternions created from axis and angle
+rotation = Quaternion.mult(Quaternion.fromAxis(up, amount.y), rotation);
+rotation = Quaternion.mult(Quaternion.fromAxis(side, amount.x), rotation);
+rotation = Quaternion.mult(Quaternion.fromAxis(forward, amount.z), rotation);
+
+// Ensure pitch stays within -90 and 90 degrees
+float pitch = MathUtils.clampf(getPitch(), -90 + MathUtils.FLOAT_ROUNDING_ERROR, 90 - MathUtils.FLOAT_ROUNDING_ERROR);
+rotation = Quaternion.fromEuler(new Vec3(pitch, getYaw(), 0));
+}
+ */
+void Transform::rotate(const glm::vec3& amount, float sensitivity)
+{
+    glm::vec3 amount_ = amount * sensitivity;
+    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+    glm::vec3 lookat = getForward();//glm::normalize(glm::rotate(this->rotation_, glm::vec3(0.0f, 0.0f, -1.0f)));
+    glm::vec3 forward = glm::normalize(glm::vec3(lookat.x, 0, lookat.z));
+    glm::vec3 side = glm::cross(up, forward);
+    rotation_ = glm::normalize(glm::quat(glm::angleAxis(amount_.y, up)) * rotation_);
+    rotation_ = glm::normalize(glm::quat(glm::angleAxis(amount_.x, side)) * rotation_);
+    rotation_ = glm::normalize(glm::quat(glm::angleAxis(amount_.z, forward)) * rotation_);
+    float pitch = glm::clamp(glm::degrees(glm::eulerAngles(rotation_)).x, -90.0f + glm::epsilon<float>(), 90.0f - glm::epsilon<float>());
+    rotation_ = glm::quat(glm::radians(glm::vec3(pitch, glm::degrees(glm::eulerAngles(rotation_)).y, 0.0f)));
 }
