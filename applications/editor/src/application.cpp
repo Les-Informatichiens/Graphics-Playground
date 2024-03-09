@@ -63,7 +63,7 @@ void application::run()
         beginImGuiFrame();
 
         ImGui::SetNextWindowSizeConstraints(ImVec2(1250, 650), ImVec2(FLT_MAX, FLT_MAX));
-        ImGui::Begin("Image Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Begin("Image", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
         // Beginning of column layout
         ImGui::Columns(2, "MyColumns", false);
@@ -120,12 +120,11 @@ void application::run()
             }
 
             // Second tab: Color Spaces
-            if (ImGui::BeginTabItem("Color Editor"))
+            if (ImGui::BeginTabItem("Image Editor"))
             {
-                static ImVec4 color = ImVec4(255.0f / 255.0f, 100.0f / 255.0f, 100.0f / 255.0f, 50.0f / 255.0f);
-                static bool filter_enable = false;
+                static ImVec4 color = ImVec4(0.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f, 128.0f / 255.0f);
 
-                // Color picker
+                // COLOR FILTER
                 ImGuiColorEditFlags flags = ImGuiColorEditFlags_AlphaBar
                                             | ImGuiColorEditFlags_PickerHueBar
                                             | ImGuiColorEditFlags_AlphaPreview
@@ -140,10 +139,8 @@ void application::run()
                 if (ImGui::Button("Apply filter"))
                 {
 
-                    // Appliquer le filtre de couleur à l'image lorsque la couleur est sélectionnée
                     if (imageData.pixels != nullptr && originalImageData != nullptr)
                     {
-                        // Restaurer les pixels de l'image d'origine
                         std::memcpy(imageData.pixels, originalImageData.get(), imageData.w * imageData.h * imageData.comp);
                         // Create a new texture to hold the color layer
                         std::unique_ptr<unsigned char[]> colorLayer(new unsigned char[imageData.w * imageData.h * imageData.comp]);
@@ -180,8 +177,9 @@ void application::run()
                     ImGui::Spacing();
                 }
 
-                ImGui::Text("Invert colors :");
                 // INVERT COLORS
+                ImGui::Text("Invert colors :");
+
                 if (ImGui::Button("Invert Colors")) {
                     if (imageData.pixels != nullptr)
                     {
@@ -189,15 +187,12 @@ void application::run()
                         {
                             for (int x = 0; x < imageData.w; ++x)
                             {
-                                // Obtenir l'index du pixel dans les données d'image
                                 int pixelIndex = (y * imageData.w + x) * imageData.comp;
 
-                                // Appliquer l'inversion des couleurs RVB
                                 imageData.pixels[pixelIndex] = 255 - imageData.pixels[pixelIndex];         // Rouge
                                 imageData.pixels[pixelIndex + 1] = 255 - imageData.pixels[pixelIndex + 1]; // Vert
                                 imageData.pixels[pixelIndex + 2] = 255 - imageData.pixels[pixelIndex + 2]; // Bleu
 
-                                // Assurer que les valeurs restent dans la plage valide (0-255)
                                 imageData.pixels[pixelIndex] = std::clamp(imageData.pixels[pixelIndex], uint8_t(0), uint8_t(255));
                                 imageData.pixels[pixelIndex+1] = std::clamp(imageData.pixels[pixelIndex+1], uint8_t(0), uint8_t(255));
                                 imageData.pixels[pixelIndex+2] = std::clamp(imageData.pixels[pixelIndex+2], uint8_t(0), uint8_t(255));
@@ -213,8 +208,7 @@ void application::run()
                     ImGui::Spacing();
                 }
 
-
-
+                //EXPORT
                 ImGui::Text("Image Export:");
                 if (ImGui::Button("Export Current Image"))
                 {
@@ -224,41 +218,30 @@ void application::run()
                     }
                 }
 
-                // Attendre que l'utilisateur sélectionne un emplacement de sauvegarde
                 if (ImGuiFileDialog::Instance()->Display("ExportFileDialogKey"))
                 {
                     if (ImGuiFileDialog::Instance()->IsOk())
                     {
-                        // Obtenir le chemin de sauvegarde sélectionné par l'utilisateur
                         std::string savePath = ImGuiFileDialog::Instance()->GetFilePathName();
-
-                        // Fermer la boîte de dialogue de sauvegarde
                         ImGuiFileDialog::Instance()->Close();
 
-                        // Récupérer la largeur et la hauteur de l'image
                         int width = imageData.w;
                         int height = imageData.h;
                         int channels = 4; // RGBA
 
-                        // Vérifier l'extension du fichier pour décider du format de sauvegarde
+                        // Check the selected extension
                         std::string extension = savePath.substr(savePath.find_last_of(".") + 1);
                         if (extension == "png")
                         {
-                            // Écrire l'image dans le format PNG en utilisant stb_image_write
                             stbi_write_png(savePath.c_str(), width, height, channels, imageData.pixels, width * channels);
                         }
                         else if (extension == "jpg" || extension == "jpeg")
                         {
-                            // Écrire l'image dans le format JPG en utilisant stb_image_write
                             stbi_write_jpg(savePath.c_str(), width, height, channels, imageData.pixels, 100);
                         }
 
                     }
                 }
-
-
-
-
 
                 ImGui::EndTabItem();
             }
@@ -267,8 +250,6 @@ void application::run()
             if (ImGui::BeginTabItem("Histogram"))
             {
 
-
-//                // Vérifiez d'abord si une image a été sélectionnée
 //                if (!selectedImagePath.empty() && imageData.pixels != nullptr)
 //                {
 //                    // Réinitialisation des bins
@@ -276,7 +257,6 @@ void application::run()
 //                    std::vector<int> binsGreen(6, 0);
 //                    std::vector<int> binsBlue(6, 0);
 //
-//                    // Parcours de l'image pour calculer l'histogramme
 //                    for (int y = 0; y < imageData.h; ++y)
 //                    {
 //                        for (int x = 0; x < imageData.w; ++x)
@@ -288,7 +268,6 @@ void application::run()
 //                        }
 //                    }
 //
-//                    // Affichage de l'histogramme
 //                    for (int i = 0; i < 6; ++i)
 //                    {
 //                        ImGui::Text("Bin %d:", i + 1);
@@ -300,14 +279,13 @@ void application::run()
 //                                binsBlue[i] / static_cast<float>(imageData.w * imageData.h)
 //                        };
 //
-//                        // Affichage de l'histogramme pour chaque canal de couleur
 //                        ImGui::PlotHistogram("Histogram", values, IM_ARRAYSIZE(values), 0, nullptr, 0.0f, 1.0f, ImVec2(0, 40));
 //
 //                    }
 //                }
 //                else
 //                {
-//                    ImGui::Text("No image is loaded.");
+                    ImGui::Text("Unable to show the histogram");
 //                }
 
 
