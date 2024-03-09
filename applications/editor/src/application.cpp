@@ -143,8 +143,11 @@ void application::run()
 
         beginImGuiFrame();
 
+        if (showImageWindow)
+        {
+
         ImGui::SetNextWindowSizeConstraints(ImVec2(1250, 650), ImVec2(FLT_MAX, FLT_MAX));
-        ImGui::Begin("Image", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Begin("Image", &showImageWindow, ImGuiWindowFlags_AlwaysAutoResize);
 
         // Beginning of column layout
         ImGui::Columns(2, "MyColumns", false);
@@ -406,6 +409,7 @@ void application::run()
         ImGui::Columns(1);
 
         ImGui::End();// End of ImGui window
+        }
 
 
     // Here we can have some ImGui code that would let the user
@@ -423,6 +427,7 @@ void application::run()
             ImGui::Text("This is some useful text."); // Display some text (you can use a format strings too)
 
             ImGui::Checkbox("Demo Window", &show_demo_window); // Edit bools storing our window open/close state
+            ImGui::Checkbox("Image Manipulation", &showImageWindow);
             ImGui::Checkbox("Vector drawing window", &show_another_window);
             ImGui::Checkbox("Scene Editor", &show_editor);
             ImGui::Checkbox("Camera Render Texture", &show_pov_cam);

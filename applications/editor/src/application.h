@@ -94,6 +94,7 @@ private:
     bool show_pov_cam = false;
     bool lockCamOnSelected = true;
     bool cameraMotion = true;
+    bool showImageWindow = false;
 
     picasso vectorDrawer;
 
