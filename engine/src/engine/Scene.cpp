@@ -35,7 +35,45 @@ void Scene::getSceneRenderData(SceneRenderData& sceneRenderData) const
 
     // iterate over all entities with a SceneNode and MeshComponent
     registry.view<SceneNode, MeshComponent>().each([&sceneRenderData](const SceneNode& node, const MeshComponent& mesh){
+        if (!node.isVisible())
+            return;
+
         sceneRenderData.meshRenderData.push_back({node.getWorldTransform().getModel(), mesh.getMesh().get(), mesh.getMaterial()});
+
+        if (node.showBoundingBox)
+        {
+            auto model = node.getWorldTransform().getModel();
+            Bounds bounds = mesh.getMesh()->bounds;
+
+            // create line segments for each edge of the bounding box, we can join the segments from the top and bottom of the box
+            glm::vec3 min = bounds.getMin();
+            glm::vec3 max = bounds.getMax();
+            glm::vec3 size = bounds.getSize();
+
+            std::vector<glm::vec3> points = {
+                    min,
+                    min + glm::vec3(size.x, 0.0f, 0.0f),
+                    min + glm::vec3(size.x, size.y, 0.0f),
+                    min + glm::vec3(0.0f, size.y, 0.0f),
+                    min,
+                    min + glm::vec3(0.0f, 0.0f, size.z),
+                    min + glm::vec3(size.x, 0.0f, size.z),
+                    min + glm::vec3(size.x, size.y, size.z),
+                    min + glm::vec3(0.0f, size.y, size.z),
+                    min + glm::vec3(0.0f, 0.0f, size.z),
+                    min + glm::vec3(size.x, 0.0f, size.z),
+                    min + glm::vec3(size.x, 0.0f, 0.0f),
+                    min + glm::vec3(size.x, size.y, 0.0f),
+                    min + glm::vec3(size.x, size.y, size.z),
+                    min + glm::vec3(0.0f, size.y, size.z),
+                    min + glm::vec3(0.0f, size.y, 0.0f)};
+
+            // split the points into lines
+            for (size_t i = 0; i < points.size() - 1; i++)
+            {
+                sceneRenderData.lineRenderData.push_back({{model * glm::vec4(points[i], 1.0f), model * glm::vec4(points[i + 1], 1.0f)}, {1.0f, 0.0f, 0.0f, 1.0f}});
+            }
+        }
     });
 }
 
@@ -121,4 +159,16 @@ std::vector<SceneNode*> Scene::getCameraNodes()
         cameraNodes.push_back(&node);
     });
     return cameraNodes;
+}
+
+std::vector<EntityView> Scene::getRootEntities()
+{
+    std::vector<EntityView> rootEntities;
+    registry.view<SceneNode>().each([&rootEntities, this](entt::entity e, SceneNode& node){
+        if (!node.hasParent())
+        {
+            rootEntities.push_back(node.getEntityView());
+        }
+    });
+    return rootEntities;
 }

@@ -19,6 +19,7 @@ class Renderer;
 class SceneNode
 {
     friend class Scene;
+    friend class SceneEditor;
 public:
     using VisitorCallback = std::function<void(SceneNode&)>;
 
@@ -33,6 +34,8 @@ public:
     SceneNode* findNode(const std::string& name);
     void visit(VisitorCallback callback);
 
+    void visitAndLeave(VisitorCallback callback, VisitorCallback leaveCallback);
+
     template <typename T>
     void visit(VisitorCallback callback)
     {
@@ -44,6 +47,20 @@ public:
         {
             child->visit<T>(callback);
         }
+    }
+
+    template <typename T>
+    void visitAndLeave(VisitorCallback callback, VisitorCallback leaveCallback)
+    {
+        if (ownEntityView.hasComponent<T>())
+        {
+            callback(*this);
+        }
+        for (auto* child : children)
+        {
+            child->visitAndLeave<T>(callback, leaveCallback);
+        }
+        leaveCallback(*this);
     }
 
     void setTransform(const Transform& transform_) { transform = transform_; }
@@ -60,6 +77,12 @@ public:
     [[nodiscard]] std::vector<SceneNode*>::const_iterator end() const { return children.end(); }
     std::vector<SceneNode*>& getChildren() { return children; }
 
+    void setShowBoundingBox(bool show) { showBoundingBox = show; }
+    [[nodiscard]] bool getShowBoundingBox() const { return showBoundingBox; }
+
+    void setVisible(bool visible_) { visible = visible_; }
+    [[nodiscard]] bool isVisible() const { return visible; }
+
 private:
     Transform transform;
     Transform worldTransform;
@@ -68,6 +91,8 @@ private:
 
     SceneNode* parent = nullptr;
     std::vector<SceneNode*> children;
+    bool showBoundingBox = false;
+    bool visible = true;
 };
 
 // Ensure components are not relocated in memory. This allows us to use raw

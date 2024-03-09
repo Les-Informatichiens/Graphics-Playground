@@ -18,6 +18,7 @@ public:
     void translate(const glm::vec3 &translation);
     void rotate(const glm::vec3 &rotation);
     void rotate(const glm::quat &rotation);
+    void rotate(const glm::vec3& amount, float sensitivity);
     void scale(const glm::vec3 &scale);
 
     void setPosition(const glm::vec3 &position);
@@ -29,6 +30,21 @@ public:
 
     [[nodiscard]] glm::mat4 getLookAt(const glm::vec3 &target, const glm::vec3 &up) const;
     void lookAt(const glm::vec3 &target, const glm::vec3 &up);
+
+    glm::vec3 getForward() const
+    {
+        return glm::normalize(glm::rotate(rotation_, glm::vec3(0.0f, 0.0f, 1.0f)));
+    }
+
+    glm::vec3 getRight() const
+    {
+        return glm::normalize(glm::rotate(rotation_, glm::vec3(1.0f, 0.0f, 0.0f)));
+    }
+
+    glm::vec3 getUp() const
+    {
+        return glm::normalize(glm::rotate(rotation_, glm::vec3(0.0f, 1.0f, 0.0f)));
+    }
 
     [[nodiscard]] glm::mat4 getModel() const;
 

@@ -31,7 +31,9 @@ void MeshRenderer::render(graphics::Renderer& renderer, const Mesh& mesh, const 
             { "inTexCoords", 2, VertexAttributeFormat::Float2 }
     });
 
-    auto vertexData = renderer.createIndexedVertexData(attribLayout, IndexFormat::UInt32, mesh.vertices.size(), mesh.indices.size());
+    static auto vertexData = renderer.createIndexedVertexData(attribLayout, IndexFormat::UInt32, mesh.vertices.size(), mesh.indices.size());
+    vertexData->allocateVertexBuffer(renderer.getDevice(), mesh.vertices.size());
+    vertexData->allocateIndexBuffer(renderer.getDevice(), mesh.indices.size());
 
     vertexData->pushVertices(mesh.vertices);
     vertexData->pushIndices(mesh.indices);

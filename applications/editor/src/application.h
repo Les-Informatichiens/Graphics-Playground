@@ -9,8 +9,9 @@
 
 #include "engine/EngineInstance.h"
 #include "imgui/ImGuiInstance.h"
-#include "imgui/drawingPanel/shape.h"
 #include "imgui/drawingPanel/picasso.h"
+#include "imgui/drawingPanel/shape.h"
+#include "imgui/scenePanel/SceneEditor.h"
 
 #include "graphicsAPI/common/Texture.h"
 
@@ -54,12 +55,17 @@ class application
 {
 public:
 
-    application(EngineInstance& engine, GLFWwindow* window)
-        : gameEngine(engine), window(window), imguiInstance({}), imageData({}), imageTexture(nullptr) {};
+    application(EngineInstance& engine, GLFWwindow *window)
+        : gameEngine(engine), window(window), imguiInstance({}), sceneEditor(engine), imageData({}), imageTexture(nullptr) {};
 
     void init();
 
     void onWindowResize(int width, int height);
+    void onKey(int key, int scancode, int action, int mods);
+    void onMouseButton(int button, int action, int mods);
+    void onMouseMove(double xpos, double ypos);
+    void onMouseScroll(double xoffset, double yoffset);
+
 
     void run();
 
@@ -82,11 +88,12 @@ private:
     int height{};
 
     // imgui state
-    double time = 0.0;
     bool show_demo_window = true;
     bool show_another_window = false;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
+    bool show_editor = false;
+    bool show_pov_cam = false;
+    bool lockCamOnSelected = true;
+    bool cameraMotion = true;
 
     picasso vectorDrawer;
 
@@ -95,4 +102,5 @@ private:
     std::shared_ptr<ITexture> imageTexture;
     void calculateAndDisplayHistogram();
     void histogram();
+    SceneEditor sceneEditor;
 };

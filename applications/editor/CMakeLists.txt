@@ -21,6 +21,8 @@ add_executable(
         src/imgui/drawingPanel/shape.h
         src/imgui/drawingPanel/picasso.h
         src/imgui/ImGuiContextAdapter.cpp
+        src/imgui/scenePanel/SceneEditor.cpp
+        src/imgui/scenePanel/SceneEditor.h
 )
 
 target_include_directories(
@@ -150,7 +152,17 @@ set(
         "assets/test/teapot.obj"
         "assets/test/smooth-sphere.obj"
         "assets/test/blocking_spider.fbx"
+        "assets/test/blocking_spider.obj"
         "assets/test/Patte_avant_tex_meshv2.fbx"
+        "assets/test/Patte_avant_tex_meshv2.obj"
+        "assets/test/googlas.obj"
+        "assets/test/googlas2.obj"
+        "assets/test/cow.obj"
+        "assets/test/nefertiti.obj"
+        "assets/test/horse.obj"
+        "assets/test/suzanne.obj"
+        "assets/test/stanford-bunny.obj"
+        "assets/test/xyzrgb_dragon.obj"
 )
 
 message("OUTPUT DIR IS: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")

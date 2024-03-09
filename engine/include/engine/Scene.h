@@ -35,6 +35,8 @@ public:
     std::optional<EntityView> getEntity(util::UUID uuid);
     std::optional<EntityView> getEntityByName(const std::string& name);
 
+    std::vector<EntityView> getRootEntities();
+
     // retrieve all camera entities
     std::vector<SceneNode*> getCameraNodes();
 
