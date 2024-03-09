@@ -254,44 +254,67 @@ void application::run()
             if (ImGui::BeginTabItem("Histogram"))
             {
 
-//                if (!selectedImagePath.empty() && imageData.pixels != nullptr)
-//                {
-//                    // Réinitialisation des bins
-//                    std::vector<int> binsRed(6, 0);
-//                    std::vector<int> binsGreen(6, 0);
-//                    std::vector<int> binsBlue(6, 0);
-//
-//                    for (int y = 0; y < imageData.h; ++y)
-//                    {
-//                        for (int x = 0; x < imageData.w; ++x)
-//                        {
-//                            PixelColor color = imageData.getPixel(x, y);
-//                            binsRed[color.r / 42]++;
-//                            binsGreen[color.g / 42]++;
-//                            binsBlue[color.b / 42]++;
-//                        }
-//                    }
-//
-//                    for (int i = 0; i < 6; ++i)
-//                    {
-//                        ImGui::Text("Bin %d:", i + 1);
-//
-//                        // Création d'un tableau pour stocker les valeurs des bins pour chaque canal de couleur
-//                        float values[3] = {
-//                                binsRed[i] / static_cast<float>(imageData.w * imageData.h),
-//                                binsGreen[i] / static_cast<float>(imageData.w * imageData.h),
-//                                binsBlue[i] / static_cast<float>(imageData.w * imageData.h)
-//                        };
-//
-//                        ImGui::PlotHistogram("Histogram", values, IM_ARRAYSIZE(values), 0, nullptr, 0.0f, 1.0f, ImVec2(0, 40));
-//
-//                    }
-//                }
-//                else
-//                {
-                    ImGui::Text("Unable to show the histogram");
-//                }
+                if (imageData.pixels != nullptr)
+                {
+                    // Create a histogram of all the hues in the image
 
+                    // Create an array to store the histogram
+                    float histogram[256];
+                    std::memset(histogram, 0, sizeof(histogram));
+
+                    // Calculate the histogram
+                    for (int y = 0; y < imageData.h; ++y)
+                    {
+                        for (int x = 0; x < imageData.w; ++x)
+                        {
+                            int pixelIndex = (y * imageData.w + x) * imageData.comp;
+                            float r = imageData.pixels[pixelIndex] / 255.0f;
+                            float g = imageData.pixels[pixelIndex + 1] / 255.0f;
+                            float b = imageData.pixels[pixelIndex + 2] / 255.0f;
+
+                            float max = std::max(r, std::max(g, b));
+                            float min = std::min(r, std::min(g, b));
+                            float delta = max - min;
+                            float hue = 0.0f;
+                            if (delta != 0.0f)
+                            {
+                                if (max == r)
+                                {
+                                    hue = 60.0f * (g - b) / delta;
+                                }
+                                else if (max == g)
+                                {
+                                    hue = 60.0f * (2 + (b - r) / delta);
+                                }
+                                else if (max == b)
+                                {
+                                    hue = 60.0f * (4 + (r - g) / delta);
+                                }
+                            }
+                            if (hue < 0.0f)
+                            {
+                                hue += 360.0f;
+                            }
+                            histogram[std::clamp(static_cast<int>(hue), 0, 255)]++;
+                        }
+                    }
+
+                    // Find the maximum value in the histogram
+                    int max = 0;
+                    for (int i = 0; i < 256; ++i)
+                    {
+                        if (histogram[i] > max)
+                        {
+                            max = histogram[i];
+                        }
+                    }
+
+
+                    // Draw the histogram
+                    ImVec2 histogramSize(256, 100);
+                    ImGui::PlotHistogram("Histogram", histogram, 256, 0, NULL, 0, max, histogramSize);
+
+                }
 
                 ImGui::EndTabItem();
             }
