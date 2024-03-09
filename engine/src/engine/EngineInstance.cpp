@@ -304,6 +304,20 @@ void EngineInstance::initialize()
         }
         childNode.addChild(&teapotPOVNode);
 
+
+        // Create a child node
+        EntityView child2 = defaultScene->createEntity("child2");
+
+        child2.addComponent<MeshComponent>(Mesh::createSphere(2.f), testMaterial);
+        auto& childNode2 = child2.getSceneNode();
+        childNode2.getTransform().setPosition({10.0f, 0.0f, 0.0f});
+        childNode2.getTransform().setScale({1.f, 1.f, 1.f});
+        childNode2.getTransform().setRotation({0.0f, 0.0f, 0.0f});
+
+        childNode.addChild(&childNode2);
+
+
+        rootNode.addChild(&childNode);
         rootNode.addChild(&childNode);
 
         viewer.getSceneNode().getTransform().lookAt(rootNode.getTransform().getPosition(), {0.0f, 1.0f, 0.0f});

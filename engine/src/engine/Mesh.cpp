@@ -3,6 +3,7 @@
 //
 
 #include "engine/Mesh.h"
+#include "glm/ext/scalar_constants.hpp"
 
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices)
     : vertices(std::move(vertices)), indices(std::move(indices)), bounds(glm::vec3(0.0f), glm::vec3(0.0f))
@@ -82,6 +83,50 @@ std::shared_ptr<Mesh> Mesh::createQuad(float size)
 
     return std::make_shared<Mesh>(vertices, indices);
 }
+
+std::shared_ptr<Mesh> Mesh::createSphere(float radius, unsigned int longitudeSegments, unsigned int latitudeSegments){
+    std::vector<Mesh::Vertex> vertices;
+    std::vector<uint32_t> indices;
+
+    for (unsigned int lat = 0; lat <= latitudeSegments; ++lat) {
+        float theta = lat * glm::pi<float>() / latitudeSegments;
+        float sinTheta = sin(theta);
+        float cosTheta = cos(theta);
+
+        for (unsigned int lon = 0; lon <= longitudeSegments; ++lon) {
+            float phi = lon * 2 * glm::pi<float>() / longitudeSegments;
+            float sinPhi = sin(phi);
+            float cosPhi = cos(phi);
+
+            glm::vec3 normal(cosPhi * sinTheta, cosTheta, sinPhi * sinTheta);
+            glm::vec2 texCoord((float)lon / longitudeSegments, (float)lat / latitudeSegments);
+            glm::vec3 position = normal * radius;
+
+            vertices.push_back(Mesh::Vertex(position, normal, texCoord));
+        }
+    }
+
+    // Generating indices for each triangle
+    for (unsigned int lat = 0; lat < latitudeSegments; ++lat) {
+        for (unsigned int lon = 0; lon < longitudeSegments; ++lon) {
+            uint32_t first = (lat * (longitudeSegments + 1)) + lon;
+            uint32_t second = first + longitudeSegments + 1;
+
+            indices.push_back(first);
+            indices.push_back(second);
+            indices.push_back(first + 1);
+
+            indices.push_back(second);
+            indices.push_back(second + 1);
+            indices.push_back(first + 1);
+        }
+    }
+
+    return std::make_shared<Mesh>(vertices, indices);
+}
+
+
+
 std::shared_ptr<Mesh> Mesh::createCube(float size)
 {
     std::vector<Vertex> vertices = {
