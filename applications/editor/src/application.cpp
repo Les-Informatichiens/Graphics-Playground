@@ -4,6 +4,7 @@
 
 #include "application.h"
 #include "backends/imgui_impl_glfw.h"
+#include <cstring>
 #include <iostream>
 
 #include "ImGuiFileDialog.h"
@@ -45,6 +46,8 @@
     // Initialize the ImGui context
     initImGui();
 }
+
+std::unique_ptr<unsigned char[]> originalImageData;
 
 void application::run()
 {
@@ -94,6 +97,7 @@ void application::run()
                 }
 
                 // Display the selected image in the "Image Window"
+
                 if (!selectedImagePath.empty())
                 {
                     ImGui::InputText("File path", const_cast<char*>(selectedImagePath.c_str()) + 2, selectedImagePath.size(), ImGuiInputTextFlags_None);
@@ -103,8 +107,14 @@ void application::run()
                     auto texDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, imageData.w, imageData.h, TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled);
                     imageTexture = gameEngine.getRenderer().getDevice().createTexture(texDesc);
                     imageTexture->upload(imageData.pixels, TextureRangeDesc::new2D(0, 0, imageData.w, imageData.h));
+                    originalImageData.reset(new unsigned char[imageData.w * imageData.h * imageData.comp]);
+                    std::memcpy(originalImageData.get(), imageData.pixels, imageData.w * imageData.h * imageData.comp);
+
                 }
 
+                for (int i = 0; i < 5; ++i) {
+                    ImGui::Spacing();
+                }
 
                 ImGui::Text("Image Export:");
                 if (ImGui::Button("Export Current Image"))
@@ -117,56 +127,64 @@ void application::run()
             // Second tab: Color Spaces
             if (ImGui::BeginTabItem("Color Spaces"))
             {
-                static ImVec4 color = ImVec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
+                static ImVec4 color = ImVec4(255.0f / 255.0f, 100.0f / 255.0f, 100.0f / 255.0f, 50.0f / 255.0f);
                 static bool filter_enable = false;
 
-                //COLOR FILTER
-                ImGui::Checkbox("Color filter", &filter_enable);
+                // Color picker
+                ImGuiColorEditFlags flags = ImGuiColorEditFlags_AlphaBar
+                                            | ImGuiColorEditFlags_PickerHueBar
+                                            | ImGuiColorEditFlags_DisplayRGB
+                                            | ImGuiColorEditFlags_DisplayHSV
+                                            | ImGuiColorEditFlags_DisplayHex;
 
-                if (filter_enable)
+                ImGui::SetNextWindowSizeConstraints(ImVec2(100, 100), ImVec2(300, 300));
+                ImGui::Text("Color filter :");
+                ImGui::ColorPicker4("MyColor##4", (float*) &color, flags, NULL);
+
+                if (ImGui::Button("Apply filter"))
                 {
-                    ImGuiColorEditFlags flags = ImGuiColorEditFlags_AlphaBar
-                                                | ImGuiColorEditFlags_PickerHueBar
-                                                | ImGuiColorEditFlags_DisplayRGB
-                                                | ImGuiColorEditFlags_DisplayHSV
-                                                | ImGuiColorEditFlags_DisplayHex;
-
-                    ImGui::SetNextWindowSizeConstraints(ImVec2(100, 100), ImVec2(300, 300));
-                    ImGui::ColorPicker4("MyColor##4", (float*)&color, flags, NULL);
 
                     // Appliquer le filtre de couleur à l'image lorsque la couleur est sélectionnée
-                    if (imageData.pixels != nullptr)
+                    if (imageData.pixels != nullptr && originalImageData != nullptr)
                     {
-                        // Parcourir tous les pixels de l'image
+                        // Restaurer les pixels de l'image d'origine
+                        std::memcpy(imageData.pixels, originalImageData.get(), imageData.w * imageData.h * imageData.comp);
+                        // Create a new texture to hold the color layer
+                        std::unique_ptr<unsigned char[]> colorLayer(new unsigned char[imageData.w * imageData.h * imageData.comp]);
+
+                        // Fill the color layer with the selected color
+                        for (int i = 0; i < imageData.w * imageData.h * imageData.comp; i += imageData.comp)
+                        {
+                            colorLayer[i] = static_cast<unsigned char>(color.x * 255.0f);
+                            colorLayer[i + 1] = static_cast<unsigned char>(color.y * 255.0f);
+                            colorLayer[i + 2] = static_cast<unsigned char>(color.z * 255.0f);
+                            colorLayer[i + 3] = static_cast<unsigned char>(color.w * 255.0f);// 50% alpha
+                        }
+
+                        // Mix the color layer with the original image
                         for (int y = 0; y < imageData.h; ++y)
                         {
                             for (int x = 0; x < imageData.w; ++x)
                             {
-                                // Obtenir l'index du pixel dans les données d'image
                                 int pixelIndex = (y * imageData.w + x) * imageData.comp;
 
-                                // Appliquer la couleur sélectionnée à chaque canal de couleur du pixel
-                                imageData.pixels[pixelIndex] = static_cast<unsigned char>(imageData.pixels[pixelIndex] * color.x); // Rouge
-                                imageData.pixels[pixelIndex + 1] = static_cast<unsigned char>(imageData.pixels[pixelIndex + 1] * color.y); // Vert
-                                imageData.pixels[pixelIndex + 2] = static_cast<unsigned char>(imageData.pixels[pixelIndex + 2] * color.z); // Bleu
+                                imageData.pixels[pixelIndex] = static_cast<unsigned char>((imageData.pixels[pixelIndex] * (255 - colorLayer[pixelIndex + 3]) + colorLayer[pixelIndex] * colorLayer[pixelIndex + 3]) / 255);
+                                imageData.pixels[pixelIndex + 1] = static_cast<unsigned char>((imageData.pixels[pixelIndex + 1] * (255 - colorLayer[pixelIndex + 3]) + colorLayer[pixelIndex + 1] * colorLayer[pixelIndex + 3]) / 255);
+                                imageData.pixels[pixelIndex + 2] = static_cast<unsigned char>((imageData.pixels[pixelIndex + 2] * (255 - colorLayer[pixelIndex + 3]) + colorLayer[pixelIndex + 2] * colorLayer[pixelIndex + 3]) / 255);
 
-
-                                // Assurer que les valeurs restent dans la plage valide (0-255)
-                                if (imageData.pixels[pixelIndex] > 255)
-                                    imageData.pixels[pixelIndex] = 255;
-                                if (imageData.pixels[pixelIndex + 1] > 255)
-                                    imageData.pixels[pixelIndex + 1] = 255;
-                                if (imageData.pixels[pixelIndex + 2] > 255)
-                                    imageData.pixels[pixelIndex + 2] = 255;
-                                if (imageData.pixels[pixelIndex + 3] > 255)
-                                    imageData.pixels[pixelIndex + 3] = 255;
                             }
                         }
+
+                        // Upload the modified image data to the texture
+                        imageTexture->upload(imageData.pixels, TextureRangeDesc::new2D(0, 0, imageData.w, imageData.h));
                     }
-
-
                 }
 
+                for (int i = 0; i < 5; ++i) {
+                    ImGui::Spacing();
+                }
+
+                ImGui::Text("Invert colors :");
                 // INVERT COLORS
                 if (ImGui::Button("Invert Colors")) {
                     if (imageData.pixels != nullptr)
@@ -178,9 +196,6 @@ void application::run()
                                 // Obtenir l'index du pixel dans les données d'image
                                 int pixelIndex = (y * imageData.w + x) * imageData.comp;
 
-                                // Vérifier s'il y a un canal alpha dans l'image
-                                bool hasAlpha = imageData.comp == 4;
-
                                 // Appliquer l'inversion des couleurs RVB
                                 imageData.pixels[pixelIndex] = 255 - imageData.pixels[pixelIndex];         // Rouge
                                 imageData.pixels[pixelIndex + 1] = 255 - imageData.pixels[pixelIndex + 1]; // Vert
@@ -191,13 +206,6 @@ void application::run()
                                 imageData.pixels[pixelIndex+1] = std::clamp(imageData.pixels[pixelIndex+1], uint8_t(0), uint8_t(255));
                                 imageData.pixels[pixelIndex+2] = std::clamp(imageData.pixels[pixelIndex+2], uint8_t(0), uint8_t(255));
 
-//                                // Ignorer l'inversion du canal alpha s'il est présent
-//                                if (!hasAlpha)
-//                                {
-//                                    imageData.pixels[pixelIndex + 3] = 255 - imageData.pixels[pixelIndex + 3]; // Alpha
-//                                    if (imageData.pixels[pixelIndex + 3] > 255)
-//                                        imageData.pixels[pixelIndex + 3] = 255;
-//                                }
                             }
                         }
                     }
@@ -265,6 +273,7 @@ void application::run()
 
         ImGui::NextColumn();
         ImGui::Separator();
+
         if (imageTexture)
         {
             ImGui::Text("Image:");
@@ -273,6 +282,10 @@ void application::run()
         else
         {
             ImGui::Text("No image is loaded.");
+        }
+
+        for (int i = 0; i < 5; ++i) {
+            ImGui::Spacing();
         }
 
         if (ImGui::Button("Update image")){
