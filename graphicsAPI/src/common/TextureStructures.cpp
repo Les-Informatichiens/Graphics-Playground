@@ -6,11 +6,6 @@
 
 #include <algorithm>
 
-size_t std::hash<TextureFormat>::operator()(TextureFormat const& key) const {
-    return std::hash<size_t>()(static_cast<size_t>(key));
-}
-
-
 TextureRangeDesc TextureRangeDesc::new1D(size_t x, size_t width, size_t mipLevel) {
     return new3D(x, 0, 0, width, 1, 1, mipLevel);
 }

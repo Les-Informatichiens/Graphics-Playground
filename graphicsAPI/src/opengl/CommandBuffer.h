@@ -22,12 +22,19 @@
 #include <array>
 #include <bitset>
 #include <set>
+#include <queue>
 
 namespace opengl {
 
 class CommandBuffer : public ICommandBuffer
 {
-    using TextureStates = std::array<std::pair<std::shared_ptr<Texture>, std::shared_ptr<SamplerState>>, MAX_TEXTURE_SAMPLERS>;
+    struct TextureState
+    {
+        std::shared_ptr<Texture> texture = nullptr;
+        std::shared_ptr<SamplerState> samplerState = nullptr;
+        int textureUnit = -1;
+    };
+    using TextureStates = std::array<TextureState, MAX_TEXTURE_SAMPLERS>;
 
 public:
     enum DirtyFlag : uint32_t
@@ -71,6 +78,8 @@ private:
 
     TextureStates vertTexturesCache;
     TextureStates fragTexturesCache;
+
+    std::queue<int> freeTextureUnits;
 
     // std::shared_ptr<Framebuffer> activeFramebuffer;
     std::shared_ptr<GraphicsPipeline> activeGraphicsPipeline = nullptr;

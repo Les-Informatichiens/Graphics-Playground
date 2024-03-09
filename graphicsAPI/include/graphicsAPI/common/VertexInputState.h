@@ -66,6 +66,8 @@ enum class VertexAttributeFormat
     HalfFloat4,
 };
 
+uint32_t getVertexAttributeFormatSize(VertexAttributeFormat format);
+
 //enum class VertexInputRate
 //{
 //    VERTEX,

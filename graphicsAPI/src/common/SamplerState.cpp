@@ -24,21 +24,20 @@ bool SamplerStateDesc::operator!=(const SamplerStateDesc& rhs) const
     return !operator==(rhs);
 }
 
-size_t std::hash<SamplerStateDesc>::operator()(SamplerStateDesc const& key) const
+size_t SamplerStateDescHash::operator()(const SamplerStateDesc& samplerStateDesc) const
 {
-    // clang-format off
- size_t hash = EnumToValue(key.minFilter) |         // 0,1: 1 bit field
-               EnumToValue(key.magFilter) << 1 |    // 0,1: 1 bit field
-               EnumToValue(key.mipFilter) << 2 |    // 0,1: 1 bit field
-               EnumToValue(key.addressModeU) << 4 | // 0,1,2: 2 bit field
-               EnumToValue(key.addressModeV) << 6 | // 0,1,2: 2 bit field
-               EnumToValue(key.addressModeW) << 8 | // 0,1,2: 2 bit field
-               (key.maxAnisotropic - 1) << 10 | // subtract 1 so it fits 4 bits
-               key.mipLodMin << 14 |                     // [0, 15]: 4 bit field
-               key.mipLodMax << 18 |                     // [0, 15]: 4 bit field
-               EnumToValue(key.depthCompareFunction) << 22 | // [0, 7]: 3 bit field
-               key.depthCompareEnabled << 25;            // 0,1: 1 bit field
-    // clang-format on
+    // Use the existing hash calculation logic
+    size_t hash = EnumToValue(samplerStateDesc.minFilter) |
+                  EnumToValue(samplerStateDesc.magFilter) << 1 |
+                  EnumToValue(samplerStateDesc.mipFilter) << 2 |
+                  EnumToValue(samplerStateDesc.addressModeU) << 4 |
+                  EnumToValue(samplerStateDesc.addressModeV) << 6 |
+                  EnumToValue(samplerStateDesc.addressModeW) << 8 |
+                  (samplerStateDesc.maxAnisotropic - 1) << 10 |
+                  samplerStateDesc.mipLodMin << 14 |
+                  samplerStateDesc.mipLodMax << 18 |
+                  EnumToValue(samplerStateDesc.depthCompareFunction) << 22 |
+                  samplerStateDesc.depthCompareEnabled << 25;
 
     return hash;
 }

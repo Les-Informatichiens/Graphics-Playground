@@ -6,22 +6,22 @@
 #include <iostream>
 #include "engine/SceneNode.h"
 
-SceneNode::SceneNode(std::string name)
-    : name(std::move(name)), transform(), worldTransform(), parent(nullptr), children(), mesh(nullptr)
+SceneNode::SceneNode(const EntityView& entityView)
+    : ownEntityView(std::move(entityView)), transform(), worldTransform(), parent(nullptr), children()
 {
 }
 
-void SceneNode::addChild(std::unique_ptr<SceneNode> child)
+void SceneNode::addChild(SceneNode* child)
 {
     child->parent = this;
-    children.push_back(std::move(child));
+    children.push_back(child);
 }
 
 void SceneNode::update(float dt)
 {
     if (parent)
     {
-        worldTransform = parent->worldTransform * transform;
+        worldTransform = transform * parent->worldTransform;
     }
     else
     {
@@ -34,9 +34,34 @@ void SceneNode::update(float dt)
     }
 //    std::cout << "DONE UPD" << std::endl;
 }
-void SceneNode::draw(graphics::Renderer& renderer) const
+
+SceneNode* SceneNode::findNode(const std::string& name)
 {
-    // Maybe we can have custom rendering operations done here
-    // as of now we only render plain meshes.
-    // I prefer to keep the rendering logic in the MeshRenderer
+    if (getName() == name)
+    {
+        return this;
+    }
+    for (auto& child : children)
+    {
+        auto node = child->findNode(name);
+        if (node)
+        {
+            return node;
+        }
+    }
+    return nullptr;
+}
+
+void SceneNode::visit(SceneNode::VisitorCallback visitor)
+{
+    visitor(*this);
+    for (auto& child : children)
+    {
+        child->visit(visitor);
+    }
+}
+
+std::string SceneNode::getName() const
+{
+    return this->ownEntityView.getName();
 }

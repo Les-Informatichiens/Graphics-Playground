@@ -18,6 +18,9 @@ add_executable(
         src/imgui/ImGuiRenderer.h
         src/imgui/ImGuiInstance.cpp
         src/imgui/ImGuiInstance.h
+        src/imgui/drawingPanel/shape.h
+        src/imgui/drawingPanel/picasso.h
+        src/imgui/ImGuiContextAdapter.cpp
 )
 
 target_include_directories(
@@ -135,16 +138,25 @@ endif ()
 
 
 # Copy resources to build directory ===================================================================
+
+set(
+        RootFiles
+        "root.config"
+)
+
 set(
         TestAssets
         "assets/test/sphere.obj"
         "assets/test/teapot.obj"
         "assets/test/smooth-sphere.obj"
+        "assets/test/blocking_spider.fbx"
+        "assets/test/Patte_avant_tex_meshv2.fbx"
 )
 
 message("OUTPUT DIR IS: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
+copy_assets(RootFiles "." "." CopiedRootFiles)
 copy_assets(TestAssets "assets/test" "assets/test" CopiedTestAssets)
 
 set_source_files_properties(${CopiedTestAssets} PROPERTIES GENERATED TRUE)
-target_sources(${PROJECT_NAME} PRIVATE ${CopiedTestAssets})
+target_sources(${PROJECT_NAME} PRIVATE ${CopiedRootFiles} ${CopiedTestAssets})

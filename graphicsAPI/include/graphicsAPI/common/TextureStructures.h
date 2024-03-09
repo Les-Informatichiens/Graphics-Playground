@@ -434,13 +434,8 @@ struct TextureFormatProperties {
     [[nodiscard]] size_t getBytesPerRange(TextureRangeDesc range) const noexcept;
 };
 
-namespace std {
-
-// Add a hash function for older compilers
-template<>
-struct hash<TextureFormat> {
-    // Declare member
-    size_t operator()(TextureFormat const& /*key*/) const;
+struct TextureFormatHash {
+    size_t operator()(const TextureFormat& textureFormat) const {
+        return static_cast<size_t>(textureFormat);
+    }
 };
-
-} // namespace std

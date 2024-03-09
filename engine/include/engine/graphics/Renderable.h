@@ -4,33 +4,33 @@
 
 #pragma once
 
-#include "graphicsAPI/common/Device.h"
+#include "Material.h"
+#include "VertexData.h"
 #include "graphicsAPI/common/CommandBuffer.h"
+#include "graphicsAPI/common/Device.h"
 
 namespace graphics {
 
 class Renderable
 {
 public:
-    Renderable(std::shared_ptr<IGraphicsPipeline> graphicsPipeline);
-
-    void setElementCount(uint32_t count);
-
-    void setVertexData(std::shared_ptr<IBuffer> buffer, std::shared_ptr<IBuffer> indexBuffer, uint32_t elementCount_);
-    void setUniformBuffer(uint32_t binding, std::shared_ptr<IBuffer> buffer);
-    void setDepthStencilState(std::shared_ptr<IDepthStencilState> depthStencilState);
+    Renderable(std::shared_ptr<Material> material, std::shared_ptr<VertexData> vertexData);
 
     void draw(IDevice& device, ICommandBuffer& cmdBuffer) const;
 
+    GraphicsPipelineDesc buildGraphicsPipelineDesc() const;
+    void injectGraphicsPipeline(std::shared_ptr<IGraphicsPipeline> pipeline) { graphicsPipeline = std::move(pipeline); }
+
+    [[nodiscard]] std::shared_ptr<Material> getMaterial() const { return material; }
+    [[nodiscard]] std::shared_ptr<IVertexData> getVertexData() const { return vertexData; }
+
+    [[nodiscard]] std::shared_ptr<IGraphicsPipeline> getGraphicsPipeline() const { return graphicsPipeline; }
+
 private:
-    std::shared_ptr<IBuffer> vertexBuffer;
-    std::shared_ptr<IBuffer> indexBuffer;
-    std::unordered_map<uint32_t, std::shared_ptr<IBuffer>> uniformBuffers;
-    std::shared_ptr<IDepthStencilState> depthStencilState;
+    std::shared_ptr<Material> material;
+    std::shared_ptr<IVertexData> vertexData;
 
     std::shared_ptr<IGraphicsPipeline> graphicsPipeline;
-
-    uint32_t elementCount;
 };
 
 } // namespace graphics

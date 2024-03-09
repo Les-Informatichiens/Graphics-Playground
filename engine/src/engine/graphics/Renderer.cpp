@@ -32,11 +32,42 @@ void Renderer::begin()
             },
             .framebuffer = nullptr};
     activeCommandBuffer->beginRenderPass(renderPassBegin);
-//    std::cout << "begin" << std::endl;
+    //    std::cout << "begin" << std::endl;
+}
+
+void Renderer::begin(const graphics::RenderTarget& renderTarget)
+{
+    activeCommandBuffer = activeCommandPool->acquireCommandBuffer({});
+
+    // create default depth texture
+    auto depthAttachment = device->createTexture(TextureDesc::new2D(
+            TextureFormat::Z_UNorm24,
+            renderTarget.colorTexture->getWidth(),
+            renderTarget.colorTexture->getHeight(),
+            TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled));
+
+    activeFramebuffer = device->createFramebuffer({
+            .colorAttachments = {{0, {renderTarget.colorTexture, nullptr}}},
+            .depthAttachment = {depthAttachment, nullptr}
+    });
+
+    RenderPassBeginDesc renderPassBegin = {
+            .renderPass = {
+                    .colorAttachments = {
+                            {renderTarget.clear ? LoadAction::Clear : LoadAction::Load, StoreAction::Store, renderTarget.clearColor}},
+                    .depthAttachment = RenderPassDesc::DepthAttachmentDesc{LoadAction::Clear, StoreAction::Store, 0, 0, 1.0f},
+
+            },
+            .framebuffer = activeFramebuffer
+    };
+    activeCommandBuffer->beginRenderPass(renderPassBegin);
 }
 
 void Renderer::draw(Renderable& renderable)
 {
+    auto pipelineDesc = renderable.buildGraphicsPipelineDesc();
+    auto pipeline = acquireGraphicsPipeline(pipelineDesc);
+    renderable.injectGraphicsPipeline(pipeline);
     renderable.draw(*device, *activeCommandBuffer);
 }
 
@@ -44,7 +75,10 @@ void Renderer::end()
 {
     activeCommandBuffer->endRenderPass();
     activeCommandPool->submitCommandBuffer(std::move(activeCommandBuffer));
-//    std::cout << "end" << std::endl;
+
+    activeFramebuffer.reset();
+
+    //    std::cout << "end" << std::endl;
 }
 
 void Renderer::shutdown()
@@ -59,19 +93,47 @@ IDevice& Renderer::getDevice() const
     }
     return *this->device;
 }
-
-void Renderer::setCamera(std::shared_ptr<Camera> camera)
+void Renderer::bindViewport(const Viewport& viewport)
 {
-    this->activeCamera = std::move(camera);
+    this->activeCommandBuffer->bindViewport(viewport);
 }
 
-Camera& Renderer::getCamera() const
+std::shared_ptr<ShaderProgram> Renderer::createShaderProgram(const std::string& vertexShaderSource, const std::string& fragmentShaderSource)
 {
-    if (this->activeCamera == nullptr)
+    auto vertexShader = device->createShaderModule({
+            .type = ShaderModuleType::Vertex,
+            .code = vertexShaderSource,
+            .entryPoint = "main"
+    });
+    auto fragmentShader = device->createShaderModule({
+            .type = ShaderModuleType::Fragment,
+            .code = fragmentShaderSource,
+            .entryPoint = "main"
+    });
+    auto vis = device->createVertexInputState({});
+
+    return std::make_shared<ShaderProgram>(getDevice(), fragmentShader, vertexShader, vis);
+}
+
+std::shared_ptr<IGraphicsPipeline> Renderer::acquireGraphicsPipeline(const GraphicsPipelineDesc& desc)
+{
+    auto hash = GraphicsPipelineDescHash{}(desc);
+    auto it = graphicsPipelines.find(hash);
+    if (it != graphicsPipelines.end())
     {
-        throw std::runtime_error("No camera has been set");
+        return it->second;
     }
-    return *this->activeCamera;
+    else
+    {
+        auto pipeline = device->createGraphicsPipeline(desc);
+        graphicsPipelines[hash] = pipeline;
+        return pipeline;
+    }
+}
+std::shared_ptr<Material> Renderer::createMaterial(const std::shared_ptr<ShaderProgram>& shaderProgram)
+{
+    auto material = std::make_shared<Material>(getDevice(), shaderProgram);
+    return material;
 }
 
 }// namespace graphics
