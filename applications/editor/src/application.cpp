@@ -5,15 +5,20 @@
 #include "application.h"
 #include "backends/imgui_impl_glfw.h"
 #include "engine/components/CameraComponent.h"
+#include <cstring>
 #include <iostream>
 
+#include "ImGuiFileDialog.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "engine/stb_image.h"
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "engine/stb_image_write.h"
 
 
-
-
-
-//implement the application class here
-void application::init()
+        //implement the application class here
+        void application::init()
 {
     // Set the user pointer of the window to the application object
     // This is needed so that we can access "this" pointer in glfw callbacks
@@ -44,8 +49,11 @@ void application::init()
     vectorDrawer = picasso();
 }
 
+std::unique_ptr<unsigned char[]> originalImageData;
+
 void application::run()
 {
+
     while (!windowShouldClose)
     {
         // We will update the simulation and render the frame before rendering the ImGui frame
@@ -58,11 +66,263 @@ void application::run()
         //add custom drawlist to imgui background draw list
 
 
-        // Here we can have some ImGui code that would let the user
-        // control some state in the application.
-        // We can later put this in a better place, like separate classes
-        // that would handle the ImGui code for different parts of the application
-        // Jonathan Richard 2024-02-10
+        ImGui::SetNextWindowSizeConstraints(ImVec2(1250, 650), ImVec2(FLT_MAX, FLT_MAX));
+        ImGui::Begin("Image", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+
+        // Beginning of column layout
+        ImGui::Columns(2, "MyColumns", false);
+        ImGui::SetColumnWidth(0, 550);
+
+
+        if (ImGui::BeginTabBar("Tabs", ImGuiTabBarFlags_None))
+        {
+            // First tab: Import and Export
+            if (ImGui::BeginTabItem("Import"))
+            {
+
+                ImGui::Text("Image Import:");
+                if (ImGui::Button("Import Image"))
+                {
+                    // Show file dialog to select an image
+                    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose an image", ".png,.jpg");
+                }
+
+                // Check if a file has been selected in the file dialog
+                if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+                {
+                    if (ImGuiFileDialog::Instance()->IsOk())
+                    {
+                        // Get the path of the selected image
+                        selectedImagePath = ImGuiFileDialog::Instance()->GetFilePathName();
+
+                        // Close the file dialog
+                        ImGuiFileDialog::Instance()->Close();
+                    }
+                }
+
+                // Display the selected image in the "Image Window"
+
+                if (!selectedImagePath.empty())
+                {
+                    ImGui::InputText("File path", const_cast<char*>(selectedImagePath.c_str()) + 2, selectedImagePath.size(), ImGuiInputTextFlags_None);
+
+                    imageData.comp = STBI_rgb_alpha;
+                    imageData.pixels = stbi_load(selectedImagePath.c_str(), &imageData.w, &imageData.h, &imageData.originalComp, STBI_rgb_alpha);
+                    auto texDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, imageData.w, imageData.h, TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled);
+                    imageTexture = gameEngine.getRenderer().getDevice().createTexture(texDesc);
+                    imageTexture->upload(imageData.pixels, TextureRangeDesc::new2D(0, 0, imageData.w, imageData.h));
+                    originalImageData.reset(new unsigned char[imageData.w * imageData.h * imageData.comp]);
+                    std::memcpy(originalImageData.get(), imageData.pixels, imageData.w * imageData.h * imageData.comp);
+
+                }
+
+                for (int i = 0; i < 5; ++i) {
+                    ImGui::Spacing();
+                }
+
+                ImGui::EndTabItem();
+            }
+
+            // Second tab: Color Spaces
+            if (ImGui::BeginTabItem("Image Editor"))
+            {
+                static ImVec4 color = ImVec4(0.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f, 128.0f / 255.0f);
+
+                // COLOR FILTER
+                ImGuiColorEditFlags flags = ImGuiColorEditFlags_AlphaBar
+                                            | ImGuiColorEditFlags_PickerHueBar
+                                            | ImGuiColorEditFlags_AlphaPreview
+                                            | ImGuiColorEditFlags_DisplayRGB
+                                            | ImGuiColorEditFlags_DisplayHSV
+                                            | ImGuiColorEditFlags_DisplayHex;
+
+                ImGui::SetNextWindowSizeConstraints(ImVec2(100, 100), ImVec2(300, 300));
+                ImGui::Text("Color filter :");
+                ImGui::ColorPicker4("MyColor##4", (float*) &color, flags, NULL);
+
+                if (ImGui::Button("Apply filter"))
+                {
+
+                    if (imageData.pixels != nullptr && originalImageData != nullptr)
+                    {
+                        std::memcpy(imageData.pixels, originalImageData.get(), imageData.w * imageData.h * imageData.comp);
+                        // Create a new texture to hold the color layer
+                        std::unique_ptr<unsigned char[]> colorLayer(new unsigned char[imageData.w * imageData.h * imageData.comp]);
+
+                        // Fill the color layer with the selected color
+                        for (int i = 0; i < imageData.w * imageData.h * imageData.comp; i += imageData.comp)
+                        {
+                            colorLayer[i] = static_cast<unsigned char>(color.x * 255.0f);
+                            colorLayer[i + 1] = static_cast<unsigned char>(color.y * 255.0f);
+                            colorLayer[i + 2] = static_cast<unsigned char>(color.z * 255.0f);
+                            colorLayer[i + 3] = static_cast<unsigned char>(color.w * 255.0f);// 50% alpha
+                        }
+
+                        // Mix the color layer with the original image
+                        for (int y = 0; y < imageData.h; ++y)
+                        {
+                            for (int x = 0; x < imageData.w; ++x)
+                            {
+                                int pixelIndex = (y * imageData.w + x) * imageData.comp;
+
+                                imageData.pixels[pixelIndex] = static_cast<unsigned char>((imageData.pixels[pixelIndex] * (255 - colorLayer[pixelIndex + 3]) + colorLayer[pixelIndex] * colorLayer[pixelIndex + 3]) / 255);
+                                imageData.pixels[pixelIndex + 1] = static_cast<unsigned char>((imageData.pixels[pixelIndex + 1] * (255 - colorLayer[pixelIndex + 3]) + colorLayer[pixelIndex + 1] * colorLayer[pixelIndex + 3]) / 255);
+                                imageData.pixels[pixelIndex + 2] = static_cast<unsigned char>((imageData.pixels[pixelIndex + 2] * (255 - colorLayer[pixelIndex + 3]) + colorLayer[pixelIndex + 2] * colorLayer[pixelIndex + 3]) / 255);
+
+                            }
+                        }
+
+                        // Upload the modified image data to the texture
+                        imageTexture->upload(imageData.pixels, TextureRangeDesc::new2D(0, 0, imageData.w, imageData.h));
+                    }
+                }
+
+                for (int i = 0; i < 5; ++i) {
+                    ImGui::Spacing();
+                }
+
+                // INVERT COLORS
+                ImGui::Text("Invert colors :");
+
+                if (ImGui::Button("Invert Colors")) {
+                    if (imageData.pixels != nullptr)
+                    {
+                        for (int y = 0; y < imageData.h; ++y)
+                        {
+                            for (int x = 0; x < imageData.w; ++x)
+                            {
+                                int pixelIndex = (y * imageData.w + x) * imageData.comp;
+
+                                imageData.pixels[pixelIndex] = 255 - imageData.pixels[pixelIndex];         // Rouge
+                                imageData.pixels[pixelIndex + 1] = 255 - imageData.pixels[pixelIndex + 1]; // Vert
+                                imageData.pixels[pixelIndex + 2] = 255 - imageData.pixels[pixelIndex + 2]; // Bleu
+
+                                imageData.pixels[pixelIndex] = std::clamp(imageData.pixels[pixelIndex], uint8_t(0), uint8_t(255));
+                                imageData.pixels[pixelIndex+1] = std::clamp(imageData.pixels[pixelIndex+1], uint8_t(0), uint8_t(255));
+                                imageData.pixels[pixelIndex+2] = std::clamp(imageData.pixels[pixelIndex+2], uint8_t(0), uint8_t(255));
+
+                            }
+                        }
+
+                        imageTexture->upload(imageData.pixels, TextureRangeDesc::new2D(0, 0, imageData.w, imageData.h));
+                    }
+                }
+
+                for (int i = 0; i < 5; ++i) {
+                    ImGui::Spacing();
+                }
+
+                //EXPORT
+                ImGui::Text("Image Export:");
+                if (ImGui::Button("Export Current Image"))
+                {
+                    if (imageData.pixels != nullptr)
+                    {
+                        ImGuiFileDialog::Instance()->OpenDialog("ExportFileDialogKey", "Save Image As", ".png,.jpg"); // Permet d'exporter en PNG ou en JPG
+                    }
+                }
+
+                if (ImGuiFileDialog::Instance()->Display("ExportFileDialogKey"))
+                {
+                    if (ImGuiFileDialog::Instance()->IsOk())
+                    {
+                        std::string savePath = ImGuiFileDialog::Instance()->GetFilePathName();
+                        ImGuiFileDialog::Instance()->Close();
+
+                        int width = imageData.w;
+                        int height = imageData.h;
+                        int channels = 4; // RGBA
+
+                        // Check the selected extension
+                        std::string extension = savePath.substr(savePath.find_last_of(".") + 1);
+                        if (extension == "png")
+                        {
+                            stbi_write_png(savePath.c_str(), width, height, channels, imageData.pixels, width * channels);
+                        }
+                        else if (extension == "jpg" || extension == "jpeg")
+                        {
+                            stbi_write_jpg(savePath.c_str(), width, height, channels, imageData.pixels, 100);
+                        }
+
+                    }
+                }
+
+                ImGui::EndTabItem();
+            }
+
+            // Third tab: Histogram
+            if (ImGui::BeginTabItem("Histogram"))
+            {
+
+//                if (!selectedImagePath.empty() && imageData.pixels != nullptr)
+//                {
+//                    // Réinitialisation des bins
+//                    std::vector<int> binsRed(6, 0);
+//                    std::vector<int> binsGreen(6, 0);
+//                    std::vector<int> binsBlue(6, 0);
+//
+//                    for (int y = 0; y < imageData.h; ++y)
+//                    {
+//                        for (int x = 0; x < imageData.w; ++x)
+//                        {
+//                            PixelColor color = imageData.getPixel(x, y);
+//                            binsRed[color.r / 42]++;
+//                            binsGreen[color.g / 42]++;
+//                            binsBlue[color.b / 42]++;
+//                        }
+//                    }
+//
+//                    for (int i = 0; i < 6; ++i)
+//                    {
+//                        ImGui::Text("Bin %d:", i + 1);
+//
+//                        // Création d'un tableau pour stocker les valeurs des bins pour chaque canal de couleur
+//                        float values[3] = {
+//                                binsRed[i] / static_cast<float>(imageData.w * imageData.h),
+//                                binsGreen[i] / static_cast<float>(imageData.w * imageData.h),
+//                                binsBlue[i] / static_cast<float>(imageData.w * imageData.h)
+//                        };
+//
+//                        ImGui::PlotHistogram("Histogram", values, IM_ARRAYSIZE(values), 0, nullptr, 0.0f, 1.0f, ImVec2(0, 40));
+//
+//                    }
+//                }
+//                else
+//                {
+                    ImGui::Text("Unable to show the histogram");
+//                }
+
+
+                ImGui::EndTabItem();
+            }
+
+            ImGui::EndTabBar();
+        }
+
+        ImGui::NextColumn();
+        ImGui::Separator();
+
+        if (imageTexture)
+        {
+            ImGui::Text("Image:");
+            ImGui::Image((ImTextureID) imageTexture.get(), ImVec2(imageTexture->getWidth(), imageTexture->getHeight()));
+        }
+        else
+        {
+            ImGui::Text("No image is loaded.");
+        }
+
+        // End of column layout
+        ImGui::Columns(1);
+
+        ImGui::End();// End of ImGui window
+
+
+    // Here we can have some ImGui code that would let the user
+    // control some state in the application.
+    // We can later put this in a better place, like separate classes
+    // that would handle the ImGui code for different parts of the application
+    // Jonathan Richard 2024-02-10
 
         {
             static float f = 0.0f;
@@ -122,7 +382,12 @@ void application::run()
         glfwPollEvents();
         windowShouldClose = glfwWindowShouldClose(window);
     }
+
+
 }
+
+
+
 
 application::~application()
 {
@@ -200,10 +465,10 @@ void application::renderImGuiFrame()
 
     // Execute the imgui rendering commands
     commandBuffer->beginRenderPass(renderPassDesc);
-//    std::cout << "Beginning ImGui renderPass" << std::endl;
+    //    std::cout << "Beginning ImGui renderPass" << std::endl;
 
     imguiInstance.renderFrame(gameEngine.getRenderer().getDevice(), *commandBuffer, nullptr, width, height);
-//    std::cout << "Ending ImGui renderPass" << std::endl;
+    //    std::cout << "Ending ImGui renderPass" << std::endl;
     commandBuffer->endRenderPass();
     commandPool->submitCommandBuffer(std::move(commandBuffer));
 }
@@ -214,4 +479,3 @@ void application::shutdownImGui()
     ImGui_ImplGlfw_Shutdown();
     imguiInstance.shutdown();
 }
-
