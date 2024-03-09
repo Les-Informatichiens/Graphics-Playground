@@ -73,14 +73,14 @@ void application::run()
         if (ImGui::BeginTabBar("Tabs", ImGuiTabBarFlags_None))
         {
             // First tab: Import and Export
-            if (ImGui::BeginTabItem("Import/Export"))
+            if (ImGui::BeginTabItem("Import"))
             {
 
                 ImGui::Text("Image Import:");
                 if (ImGui::Button("Import Image"))
                 {
                     // Show file dialog to select an image
-                    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose an image", ".png,.jpg,.bmp");
+                    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose an image", ".png,.jpg");
                 }
 
                 // Check if a file has been selected in the file dialog
@@ -116,16 +116,11 @@ void application::run()
                     ImGui::Spacing();
                 }
 
-                ImGui::Text("Image Export:");
-                if (ImGui::Button("Export Current Image"))
-                {
-                }
-
                 ImGui::EndTabItem();
             }
 
             // Second tab: Color Spaces
-            if (ImGui::BeginTabItem("Color Spaces"))
+            if (ImGui::BeginTabItem("Color Editor"))
             {
                 static ImVec4 color = ImVec4(255.0f / 255.0f, 100.0f / 255.0f, 100.0f / 255.0f, 50.0f / 255.0f);
                 static bool filter_enable = false;
@@ -133,6 +128,7 @@ void application::run()
                 // Color picker
                 ImGuiColorEditFlags flags = ImGuiColorEditFlags_AlphaBar
                                             | ImGuiColorEditFlags_PickerHueBar
+                                            | ImGuiColorEditFlags_AlphaPreview
                                             | ImGuiColorEditFlags_DisplayRGB
                                             | ImGuiColorEditFlags_DisplayHSV
                                             | ImGuiColorEditFlags_DisplayHex;
@@ -208,10 +204,60 @@ void application::run()
 
                             }
                         }
-                    }
 
-                    imageTexture->upload(imageData.pixels, TextureRangeDesc::new2D(0, 0, imageData.w, imageData.h));
+                        imageTexture->upload(imageData.pixels, TextureRangeDesc::new2D(0, 0, imageData.w, imageData.h));
+                    }
                 }
+
+                for (int i = 0; i < 5; ++i) {
+                    ImGui::Spacing();
+                }
+
+
+
+                ImGui::Text("Image Export:");
+                if (ImGui::Button("Export Current Image"))
+                {
+                    if (imageData.pixels != nullptr)
+                    {
+                        ImGuiFileDialog::Instance()->OpenDialog("ExportFileDialogKey", "Save Image As", ".png,.jpg"); // Permet d'exporter en PNG ou en JPG
+                    }
+                }
+
+                // Attendre que l'utilisateur sélectionne un emplacement de sauvegarde
+                if (ImGuiFileDialog::Instance()->Display("ExportFileDialogKey"))
+                {
+                    if (ImGuiFileDialog::Instance()->IsOk())
+                    {
+                        // Obtenir le chemin de sauvegarde sélectionné par l'utilisateur
+                        std::string savePath = ImGuiFileDialog::Instance()->GetFilePathName();
+
+                        // Fermer la boîte de dialogue de sauvegarde
+                        ImGuiFileDialog::Instance()->Close();
+
+                        // Récupérer la largeur et la hauteur de l'image
+                        int width = imageData.w;
+                        int height = imageData.h;
+                        int channels = 4; // RGBA
+
+                        // Vérifier l'extension du fichier pour décider du format de sauvegarde
+                        std::string extension = savePath.substr(savePath.find_last_of(".") + 1);
+                        if (extension == "png")
+                        {
+                            // Écrire l'image dans le format PNG en utilisant stb_image_write
+                            stbi_write_png(savePath.c_str(), width, height, channels, imageData.pixels, width * channels);
+                        }
+                        else if (extension == "jpg" || extension == "jpeg")
+                        {
+                            // Écrire l'image dans le format JPG en utilisant stb_image_write
+                            stbi_write_jpg(savePath.c_str(), width, height, channels, imageData.pixels, 100);
+                        }
+
+                    }
+                }
+
+
+
 
 
                 ImGui::EndTabItem();
@@ -282,18 +328,6 @@ void application::run()
         else
         {
             ImGui::Text("No image is loaded.");
-        }
-
-        for (int i = 0; i < 5; ++i) {
-            ImGui::Spacing();
-        }
-
-        if (ImGui::Button("Update image")){
-            if (imageTexture)
-            {
-                // Mettre à jour la texture de l'image avec les nouveaux pixels modifiés
-                imageTexture->upload(imageData.pixels, TextureRangeDesc::new2D(0, 0, imageData.w, imageData.h));
-            }
         }
 
         // End of column layout
