@@ -98,7 +98,7 @@ void ArrayBuffer::data(const void* data, uint32_t size, uint32_t offset) const
 
     savePreviousBuffer();
     getContext().bindBuffer(target_, id_);
-    if (offset == 0 && size == 0)
+    if ((offset == 0 && size == 0) || (size == size_ && offset == 0))
     {
         getContext().bufferData(target_, size_, data, GL_DYNAMIC_DRAW);
     }
@@ -184,8 +184,8 @@ void ArrayBuffer::savePreviousBuffer() const
         default:
             throw std::runtime_error("Unknown buffer type");
     }
-    // this method is a wrap around getContext().bindBuffer(getTarget(), id_); to ensure we dont alter the current state
-    getContext().getIntegerv(queryTarget, &lastBoundBuffer_);
+//    // this method is a wrap around getContext().bindBuffer(getTarget(), id_); to ensure we dont alter the current state
+//    getContext().getIntegerv(queryTarget, &lastBoundBuffer_);
 }
 
 void ArrayBuffer::restorePreviousBuffer() const

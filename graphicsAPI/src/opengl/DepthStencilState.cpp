@@ -79,7 +79,9 @@ void DepthStencilState::bind()
     }
     getContext().depthFunc(toOpenGLCompareOp(desc.depth.compareOp));
 
-    if (getContext().isEnabled(GL_STENCIL_TEST))
+    // checking isEnabled inside render loop is very bad, we should have a flag to check if stencil is enabled
+    // and not rely on the state of the context
+    if (false) //(getContext().isEnabled(GL_STENCIL_TEST))
     {
         GLuint mask = 0xFF;
         GLenum frontCompareOp = toOpenGLCompareOp(desc.stencilFront.compareOp);

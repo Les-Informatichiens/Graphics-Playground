@@ -55,7 +55,7 @@ CommandBuffer::CommandBuffer(const std::shared_ptr<Context>& context)
 void CommandBuffer::beginRenderPass(const RenderPassBeginDesc& desc)
 {
     // save the current state
-    scissorEnabled = context->isEnabled(GL_SCISSOR_TEST);
+    scissorEnabled = false;//context->isEnabled(GL_SCISSOR_TEST);
     context->disable(GL_SCISSOR_TEST);
 
     if (activeVAO)

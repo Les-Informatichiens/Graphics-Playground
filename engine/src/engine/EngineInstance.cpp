@@ -15,7 +15,7 @@
 #undef OBJL_CONSOLE_OUTPUT
 
 EngineInstance::EngineInstance(InstanceDesc desc)
-    : desc(std::move(desc)), renderer(), stage(), sceneRenderer(), input()
+    : desc(std::move(desc)), renderer(), resourceManager(), stage(), sceneRenderer(), input()
 {
     activeCamera = std::make_unique<Camera>("camera");
 }
@@ -35,6 +35,13 @@ void EngineInstance::updateDisplay(int width, int height)
 
 void EngineInstance::initialize()
 {
+    // ----------- Initializing resourceManager ------------
+
+    ResourceManagerDesc resourceManagerDesc;
+    resourceManager.initialize(resourceManagerDesc);
+
+    // ----------- Initializing renderer ------------
+
     graphics::RendererDesc rendererDesc;
     renderer.initialize(rendererDesc);
     testRenderPass.initialize(renderer.getDevice());
@@ -249,6 +256,7 @@ void EngineInstance::initialize()
             Mesh::Vertex vertex{};
             vertex.position = {LoadedVertice.Position.X, LoadedVertice.Position.Y, LoadedVertice.Position.Z};
             vertex.normal = {LoadedVertice.Normal.X, LoadedVertice.Normal.Y, LoadedVertice.Normal.Z};
+            vertex.texCoords = {LoadedVertice.TextureCoordinate.X, LoadedVertice.TextureCoordinate.Y};
             m->vertices.push_back(vertex);
         }
         for (unsigned int LoadedIndice: loader.LoadedIndices)
@@ -275,6 +283,7 @@ void EngineInstance::initialize()
             Mesh::Vertex vertex{};
             vertex.position = {LoadedVertice.Position.X, LoadedVertice.Position.Y, LoadedVertice.Position.Z};
             vertex.normal = {LoadedVertice.Normal.X, LoadedVertice.Normal.Y, LoadedVertice.Normal.Z};
+            vertex.texCoords = {LoadedVertice.TextureCoordinate.X, LoadedVertice.TextureCoordinate.Y};
             spiderMesh->vertices.push_back(vertex);
         }
         for (unsigned int LoadedIndice: loader.LoadedIndices)
@@ -289,17 +298,18 @@ void EngineInstance::initialize()
     std::shared_ptr<Mesh> bunnyMesh = std::make_shared<Mesh>();
     {
         objl::Loader loader;
-        bool success = loader.LoadFile(desc.assetPath + "/test/suzanne.obj");
+        bool success = loader.LoadFile(desc.assetPath + "/test/blocking_spider.obj");
         if (!success)
         {
             std::cerr << "Failed to load model" << std::endl;
-            return;
+            //return;
         }
         for (auto& LoadedVertice: loader.LoadedVertices)
         {
             Mesh::Vertex vertex{};
             vertex.position = {LoadedVertice.Position.X, LoadedVertice.Position.Y, LoadedVertice.Position.Z};
             vertex.normal = {LoadedVertice.Normal.X, LoadedVertice.Normal.Y, LoadedVertice.Normal.Z};
+            vertex.texCoords = {LoadedVertice.TextureCoordinate.X, LoadedVertice.TextureCoordinate.Y};
             bunnyMesh->vertices.push_back(vertex);
         }
         for (unsigned int LoadedIndice: loader.LoadedIndices)
@@ -312,6 +322,20 @@ void EngineInstance::initialize()
 
     // Create a scene
     defaultScene = std::make_shared<Scene>();
+
+
+    // spawn a bunch of teapots at random positions and rotations
+    {
+        int num = 1;
+        for (int i = 0; i < num; i++)
+        {
+            EntityView teapot = defaultScene->createEntity("teapot" + std::to_string(i));
+            teapot.addComponent<MeshComponent>(m, testMaterial);
+            auto& teapotNode = teapot.getSceneNode();
+            teapotNode.getTransform().setPosition({(float)rand() / RAND_MAX * 20.0f - 10.0f, (float)rand() / RAND_MAX * 20.0f - 10.0f, (float)rand() / RAND_MAX * 20.0f - 10.0f});
+            teapotNode.getTransform().setRotation({(float)rand() / RAND_MAX * 360.0f, (float)rand() / RAND_MAX * 360.0f, (float)rand() / RAND_MAX * 360.0f});
+        }
+    }
 
     // teapot gobbledygook
     {
@@ -498,32 +522,42 @@ void EngineInstance::updateSimulation(float dt)
 //        portal->getSceneNode().getTransform().rotate(glm::angleAxis(glm::radians(0.5f), glm::vec3(1.0f, 0.0f, 0.0f)));
     }
 
-//    auto viewer = defaultScene->getEntityByName("viewer");
-//    if (viewer)
-//    {
-//        auto& viewerNode = viewer->getSceneNode();
-//        // make it turn in circles with system clock
+    auto viewer = defaultScene->getEntityByName("viewer");
+    if (viewer)
+    {
+        auto& viewerNode = viewer->getSceneNode();
+        // make it turn in circles with system clock
 //        viewerNode.getTransform().setPosition({10.0f * glm::cos((float)clock()/1000.0f), 6.0f, 10.0f * glm::sin((float)clock()/1000.0f)});
 //        viewerNode.getTransform().lookAt({0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f});
-//
-//
-////        if (input.isMouseDragging(0))
-////        {
-////            std::cout << "Mouse dragging" << std::endl;
-////            std::cout << "Mouse drag delta: " << input.getMouseDragDeltaX() << ", " << input.getMouseDragDeltaY() << std::endl;
-////            auto& transform = viewerNode.getTransform();
-////
-////            // Create quaternions representing the x and y rotations
-////            glm::quat xRotation = glm::angleAxis(input.getMouseDragDeltaY() * 0.01f, glm::vec3(1.0f, 0.0f, 0.0f));  // X rotation around the right axis
-////            glm::quat yRotation = glm::angleAxis(input.getMouseDragDeltaX() * 0.01f, glm::vec3(0.0f, 1.0f, 0.0f));  // Y rotation around the up axis
-////
-////            // Combine the rotations
-////            glm::quat newRotation = xRotation * yRotation;
-////
-////            // Apply the new rotation to the transform
-////        }
-//
-//    }
+
+
+        if (input.isMouseDragging(0))
+        {
+            std::cout << "Mouse dragging" << std::endl;
+            std::cout << "Mouse drag delta: " << input.getMouseDragDeltaX() << ", " << input.getMouseDragDeltaY() << std::endl;
+            auto& transform = viewerNode.getTransform();
+
+            // Create quaternions representing the x and y rotations
+//            glm::quat xRotation = glm::angleAxis(input.getMouseDragDeltaY() * 0.01f, glm::vec3(1.0f, 0.0f, 0.0f));  // X rotation around the right axis
+//            glm::quat yRotation = glm::angleAxis(input.getMouseDragDeltaX() * 0.01f, glm::vec3(0.0f, 1.0f, 0.0f));  // Y rotation around the up axis
+
+            pitch = input.getMouseDragDeltaY() * 0.01f;
+            yaw = input.getMouseDragDeltaX() * 0.01f;
+
+            glm::quat qPitch = glm::angleAxis(pitch, glm::vec3(1, 0, 0));
+            glm::quat qYaw = glm::angleAxis(yaw, glm::vec3(0, 1, 0));
+            glm::quat qRoll = glm::angleAxis(roll,glm::vec3(0,0,1));
+
+            //For a FPS camera we can omit roll
+//            glm::quat orientation = qRoll * qPitch * qYaw;
+
+//            transform.setRotation(glm::normalize(orientation));
+
+            transform.setRotation(glm::normalize(qYaw * transform.getRotation()));
+            transform.setRotation(glm::normalize(transform.getRotation() * qPitch));
+        }
+
+    }
 
     stage.update(dt);
 }

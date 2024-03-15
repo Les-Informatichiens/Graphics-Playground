@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
 
     // Engine init
     InstanceDesc desc = {
-            .assetPath = "assets",
+            .assetPath = "./assets",
             .width = width,
             .height = height
     };

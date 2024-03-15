@@ -9,6 +9,7 @@
 #include "Mesh.h"
 #include "MeshRenderer.h"
 #include "Model.h"
+#include "ResourceManager.h"
 #include "SceneRenderer.h"
 #include "Stage.h"
 #include "TestRenderPass.h"
@@ -43,6 +44,9 @@ private:
     Input input;
 
     graphics::Renderer renderer;
+
+    ResourceManager resourceManager;
+
     TestRenderPass testRenderPass;
 
     InstanceDesc desc;
@@ -60,4 +64,8 @@ private:
     std::shared_ptr<graphics::Material> testMaterial;
     std::shared_ptr<graphics::Material> floorMaterial;
     std::shared_ptr<graphics::Material> portalMaterial;
+
+    float pitch = 0.0f;
+    float yaw = 0.0f;
+    float roll = 0.0f;
 };

@@ -107,36 +107,36 @@ void application::run()
         // Jonathan Richard 2024-02-10
         gameEngine.updateSimulation(0.0f);
 
-        if (auto scene = gameEngine.getStage().getScene())
-        {
-
-            auto viewer = scene->getEntityByName("viewer");
-            if (viewer)
-            {
-                auto& viewerNode = viewer->getSceneNode();
-                // make it turn in circles with system clock
-                if (cameraMotion)
-                    viewerNode.getTransform().setPosition({20.0f * glm::cos((float)clock()/1000.0f), 15.0f, 20.0f * glm::sin((float)clock()/1000.0f)});
-
-                if (lockCamOnSelected)
-                {
-                    auto selected = sceneEditor.getLastSelectedEntity();
-                    if (selected.first && scene->getEntity(selected.second)->getName() != "viewer")
-                    {
-                        auto& selectedNode = scene->getEntity(selected.second)->getSceneNode();
-                        viewerNode.getTransform().lookAt(selectedNode.getWorldTransform().getPosition(), glm::vec3(0.0f, 1.0f, 0.0f));
-                    }
-                    else
-                    {
-                        viewerNode.getTransform().lookAt({0.0f, 0.0f, 0.0f}, glm::vec3(0.0f, 1.0f, 0.0f));
-                    }
-                }
-                else
-                {
-                    viewerNode.getTransform().lookAt({0.0f, 0.0f, 0.0f}, glm::vec3(0.0f, 1.0f, 0.0f));
-                }
-            }
-        }
+//        if (auto scene = gameEngine.getStage().getScene())
+//        {
+//
+//            auto viewer = scene->getEntityByName("viewer");
+//            if (viewer)
+//            {
+//                auto& viewerNode = viewer->getSceneNode();
+//                // make it turn in circles with system clock
+//                if (cameraMotion)
+//                    viewerNode.getTransform().setPosition({20.0f * glm::cos((float)clock()/1000.0f), 15.0f, 20.0f * glm::sin((float)clock()/1000.0f)});
+//
+//                if (lockCamOnSelected)
+//                {
+//                    auto selected = sceneEditor.getLastSelectedEntity();
+//                    if (selected.first && scene->getEntity(selected.second)->getName() != "viewer")
+//                    {
+//                        auto& selectedNode = scene->getEntity(selected.second)->getSceneNode();
+//                        viewerNode.getTransform().lookAt(selectedNode.getWorldTransform().getPosition(), glm::vec3(0.0f, 1.0f, 0.0f));
+//                    }
+//                    else
+//                    {
+//                        viewerNode.getTransform().lookAt({0.0f, 0.0f, 0.0f}, glm::vec3(0.0f, 1.0f, 0.0f));
+//                    }
+//                }
+//                else
+//                {
+//                    viewerNode.getTransform().lookAt({0.0f, 0.0f, 0.0f}, glm::vec3(0.0f, 1.0f, 0.0f));
+//                }
+//            }
+//        }
 
 
         gameEngine.renderFrame();

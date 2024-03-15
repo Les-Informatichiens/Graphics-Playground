@@ -136,5 +136,35 @@ std::shared_ptr<Material> Renderer::createMaterial(const std::shared_ptr<ShaderP
     auto material = std::make_shared<Material>(getDevice(), shaderProgram);
     return material;
 }
+std::shared_ptr<VertexData> Renderer::createIndexedVertexData(const VertexDataLayout& layout, IndexFormat indexFormat, uint32_t vertexCount, uint32_t indexCount) const
+{
+    return std::make_shared<VertexData>(getDevice(), layout, indexFormat, vertexCount, indexCount);
+}
+std::shared_ptr<VertexData> Renderer::createCachedVertexData(size_t id, const VertexDataLayout& layout, uint32_t vertexCount)
+{
+    auto it = vertexDataCache.find(id);
+    if (it != vertexDataCache.end())
+    {
+        return it->second;
+    }
+    auto vertexData = createVertexData(layout, vertexCount);
+    vertexDataCache[id] = vertexData;
+    return vertexData;
+}
+std::shared_ptr<VertexData> Renderer::createCachedIndexedVertexData(size_t id, const VertexDataLayout& layout, IndexFormat indexFormat, uint32_t vertexCount, uint32_t indexCount)
+{
+    auto it = vertexDataCache.find(id);
+    if (it != vertexDataCache.end())
+    {
+        return it->second;
+    }
+    auto vertexData = createIndexedVertexData(layout, indexFormat, vertexCount, indexCount);
+    vertexDataCache[id] = vertexData;
+    return vertexData;
+}
+std::shared_ptr<VertexData> Renderer::createVertexData(const VertexDataLayout& layout, uint32_t vertexCount) const
+{
+    return std::make_shared<VertexData>(getDevice(), layout, IndexFormat::UInt32, vertexCount, 0);
+}
 
 }// namespace graphics

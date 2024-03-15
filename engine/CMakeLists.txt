@@ -61,6 +61,8 @@ add_library(
         include/engine/Bounds.h
         src/engine/Input.cpp
         include/engine/Input.h
+        src/engine/ResourceManager.cpp
+        include/ResourceManager.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
@@ -103,6 +105,16 @@ if (EnTT_ADDED)
     target_link_libraries(${PROJECT_NAME} PUBLIC EnTT)
 endif()
 # =====================================================================================================
+
+
+## lua ================================================================================================
+CPMAddPackage(
+        NAME "sol2"
+        GITHUB_REPOSITORY "ThePhD/sol2"
+        VERSION "3.3.0"
+)
+target_link_libraries(${PROJECT_NAME} PRIVATE sol2::sol2)
+## ====================================================================================================
 
 ## assimp ===============================================================================================
 #CPMAddPackage(

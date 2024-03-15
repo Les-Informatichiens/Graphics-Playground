@@ -151,6 +151,7 @@ set(
         "assets/test/teapot.obj"
         "assets/test/cow.obj"
         "assets/test/suzanne.obj"
+        "assets/test/blocking_spider.obj"
 )
 
 message("OUTPUT DIR IS: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")

@@ -6,9 +6,10 @@
 
 #include <engine/Bounds.h>
 
+#include "engine/util/UUID.h"
 #include "glm/glm.hpp"
-#include <vector>
 #include <memory>
+#include <vector>
 
 class Mesh {
 public:
