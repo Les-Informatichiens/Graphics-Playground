@@ -8,13 +8,16 @@
 #include <vector>
 #include "engine/graphics/Material.h"
 
+class MeshResource;
+class MaterialResource;
+
 struct Mesh;
 
 struct MeshRenderData
 {
-    glm::mat4 modelMatrix;
-    Mesh* mesh;
-    std::shared_ptr<graphics::Material> material;
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    std::shared_ptr<MeshResource> mesh = nullptr;
+    std::shared_ptr<MaterialResource> material = nullptr;
 };
 
 struct LineRenderData
@@ -31,6 +34,7 @@ struct SceneRenderData
 public:
     void reset()
     {
+        lineRenderData.clear();
         meshRenderData.clear();
     }
 };

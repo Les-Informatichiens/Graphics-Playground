@@ -139,8 +139,8 @@ void LineRenderer::drawLines(graphics::Renderer& renderer, const std::vector<glm
     )";
 
 
-        auto shaderProgram = renderer.createShaderProgram(vs, fs);
-        LineRenderer::lineMaterial = renderer.createMaterial(shaderProgram);
+        auto shaderProgram = renderer.getDeviceManager().createShaderProgram(vs, fs);
+        LineRenderer::lineMaterial = renderer.getDeviceManager().createMaterial(shaderProgram);
 
     }
 
@@ -223,7 +223,7 @@ void LineRenderer::drawLines(graphics::Renderer& renderer, const std::vector<glm
     }
     if (!lineVertexData)
     {
-        lineVertexData = renderer.createIndexedVertexData(attribLayout, IndexFormat::UInt16, vertices.size(), indices.size());
+        lineVertexData = renderer.getDeviceManager().createIndexedVertexData(attribLayout, IndexFormat::UInt16, vertices.size(), indices.size());
     }
     else
     {

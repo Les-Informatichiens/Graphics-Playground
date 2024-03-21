@@ -12,7 +12,7 @@ void SceneRenderer::render(graphics::Renderer& renderer, const SceneRenderData& 
     MeshRenderer meshRenderer;
     for (const auto& meshRenderData: sceneData.meshRenderData)
     {
-        meshRenderer.render(renderer, *meshRenderData.mesh, meshRenderData.material, meshRenderData.modelMatrix, cameraDesc.view, cameraDesc.projection);
+        meshRenderer.render(renderer, meshRenderData.mesh, meshRenderData.material, meshRenderData.modelMatrix, cameraDesc.view, cameraDesc.projection);
     }
 
     LineRenderer lineRenderer;

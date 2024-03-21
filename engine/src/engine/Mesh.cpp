@@ -188,3 +188,10 @@ void Mesh::recalculateBounds() const
 
     bounds = Bounds(center, max - min);
 }
+
+void Mesh::clear()
+{
+    vertices.clear();
+    indices.clear();
+    bounds = Bounds(glm::vec3(0.0f), glm::vec3(0.0f));
+}

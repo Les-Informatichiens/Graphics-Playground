@@ -33,6 +33,8 @@ public:
 
     void recalculateBounds() const;
 
+    void clear();
+
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
     mutable Bounds bounds = Bounds(glm::vec3(0.0f), glm::vec3(0.0f));

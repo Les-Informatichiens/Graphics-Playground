@@ -62,7 +62,19 @@ add_library(
         src/engine/Input.cpp
         include/engine/Input.h
         src/engine/ResourceManager.cpp
-        include/ResourceManager.h
+        include/engine/ResourceManager.h
+        src/engine/graphics/TextureResource.cpp
+        include/engine/graphics/TextureResource.h
+        src/engine/Resource.cpp
+        include/engine/Resource.h
+        src/engine/graphics/MeshResource.cpp
+        include/engine/graphics/MeshResource.h
+        src/engine/ResourceHandle.cpp
+        include/engine/ResourceHandle.h
+        src/engine/graphics/MaterialResource.cpp
+        include/engine/graphics/MaterialResource.h
+        src/engine/graphics/DeviceManager.cpp
+        include/engine/graphics/DeviceManager.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)

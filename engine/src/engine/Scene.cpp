@@ -38,12 +38,16 @@ void Scene::getSceneRenderData(SceneRenderData& sceneRenderData) const
         if (!node.isVisible())
             return;
 
-        sceneRenderData.meshRenderData.push_back({node.getWorldTransform().getModel(), mesh.getMesh().get(), mesh.getMaterial()});
+        MeshRenderData meshRenderData;
+        meshRenderData.modelMatrix = node.getWorldTransform().getModel();
+        meshRenderData.mesh = mesh.getMesh();
+        meshRenderData.material = mesh.getMaterial();
+        sceneRenderData.meshRenderData.push_back(meshRenderData);
 
         if (node.showBoundingBox)
         {
             auto model = node.getWorldTransform().getModel();
-            Bounds bounds = mesh.getMesh()->bounds;
+            Bounds bounds = mesh.getMesh()->getMesh().bounds;
 
             // create line segments for each edge of the bounding box, we can join the segments from the top and bottom of the box
             glm::vec3 min = bounds.getMin();

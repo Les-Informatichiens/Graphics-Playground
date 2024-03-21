@@ -9,10 +9,13 @@
 #include "Transform.h"
 #include "engine/graphics/Renderer.h"
 
+class MaterialResource;
+class MeshResource;
+
 class MeshRenderer
 {
 public:
     MeshRenderer() = default;
 
-    void render(graphics::Renderer& renderer, const Mesh& mesh, const std::shared_ptr<graphics::Material>&, const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection);
+    void render(graphics::Renderer& renderer, const std::shared_ptr<MeshResource>& mesh, const std::shared_ptr<MaterialResource>&, const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection);
 };

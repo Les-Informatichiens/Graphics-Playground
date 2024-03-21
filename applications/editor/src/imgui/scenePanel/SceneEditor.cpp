@@ -136,8 +136,8 @@ void SceneEditor::draw()
                             // mesh info
                             ImGui::BeginTooltip();
                             ImGui::TextDisabled("Mesh info");
-                            ImGui::Text("Vertex count: %zu", mesh.getMesh()->vertices.size());
-                            ImGui::Text("Index count: %zu", mesh.getMesh()->indices.size());
+                            ImGui::Text("Vertex count: %zu", mesh.getMesh()->getMesh().vertices.size());
+                            ImGui::Text("Index count: %zu", mesh.getMesh()->getMesh().indices.size());
                             ImGui::EndTooltip();
                         }
                         ImGui::Text("Material: %d", mesh.getMaterial().get());

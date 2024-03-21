@@ -89,8 +89,11 @@ void EngineInstance::initialize()
             }
         )";
 
-        auto shaderProgram = renderer.createShaderProgram(vs, fs);
-        normalMaterial = renderer.createMaterial(shaderProgram);
+        auto shaderProgram = renderer.getDeviceManager().createShaderProgram(vs, fs);
+        normalMaterial = renderer.getDeviceManager().createMaterial(shaderProgram);
+        auto matres = resourceManager.createMaterial("normalMaterial");
+        matres->setMaterial(normalMaterial);
+        matres->load();
     }
 
     // test teapot material
@@ -139,8 +142,11 @@ void EngineInstance::initialize()
             }
         )";
 
-        auto shaderProgram = renderer.createShaderProgram(vs, fs);
-        testMaterial = renderer.createMaterial(shaderProgram);
+        auto shaderProgram = renderer.getDeviceManager().createShaderProgram(vs, fs);
+        testMaterial = renderer.getDeviceManager().createMaterial(shaderProgram);
+        auto matres = resourceManager.createMaterial("testMaterial");
+        matres->setMaterial(testMaterial);
+        matres->load();
     }
 
     // floor material with checkered pattern
@@ -184,10 +190,14 @@ void EngineInstance::initialize()
             }
         )";
 
-        auto shaderProgram = renderer.createShaderProgram(vs, fs);
-        floorMaterial = renderer.createMaterial(shaderProgram);
+        auto shaderProgram = renderer.getDeviceManager().createShaderProgram(vs, fs);
+        floorMaterial = renderer.getDeviceManager().createMaterial(shaderProgram);
 
         floorMaterial->setCullMode(CullMode::None);
+
+        auto matres = resourceManager.createMaterial("floorMaterial");
+        matres->setMaterial(floorMaterial);
+        matres->load();
     }
 
     // portal material: usage will be a simple textured mesh
@@ -228,17 +238,38 @@ void EngineInstance::initialize()
             }
         )";
 
-        auto shaderProgram = renderer.createShaderProgram(vs, fs);
-        portalMaterial = renderer.createMaterial(shaderProgram);
+        auto shaderProgram = renderer.getDeviceManager().createShaderProgram(vs, fs);
+        portalMaterial = renderer.getDeviceManager().createMaterial(shaderProgram);
+        auto matres = resourceManager.createMaterial("portalMaterial");
+        matres->setMaterial(portalMaterial);
+        matres->load();
     }
 
-    // Portal Mesh
-    auto portalMesh = Mesh::createQuad();
-    portalMesh->vertices[0].texCoords = {0.0f, 0.0f};
-    portalMesh->vertices[1].texCoords = {1.0f, 0.0f};
-    portalMesh->vertices[2].texCoords = {1.0f, 1.0f};
-    portalMesh->vertices[3].texCoords = {0.0f, 1.0f};
+    {// Portal Mesh
+        auto portalMesh = Mesh::createQuad();
+        portalMesh->vertices[0].texCoords = {0.0f, 0.0f};
+        portalMesh->vertices[1].texCoords = {1.0f, 0.0f};
+        portalMesh->vertices[2].texCoords = {1.0f, 1.0f};
+        portalMesh->vertices[3].texCoords = {0.0f, 1.0f};
 
+        auto portalMeshRes = resourceManager.createMesh("portal");
+        portalMeshRes->getMesh() = *portalMesh;
+
+        graphics::VertexDataLayout attribLayout({
+                { "inPosition", 0, VertexAttributeFormat::Float3 },
+                { "inNormal", 1, VertexAttributeFormat::Float3 },
+                { "inTexCoords", 2, VertexAttributeFormat::Float2 }
+        });
+
+        auto vertexData = renderer.getDeviceManager().createVertexData(attribLayout);
+        vertexData->allocateVertexBuffer(renderer.getDevice(), portalMesh->vertices.size());
+        vertexData->allocateIndexBuffer(renderer.getDevice(), portalMesh->indices.size());
+        vertexData->pushVertices(portalMesh->vertices);
+        vertexData->pushIndices(portalMesh->indices);
+
+        portalMeshRes->setVertexData(vertexData);
+        portalMeshRes->load();
+    }
 
 
     // Load teapot model
@@ -266,7 +297,26 @@ void EngineInstance::initialize()
         m->normalize();
         m->recalculateBounds();
     }
+    {
+        auto teapotMeshRes = resourceManager.createMesh("teapot");
+        teapotMeshRes->getMesh().vertices = m->vertices;
+        teapotMeshRes->getMesh().indices = m->indices;
 
+        graphics::VertexDataLayout attribLayout({
+                { "inPosition", 0, VertexAttributeFormat::Float3 },
+                { "inNormal", 1, VertexAttributeFormat::Float3 },
+                { "inTexCoords", 2, VertexAttributeFormat::Float2 }
+        });
+
+        auto vertexData = renderer.getDeviceManager().createVertexData(attribLayout);
+        vertexData->allocateVertexBuffer(renderer.getDevice(), m->vertices.size());
+        vertexData->allocateIndexBuffer(renderer.getDevice(), m->indices.size());
+        vertexData->pushVertices(m->vertices);
+        vertexData->pushIndices(m->indices);
+
+        teapotMeshRes->setVertexData(vertexData);
+        teapotMeshRes->load();
+    }
 
     // Load spider mesh
     std::shared_ptr<Mesh> spiderMesh = std::make_shared<Mesh>();
@@ -293,12 +343,32 @@ void EngineInstance::initialize()
         spiderMesh->normalize();
         spiderMesh->recalculateBounds();
     }
+    {
+        auto spiderMeshRes = resourceManager.createMesh("spider");
+        spiderMeshRes->getMesh().vertices = spiderMesh->vertices;
+        spiderMeshRes->getMesh().indices = spiderMesh->indices;
+
+        graphics::VertexDataLayout attribLayout({
+                { "inPosition", 0, VertexAttributeFormat::Float3 },
+                { "inNormal", 1, VertexAttributeFormat::Float3 },
+                { "inTexCoords", 2, VertexAttributeFormat::Float2 }
+        });
+
+        auto vertexData = renderer.getDeviceManager().createVertexData(attribLayout);
+        vertexData->allocateVertexBuffer(renderer.getDevice(), spiderMesh->vertices.size());
+        vertexData->allocateIndexBuffer(renderer.getDevice(), spiderMesh->indices.size());
+        vertexData->pushVertices(spiderMesh->vertices);
+        vertexData->pushIndices(spiderMesh->indices);
+
+        spiderMeshRes->setVertexData(vertexData);
+        spiderMeshRes->load();
+    }
 
     // standford bunny mesh
     std::shared_ptr<Mesh> bunnyMesh = std::make_shared<Mesh>();
     {
         objl::Loader loader;
-        bool success = loader.LoadFile(desc.assetPath + "/test/blocking_spider.obj");
+        bool success = loader.LoadFile(desc.assetPath + "/test/suzanne.obj");
         if (!success)
         {
             std::cerr << "Failed to load model" << std::endl;
@@ -319,6 +389,112 @@ void EngineInstance::initialize()
         bunnyMesh->normalize();
         bunnyMesh->recalculateBounds();
     }
+    {
+        auto bunnyMeshRes = resourceManager.createMesh("bunny");
+        bunnyMeshRes->getMesh().vertices = bunnyMesh->vertices;
+        bunnyMeshRes->getMesh().indices = bunnyMesh->indices;
+
+        graphics::VertexDataLayout attribLayout({
+                { "inPosition", 0, VertexAttributeFormat::Float3 },
+                { "inNormal", 1, VertexAttributeFormat::Float3 },
+                { "inTexCoords", 2, VertexAttributeFormat::Float2 }
+        });
+
+        auto vertexData = renderer.getDeviceManager().createVertexData(attribLayout);
+        vertexData->allocateVertexBuffer(renderer.getDevice(), bunnyMesh->vertices.size());
+        vertexData->allocateIndexBuffer(renderer.getDevice(), bunnyMesh->indices.size());
+        vertexData->pushVertices(bunnyMesh->vertices);
+        vertexData->pushIndices(bunnyMesh->indices);
+
+        bunnyMeshRes->setVertexData(vertexData);
+        bunnyMeshRes->load();
+    }
+
+    {
+        auto sphereMeshRes = resourceManager.createMesh("sphere");
+        sphereMeshRes->getMesh() = *Mesh::createSphere(2.0f);
+
+        graphics::VertexDataLayout attribLayout({
+                { "inPosition", 0, VertexAttributeFormat::Float3 },
+                { "inNormal", 1, VertexAttributeFormat::Float3 },
+                { "inTexCoords", 2, VertexAttributeFormat::Float2 }
+        });
+
+        auto vertexData = renderer.getDeviceManager().createVertexData(attribLayout);
+        vertexData->allocateVertexBuffer(renderer.getDevice(), sphereMeshRes->getMesh().vertices.size());
+        vertexData->allocateIndexBuffer(renderer.getDevice(), sphereMeshRes->getMesh().indices.size());
+        vertexData->pushVertices(sphereMeshRes->getMesh().vertices);
+        vertexData->pushIndices(sphereMeshRes->getMesh().indices);
+
+        sphereMeshRes->setVertexData(vertexData);
+        sphereMeshRes->load();
+    }
+
+    {
+        auto floorMeshRes = resourceManager.createMesh("floor");
+        floorMeshRes->getMesh() = *Mesh::createQuad(10.0f);
+
+        graphics::VertexDataLayout attribLayout({
+                { "inPosition", 0, VertexAttributeFormat::Float3 },
+                { "inNormal", 1, VertexAttributeFormat::Float3 },
+                { "inTexCoords", 2, VertexAttributeFormat::Float2 }
+        });
+
+        auto vertexData = renderer.getDeviceManager().createVertexData(attribLayout);
+        vertexData->allocateVertexBuffer(renderer.getDevice(), floorMeshRes->getMesh().vertices.size());
+        vertexData->allocateIndexBuffer(renderer.getDevice(), floorMeshRes->getMesh().indices.size());
+        vertexData->pushVertices(floorMeshRes->getMesh().vertices);
+        vertexData->pushIndices(floorMeshRes->getMesh().indices);
+
+        floorMeshRes->setVertexData(vertexData);
+        floorMeshRes->load();
+    }
+
+    {
+        auto portalFrameMeshRes = resourceManager.createMesh("portalFrame");
+        portalFrameMeshRes->getMesh() = *Mesh::createCube(1.0f);
+
+        graphics::VertexDataLayout attribLayout({
+                { "inPosition", 0, VertexAttributeFormat::Float3 },
+                { "inNormal", 1, VertexAttributeFormat::Float3 },
+                { "inTexCoords", 2, VertexAttributeFormat::Float2 }
+        });
+
+        auto vertexData = renderer.getDeviceManager().createVertexData(attribLayout);
+        vertexData->allocateVertexBuffer(renderer.getDevice(), portalFrameMeshRes->getMesh().vertices.size());
+        vertexData->allocateIndexBuffer(renderer.getDevice(), portalFrameMeshRes->getMesh().indices.size());
+        vertexData->pushVertices(portalFrameMeshRes->getMesh().vertices);
+        vertexData->pushIndices(portalFrameMeshRes->getMesh().indices);
+
+        portalFrameMeshRes->setVertexData(vertexData);
+        portalFrameMeshRes->load();
+    }
+
+    //create a number of meshes in the resource manager
+    {
+        int numMeshes = 10000;
+        for (int i = 0; i < numMeshes; i++)
+        {
+            auto mesh = Mesh::createCube(1.0f);
+            auto meshRes = resourceManager.createMesh("cube" + std::to_string(i));
+            meshRes->getMesh() = *mesh;
+
+            graphics::VertexDataLayout attribLayout({
+                    { "inPosition", 0, VertexAttributeFormat::Float3 },
+                    { "inNormal", 1, VertexAttributeFormat::Float3 },
+                    { "inTexCoords", 2, VertexAttributeFormat::Float2 }
+            });
+
+            auto vertexData = renderer.getDeviceManager().createVertexData(attribLayout);
+            vertexData->allocateVertexBuffer(renderer.getDevice(), mesh->vertices.size());
+            vertexData->allocateIndexBuffer(renderer.getDevice(), mesh->indices.size());
+            vertexData->pushVertices(mesh->vertices);
+            vertexData->pushIndices(mesh->indices);
+
+            meshRes->setVertexData(vertexData);
+            meshRes->load();
+        }
+    }
 
     // Create a scene
     defaultScene = std::make_shared<Scene>();
@@ -330,7 +506,7 @@ void EngineInstance::initialize()
         for (int i = 0; i < num; i++)
         {
             EntityView teapot = defaultScene->createEntity("teapot" + std::to_string(i));
-            teapot.addComponent<MeshComponent>(m, testMaterial);
+            teapot.addComponent<MeshComponent>(resourceManager.getMeshByName("teapot"), resourceManager.getMaterialByName("testMaterial"));
             auto& teapotNode = teapot.getSceneNode();
             teapotNode.getTransform().setPosition({(float)rand() / RAND_MAX * 20.0f - 10.0f, (float)rand() / RAND_MAX * 20.0f - 10.0f, (float)rand() / RAND_MAX * 20.0f - 10.0f});
             teapotNode.getTransform().setRotation({(float)rand() / RAND_MAX * 360.0f, (float)rand() / RAND_MAX * 360.0f, (float)rand() / RAND_MAX * 360.0f});
@@ -345,19 +521,19 @@ void EngineInstance::initialize()
         viewer.getSceneNode().getTransform().setRotation({glm::radians(-20.0f), 0, 0.0f});
 
         EntityView cow = defaultScene->createEntity("cow");
-        cow.addComponent<MeshComponent>(spiderMesh, testMaterial);
+        cow.addComponent<MeshComponent>(resourceManager.getMeshByName("spider"), resourceManager.getMaterialByName("testMaterial"));
         cow.getSceneNode().getTransform().setPosition({-7.0f, 0.0f, -4.0f});
         cow.getSceneNode().getTransform().setScale(glm::vec3(1.0f));
         cow.getSceneNode().getTransform().setRotation({0.0f, glm::radians(20.0f), 0.0f});
 
         EntityView bunny = defaultScene->createEntity("bunny");
-        bunny.addComponent<MeshComponent>(bunnyMesh, testMaterial);
+        bunny.addComponent<MeshComponent>(resourceManager.getMeshByName("bunny"), resourceManager.getMaterialByName("testMaterial"));
         bunny.getSceneNode().getTransform().setPosition({0.0f, 0.0f, 0.0f});
         bunny.getSceneNode().getTransform().setScale(glm::vec3(2.0f));
         bunny.getSceneNode().getTransform().setRotation({0.0f, 3.0f, 0.0f});
 
         EntityView root = defaultScene->createEntity("teapot");
-        root.addComponent<MeshComponent>(m, testMaterial);
+        root.addComponent<MeshComponent>(resourceManager.getMeshByName("teapot"), resourceManager.getMaterialByName("testMaterial"));
 
         auto& rootNode = root.getSceneNode();
         rootNode.getTransform().setPosition({-3.0f, 0.0f, 10.0f});
@@ -367,7 +543,7 @@ void EngineInstance::initialize()
         // Create a child node
         EntityView child = defaultScene->createEntity("childTeapot");
 
-        child.addComponent<MeshComponent>(m, testMaterial);
+        child.addComponent<MeshComponent>(resourceManager.getMeshByName("teapot"), resourceManager.getMaterialByName("testMaterial"));
         auto& childNode = child.getSceneNode();
         childNode.getTransform().setPosition({7.0f, 0.0f, 0.0f});
         childNode.getTransform().setScale({1.f, 1.f, 1.f});
@@ -383,7 +559,7 @@ void EngineInstance::initialize()
                     .clearColor = {0.0f, 0.2f, 0.2f, 1.0f},
             };
             teapotPOV.addComponent<CameraComponent>(testRenderTextureCamera, testRenderTextureCameraTarget);
-            teapotPOV.addComponent<MeshComponent>(m, testMaterial);
+            teapotPOV.addComponent<MeshComponent>(resourceManager.getMeshByName("teapot"), resourceManager.getMaterialByName("testMaterial"));
 
             auto& teapotPOVTransform = teapotPOVNode.getTransform();
             teapotPOVTransform.setPosition({4.0f, 0.0f, 0.0f});
@@ -395,7 +571,7 @@ void EngineInstance::initialize()
         // Create a child node
         EntityView spherePortal = defaultScene->createEntity("spherePortal");
 
-        spherePortal.addComponent<MeshComponent>(Mesh::createSphere(3.f), portalMaterial);
+        spherePortal.addComponent<MeshComponent>(resourceManager.getMeshByName("sphere"), resourceManager.getMaterialByName("portalMaterial"));
         auto& spherePortalNode = spherePortal.getSceneNode();
         spherePortalNode.getTransform().setPosition({10.0f, 3.0f, 10.0f});
         spherePortalNode.getTransform().setScale({1.f, 1.f, 1.f});
@@ -404,7 +580,7 @@ void EngineInstance::initialize()
         // Create a child node
         EntityView sphere = defaultScene->createEntity("sphere");
 
-        sphere.addComponent<MeshComponent>(Mesh::createSphere(2.f), normalMaterial);
+        sphere.addComponent<MeshComponent>(resourceManager.getMeshByName("sphere"), resourceManager.getMaterialByName("testMaterial"));
         auto& sphereNode = sphere.getSceneNode();
         sphereNode.getTransform().setPosition({10.0f, 0.0f, 0.0f});
         sphereNode.getTransform().setScale({1.f, 1.f, 1.f});
@@ -421,7 +597,7 @@ void EngineInstance::initialize()
     // floor
     {
         auto floor = defaultScene->createEntity("floor");
-        floor.addComponent<MeshComponent>(Mesh::createQuad(10.0f), floorMaterial);
+        floor.addComponent<MeshComponent>(resourceManager.getMeshByName("floor"), resourceManager.getMaterialByName("floorMaterial"));
         {
             auto& floorNode = floor.getSceneNode();
             floorNode.getTransform().setPosition({0.0f, -5.0f, 0.0f});
@@ -433,7 +609,7 @@ void EngineInstance::initialize()
     // portal and its frame
     {
         auto portal = defaultScene->createEntity("portal");
-        portal.addComponent<MeshComponent>(portalMesh, portalMaterial);
+        portal.addComponent<MeshComponent>(resourceManager.getMeshByName("portal"), resourceManager.getMaterialByName("portalMaterial"));
         {
             auto& portalNode = portal.getSceneNode();
             portalNode.getTransform().setPosition({0.0f, 0.0f, 0.0f});
@@ -441,9 +617,9 @@ void EngineInstance::initialize()
             portalNode.getTransform().setRotation({glm::radians(90.0f), 0.0f, 0.0f});
 
             auto& portalMaterialComponent = portal.getComponent<MeshComponent>();
-            auto& portalMaterial = portalMaterialComponent.getMaterial();
+            auto portalMaterial_ = portalMaterialComponent.getMaterial()->getMaterial();
             auto samplerState = renderer.getDevice().createSamplerState(SamplerStateDesc::newLinear());
-            portalMaterial->setTextureSampler("tex", testRenderTexture, samplerState, 0);
+            portalMaterial_->setTextureSampler("tex", testRenderTexture, samplerState, 0);
         }
 
         // create a rectangular frame around the portal made of 4 cubes stretched to be a frame
@@ -453,7 +629,7 @@ void EngineInstance::initialize()
         for (int i = 0; i < 4; i++)
         {
             auto framePart = defaultScene->createEntity("framePart" + std::to_string(i));
-            framePart.addComponent<MeshComponent>(Mesh::createCube(1.0f), normalMaterial);
+            framePart.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("normalMaterial"));
             auto& framePartNode = framePart.getSceneNode();
 
             // transform the frame part according to i, add a scale parameter for the thickness, and the transformations are TRS
