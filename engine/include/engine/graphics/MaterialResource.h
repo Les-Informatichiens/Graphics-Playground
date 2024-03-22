@@ -19,7 +19,6 @@ struct MaterialMetadata
     std::string normal; // texture name
     std::string metallic; // texture name
     std::string roughness; // texture name
-    std::string ao; // texture name
 };
 
 class MaterialResource : public Resource

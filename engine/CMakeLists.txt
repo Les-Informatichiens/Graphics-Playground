@@ -75,6 +75,8 @@ add_library(
         include/engine/graphics/MaterialResource.h
         src/engine/graphics/DeviceManager.cpp
         include/engine/graphics/DeviceManager.h
+        src/engine/ImageResource.cpp
+        src/engine/ImageResource.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)

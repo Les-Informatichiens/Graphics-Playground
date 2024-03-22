@@ -74,7 +74,7 @@ class Material
     {
         size_t size = 0;
         std::vector<uint8_t> data;
-        mutable std::shared_ptr<IBuffer> buffer;
+        std::shared_ptr<IBuffer> buffer;
         size_t bindingPoint = 0;
     };
 
@@ -179,7 +179,7 @@ public:
 //        commandBuffer.bindGraphicsPipeline(cachedPipeline);
 
         // bind the uniform buffers
-        for (const auto& [name, bufferDesc] : uniformBuffers)
+        for (auto& [name, bufferDesc] : uniformBuffers)
         {
             if (!bufferDesc.buffer)
             {
