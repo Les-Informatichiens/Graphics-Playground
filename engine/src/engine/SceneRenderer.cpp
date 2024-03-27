@@ -3,7 +3,7 @@
 //
 
 #include "engine/SceneRenderer.h"
-#include "LineRenderer.h"
+#include "engine/LineRenderer.h"
 #include "engine/MeshRenderer.h"
 
 
@@ -12,7 +12,7 @@ void SceneRenderer::render(graphics::Renderer& renderer, const SceneRenderData& 
     MeshRenderer meshRenderer;
     for (const auto& meshRenderData: sceneData.meshRenderData)
     {
-        meshRenderer.render(renderer, meshRenderData.mesh, meshRenderData.material, meshRenderData.modelMatrix, cameraDesc.view, cameraDesc.projection);
+        meshRenderer.render(renderer, meshRenderData.mesh, meshRenderData.material, meshRenderData.modelMatrix, cameraDesc.view, cameraDesc.projection, cameraDesc.position, cameraDesc.direction);
     }
 
     LineRenderer lineRenderer;

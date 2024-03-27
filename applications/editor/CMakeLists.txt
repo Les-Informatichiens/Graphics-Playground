@@ -152,6 +152,18 @@ set(
         "assets/test/cow.obj"
         "assets/test/suzanne.obj"
         "assets/test/blocking_spider.obj"
+
+        "assets/test/textures/default/metallic.png"
+
+        "assets/test/textures/rustedmetal/albedo.png"
+        "assets/test/textures/rustedmetal/normal.png"
+        "assets/test/textures/rustedmetal/roughness.png"
+        "assets/test/textures/rustedmetal/metallic.png"
+        "assets/test/textures/rustedmetal/ao.png"
+        "assets/test/textures/polishedconcrete/albedo.png"
+        "assets/test/textures/polishedconcrete/normal.png"
+        "assets/test/textures/polishedconcrete/roughness.png"
+        "assets/test/textures/polishedconcrete/height.png"
 )
 
 message("OUTPUT DIR IS: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")

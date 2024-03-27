@@ -11,6 +11,7 @@
 #include "ImGuiFileDialog.h"
 
 #define STB_IMAGE_IMPLEMENTATION
+#define STBI_FAILURE_USERMSG //generate user friendly error messages
 #include "engine/stb_image.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION

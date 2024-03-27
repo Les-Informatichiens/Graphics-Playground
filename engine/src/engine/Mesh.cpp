@@ -195,3 +195,40 @@ void Mesh::clear()
     indices.clear();
     bounds = Bounds(glm::vec3(0.0f), glm::vec3(0.0f));
 }
+
+//void Mesh::calculateTangents()
+//{
+//    // calc tangents and bitangents
+//    for (int i = 0; i < indices.size(); i += 3)
+//    {
+//        // Shortcuts for vertices
+//        glm::vec3 &v0 = vertices[indices[i]].position;
+//        glm::vec3 &v1 = vertices[indices[i + 1]].position;
+//        glm::vec3 &v2 = vertices[indices[i + 2]].position;
+//
+//        // Shortcuts for UVs
+//        glm::vec2 &uv0 = vertices[indices[i]].texCoords;
+//        glm::vec2 &uv1 = vertices[indices[i + 1]].texCoords;
+//        glm::vec2 &uv2 = vertices[indices[i + 2]].texCoords;
+//
+//        // Edges of the triangle : postion delta
+//        glm::vec3 deltaPos1 = v1 - v0;
+//        glm::vec3 deltaPos2 = v2 - v0;
+//
+//        // UV delta
+//        glm::vec2 deltaUV1 = uv1 - uv0;
+//        glm::vec2 deltaUV2 = uv2 - uv0;
+//
+//        float r = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
+//        glm::vec3 tangent = (deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y) * r;
+//        glm::vec3 bitangent = (deltaPos2 * deltaUV1.x - deltaPos1 * deltaUV2.x) * r;
+//
+//        vertices[indices[i]].tangent += tangent;
+//        vertices[indices[i + 1]].tangent += tangent;
+//        vertices[indices[i + 2]].tangent += tangent;
+//
+//        vertices[indices[i]].bitangent += bitangent;
+//        vertices[indices[i + 1]].bitangent += bitangent;
+//        vertices[indices[i + 2]].bitangent += bitangent;
+//    }
+//}

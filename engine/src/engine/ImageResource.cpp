@@ -2,19 +2,33 @@
 // Created by Jonathan Richard on 2024-03-22.
 //
 
-#include "ImageResource.h"
+#include "engine/ImageResource.h"
 #include "engine/stb_image.h"
 
-ImageResource::ImageResource(ResourceManager* manager, const std::string& name, const std::string& path, ResourceHandle handle_, bool external)
-    : Resource(manager, name, handle_, external)
+ImageResource::ImageResource(ResourceManager* manager, const std::string& name, ResourceHandle handle_, bool external, Format format)
+    : Resource(manager, name, handle_, external), format_(format)
 {
 }
 
 void ImageResource::load()
 {
     std::string path = getName();
-    stbi_set_flip_vertically_on_load(true);
-    data_ = stbi_load(path.c_str(), &width_, &height_, &channels_, 0);
+//    stbi_set_flip_vertically_on_load(true);
+
+    auto stbiFormat = 0;
+    switch (format_)
+    {
+        case Format::AUTO:
+            break;
+        case Format::RGB:
+            stbiFormat = STBI_rgb;
+            break;
+        case Format::RGBA:
+            stbiFormat = STBI_rgb_alpha;
+            break;
+    }
+
+    data_ = stbi_load(path.c_str(), &width_, &height_, &channels_, stbiFormat);
     setState(LoadingState::Loaded);
 }
 

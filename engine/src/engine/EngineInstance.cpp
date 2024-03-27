@@ -3,11 +3,12 @@
 //
 
 #include "engine/EngineInstance.h"
-#include "LineRenderer.h"
 #include "engine/EntityView.h"
+#include "engine/LineRenderer.h"
 #include "engine/MeshRenderer.h"
 #include "engine/OBJ_Loader.h"
 #include "engine/components/CameraComponent.h"
+#include "engine/components/LightComponent.h"
 #include "engine/components/MeshComponent.h"
 #include <iostream>
 #include <utility>
@@ -54,6 +55,272 @@ void EngineInstance::initialize()
 
 
     // Create materials
+
+    // PBR material
+    {
+        auto vs = R"(
+            #version 450
+            layout(location = 0) in vec3 inPosition;
+            layout(location = 1) in vec3 inNormal;
+            layout(location = 2) in vec2 inTexCoord;
+
+            layout(location = 0) out vec2 fragTexCoord;
+            layout(location = 1) out vec3 fragWorldPos;
+            layout(location = 2) out vec3 fragNormal;
+
+            layout(binding = 0) uniform UBO {
+                mat4 model;
+                mat4 view;
+                mat4 proj;
+            } ubo;
+
+            void main() {
+                gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
+                fragTexCoord = inTexCoord;
+                fragWorldPos = vec3(ubo.model * vec4(inPosition, 1.0));
+                mat3 normalMatrix = transpose(inverse(mat3(ubo.model)));
+                fragNormal = normalMatrix * inNormal;
+            }
+        )";
+
+        auto fs = R"(
+            #version 450
+            layout(location = 0) in vec2 fragTexCoord;
+            layout(location = 1) in vec3 fragWorldPos;
+            layout(location = 2) in vec3 fragNormal;
+            out vec4 fragColor;
+
+            layout(binding = 1) uniform sampler2D albedoMap;
+            layout(binding = 2) uniform sampler2D normalMap;
+            layout(binding = 3) uniform sampler2D metallicMap;
+            layout(binding = 4) uniform sampler2D roughnessMap;
+            layout(binding = 5) uniform sampler2D aoMap;
+
+            struct Material {
+                vec3 albedo;
+                float metallic;
+                float roughness;
+                float ao;
+            };
+
+            struct Light {
+                vec3 position;
+                vec3 color;
+            };
+
+            const int MAX_LIGHTS = 10;
+            layout(binding = 6) uniform Lights {
+                int lightCount;
+                Light lights[MAX_LIGHTS];
+            };
+
+            layout(binding = 1) uniform Constants {
+                vec3 cameraPos;
+                vec3 cameraDir;
+                vec3 lightDir;
+                float shininess;
+            } constants;
+
+            const float PI = 3.14159265359;
+            // ----------------------------------------------------------------------------
+            float DistributionGGX(vec3 N, vec3 H, float roughness)
+            {
+                float a = roughness*roughness;
+                float a2 = a*a;
+                float NdotH = max(dot(N, H), 0.0);
+                float NdotH2 = NdotH*NdotH;
+
+                float nom   = a2;
+                float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+                denom = PI * denom * denom;
+
+                return nom / denom;
+            }
+            // ----------------------------------------------------------------------------
+            float GeometrySchlickGGX(float NdotV, float roughness)
+            {
+                float r = (roughness + 1.0);
+                float k = (r*r) / 8.0;
+
+                float nom   = NdotV;
+                float denom = NdotV * (1.0 - k) + k;
+
+                return nom / denom;
+            }
+            // ----------------------------------------------------------------------------
+            float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+            {
+                float NdotV = max(dot(N, V), 0.0);
+                float NdotL = max(dot(N, L), 0.0);
+                float ggx2 = GeometrySchlickGGX(NdotV, roughness);
+                float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+
+                return ggx1 * ggx2;
+            }
+            // ----------------------------------------------------------------------------
+            vec3 fresnelSchlick(float cosTheta, vec3 F0)
+            {
+                return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+            }
+            // ----------------------------------------------------------------------------
+
+            void main() {
+                vec3 albedo = pow(texture(albedoMap, fragTexCoord).rgb, vec3(2.2));
+
+                vec3 normal = texture(normalMap, fragTexCoord).rgb;
+                float metallic = texture(metallicMap, fragTexCoord).r;
+                float roughness = texture(roughnessMap, fragTexCoord).r;
+                float ao = texture(aoMap, fragTexCoord).r;
+
+                Material material = Material(albedo, metallic, roughness, ao);
+
+                vec3 camPos = constants.cameraPos;
+
+                vec3 N = normalize(fragNormal);
+                vec3 V = normalize(camPos - fragWorldPos);
+
+                vec3 F0 = vec3(0.04);
+                F0 = mix(F0, albedo, metallic);
+
+                vec3 Lo = vec3(0.0);
+                for (int i = 0; i < lightCount; ++i) {
+                    vec3 L = normalize(lights[i].position - fragWorldPos);
+                    vec3 H = normalize(V + L);
+                    float distance = length(lights[i].position - fragWorldPos);
+                    float attenuation = 1.0 / (distance * distance);
+                    vec3 radiance = lights[i].color * attenuation;
+
+                    float NDF = DistributionGGX(N, H, material.roughness);
+                    float G = GeometrySmith(N, V, L, material.roughness);
+                    vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
+
+                    vec3 numerator = NDF * G * F;
+                    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+                    vec3 specular = numerator / denominator;
+
+                    vec3 kS = F;
+                    vec3 kD = vec3(1.0) - kS;
+                    kD *= 1.0 - material.metallic;
+
+                    float NdotL = max(dot(N, L), 0.0);
+
+                    Lo += (kD * material.albedo / PI + specular) * radiance * NdotL;
+                }
+
+                vec3 ambient = vec3(0.03) * material.albedo * material.ao;
+
+                vec3 color = ambient + Lo;
+
+                color = color / (color + vec3(1.0));
+                color = pow(color, vec3(1.0 / 2.2));
+
+                fragColor = vec4(color, 1.0);
+            }
+        )";
+
+        auto shaderProgram = renderer.getDeviceManager().createShaderProgram(vs, fs);
+        {
+            auto pbrMaterial = renderer.getDeviceManager().createMaterial(shaderProgram);
+            auto matres = resourceManager.createMaterial("pbrMaterial");
+
+            // PBR test textures
+            auto albedoImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/rustedmetal/albedo.png");
+            albedoImage->load();
+            auto normalImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/rustedmetal/normal.png");
+            normalImage->load();
+            auto metallicImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/rustedmetal/metallic.png");
+            metallicImage->load();
+            auto roughnessImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/rustedmetal/roughness.png");
+            roughnessImage->load();
+            auto aoImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/rustedmetal/ao.png");
+            aoImage->load();
+
+            // create textures from image data
+
+            TextureDesc albedoTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, albedoImage->getWidth(), albedoImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
+            auto albedoTex = renderer.getDeviceManager().getDevice().createTexture(albedoTexDesc);
+            albedoTex->upload(albedoImage->getData(), TextureRangeDesc::new2D(0, 0, albedoImage->getWidth(), albedoImage->getHeight()));
+
+            TextureDesc normalTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, normalImage->getWidth(), normalImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
+            auto normalTex = renderer.getDeviceManager().getDevice().createTexture(normalTexDesc);
+            normalTex->upload(normalImage->getData(), TextureRangeDesc::new2D(0, 0, normalImage->getWidth(), normalImage->getHeight()));
+
+            TextureDesc metallicTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, metallicImage->getWidth(), metallicImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
+            auto metallicTex = renderer.getDeviceManager().getDevice().createTexture(metallicTexDesc);
+            metallicTex->upload(metallicImage->getData(), TextureRangeDesc::new2D(0, 0, metallicImage->getWidth(), metallicImage->getHeight()));
+
+            TextureDesc roughnessTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, roughnessImage->getWidth(), roughnessImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
+            auto roughnessTex = renderer.getDeviceManager().getDevice().createTexture(roughnessTexDesc);
+            roughnessTex->upload(roughnessImage->getData(), TextureRangeDesc::new2D(0, 0, roughnessImage->getWidth(), roughnessImage->getHeight()));
+
+            TextureDesc aoTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, aoImage->getWidth(), aoImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
+            auto aoTex = renderer.getDeviceManager().getDevice().createTexture(aoTexDesc);
+            aoTex->upload(aoImage->getData(), TextureRangeDesc::new2D(0, 0, aoImage->getWidth(), aoImage->getHeight()));
+
+            auto samplerState = renderer.getDevice().createSamplerState(SamplerStateDesc::newLinear());
+
+            // set textures to material
+            pbrMaterial->setTextureSampler("albedoMap", albedoTex, samplerState, 1);
+            pbrMaterial->setTextureSampler("normalMap", normalTex, samplerState, 2);
+            pbrMaterial->setTextureSampler("metallicMap", metallicTex, samplerState, 3);
+            pbrMaterial->setTextureSampler("roughnessMap", roughnessTex, samplerState, 4);
+            pbrMaterial->setTextureSampler("aoMap", aoTex, samplerState, 5);
+
+            matres->setMaterial(pbrMaterial);
+            matres->load();
+        }
+
+        {
+            auto pbrMaterial = renderer.getDeviceManager().createMaterial(shaderProgram);
+            auto matres = resourceManager.createMaterial("pbrMaterial2");
+
+            // PBR test textures
+            auto albedoImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/polishedconcrete/albedo.png");
+            albedoImage->load();
+            auto normalImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/polishedconcrete/normal.png");
+            normalImage->load();
+            auto metallicImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/default/metallic.png");
+            metallicImage->load();
+            auto roughnessImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/polishedconcrete/roughness.png");
+            roughnessImage->load();
+            auto aoImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/rustedmetal/ao.png");
+            aoImage->load();
+
+            // create textures from image data
+
+            TextureDesc albedoTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, albedoImage->getWidth(), albedoImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
+            auto albedoTex = renderer.getDeviceManager().getDevice().createTexture(albedoTexDesc);
+            albedoTex->upload(albedoImage->getData(), TextureRangeDesc::new2D(0, 0, albedoImage->getWidth(), albedoImage->getHeight()));
+
+            TextureDesc normalTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, normalImage->getWidth(), normalImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
+            auto normalTex = renderer.getDeviceManager().getDevice().createTexture(normalTexDesc);
+            normalTex->upload(normalImage->getData(), TextureRangeDesc::new2D(0, 0, normalImage->getWidth(), normalImage->getHeight()));
+
+            TextureDesc metallicTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, metallicImage->getWidth(), metallicImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
+            auto metallicTex = renderer.getDeviceManager().getDevice().createTexture(metallicTexDesc);
+            metallicTex->upload(metallicImage->getData(), TextureRangeDesc::new2D(0, 0, metallicImage->getWidth(), metallicImage->getHeight()));
+
+            TextureDesc roughnessTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, roughnessImage->getWidth(), roughnessImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
+            auto roughnessTex = renderer.getDeviceManager().getDevice().createTexture(roughnessTexDesc);
+            roughnessTex->upload(roughnessImage->getData(), TextureRangeDesc::new2D(0, 0, roughnessImage->getWidth(), roughnessImage->getHeight()));
+
+            TextureDesc aoTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, aoImage->getWidth(), aoImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
+            auto aoTex = renderer.getDeviceManager().getDevice().createTexture(aoTexDesc);
+            aoTex->upload(aoImage->getData(), TextureRangeDesc::new2D(0, 0, aoImage->getWidth(), aoImage->getHeight()));
+
+            auto samplerState = renderer.getDevice().createSamplerState(SamplerStateDesc::newLinear());
+
+            // set textures to material
+            pbrMaterial->setTextureSampler("albedoMap", albedoTex, samplerState, 1);
+            pbrMaterial->setTextureSampler("normalMap", normalTex, samplerState, 2);
+            pbrMaterial->setTextureSampler("metallicMap", metallicTex, samplerState, 3);
+            pbrMaterial->setTextureSampler("roughnessMap", roughnessTex, samplerState, 4);
+            pbrMaterial->setTextureSampler("aoMap", aoTex, samplerState, 5);
+
+            matres->setMaterial(pbrMaterial);
+            matres->load();
+        }
+    }
 
     // normal material
     {
@@ -125,6 +392,8 @@ void EngineInstance::initialize()
             out vec4 fragColor;
 
             layout(binding = 1) uniform Constants {
+                vec3 cameraPos;
+                vec3 cameraDir;
                 vec3 lightDir;
                 float shininess;
             } constants;
@@ -502,11 +771,13 @@ void EngineInstance::initialize()
 
     // spawn a bunch of teapots at random positions and rotations
     {
-        int num = 1;
+        Light light;
+        int num = 0;
         for (int i = 0; i < num; i++)
         {
             EntityView teapot = defaultScene->createEntity("teapot" + std::to_string(i));
             teapot.addComponent<MeshComponent>(resourceManager.getMeshByName("teapot"), resourceManager.getMaterialByName("testMaterial"));
+            teapot.addComponent<LightComponent>(light);
             auto& teapotNode = teapot.getSceneNode();
             teapotNode.getTransform().setPosition({(float)rand() / RAND_MAX * 20.0f - 10.0f, (float)rand() / RAND_MAX * 20.0f - 10.0f, (float)rand() / RAND_MAX * 20.0f - 10.0f});
             teapotNode.getTransform().setRotation({(float)rand() / RAND_MAX * 360.0f, (float)rand() / RAND_MAX * 360.0f, (float)rand() / RAND_MAX * 360.0f});
@@ -517,6 +788,7 @@ void EngineInstance::initialize()
     {
         EntityView viewer = defaultScene->createEntity("viewer");
         viewer.addComponent<CameraComponent>(activeCamera);
+        viewer.addComponent<LightComponent>(Light{});
         viewer.getSceneNode().getTransform().setPosition({0.0f, 6.0f, 3.0f});
         viewer.getSceneNode().getTransform().setRotation({glm::radians(-20.0f), 0, 0.0f});
 
@@ -571,7 +843,7 @@ void EngineInstance::initialize()
         // Create a child node
         EntityView spherePortal = defaultScene->createEntity("spherePortal");
 
-        spherePortal.addComponent<MeshComponent>(resourceManager.getMeshByName("sphere"), resourceManager.getMaterialByName("portalMaterial"));
+        spherePortal.addComponent<MeshComponent>(resourceManager.getMeshByName("sphere"), resourceManager.getMaterialByName("pbrMaterial"));
         auto& spherePortalNode = spherePortal.getSceneNode();
         spherePortalNode.getTransform().setPosition({10.0f, 3.0f, 10.0f});
         spherePortalNode.getTransform().setScale({1.f, 1.f, 1.f});
@@ -581,6 +853,9 @@ void EngineInstance::initialize()
         EntityView sphere = defaultScene->createEntity("sphere");
 
         sphere.addComponent<MeshComponent>(resourceManager.getMeshByName("sphere"), resourceManager.getMaterialByName("testMaterial"));
+        Light light;
+        light.setColor({1.0f, 0.0f, 1.0f});
+        sphere.addComponent<LightComponent>(light);
         auto& sphereNode = sphere.getSceneNode();
         sphereNode.getTransform().setPosition({10.0f, 0.0f, 0.0f});
         sphereNode.getTransform().setScale({1.f, 1.f, 1.f});
@@ -597,11 +872,11 @@ void EngineInstance::initialize()
     // floor
     {
         auto floor = defaultScene->createEntity("floor");
-        floor.addComponent<MeshComponent>(resourceManager.getMeshByName("floor"), resourceManager.getMaterialByName("floorMaterial"));
+        floor.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrMaterial2"));
         {
             auto& floorNode = floor.getSceneNode();
             floorNode.getTransform().setPosition({0.0f, -5.0f, 0.0f});
-            floorNode.getTransform().setScale({10.0f, 10.0f, 1.0f});
+            floorNode.getTransform().setScale({20.0f, 20.0f, 1.0f});
             floorNode.getTransform().setRotation({glm::radians(90.0f), 0.0f, 0.0f});
         }
     }
@@ -733,6 +1008,40 @@ void EngineInstance::updateSimulation(float dt)
             transform.setRotation(glm::normalize(transform.getRotation() * qPitch));
         }
 
+        // wasd
+        float speed = 0.1f;
+        if (input.isKeyPressed(input::KeyCode::W))
+        {
+            // move forward relative to orientation
+            viewerNode.getTransform().translate(viewerNode.getTransform().getForward() * -speed);
+        }
+        if (input.isKeyPressed(input::KeyCode::S))
+        {
+            // move backward relative to orientation
+            viewerNode.getTransform().translate(viewerNode.getTransform().getForward() * speed);
+        }
+        if (input.isKeyPressed(input::KeyCode::A))
+        {
+            // move left relative to orientation
+            viewerNode.getTransform().translate(viewerNode.getTransform().getRight() * -speed);
+        }
+        if (input.isKeyPressed(input::KeyCode::D))
+        {
+            // move right relative to orientation
+            viewerNode.getTransform().translate(viewerNode.getTransform().getRight() * speed);
+        }
+
+        // up and down
+        if (input.isKeyPressed(input::KeyCode::Q))
+        {
+            // move up
+            viewerNode.getTransform().translate(viewerNode.getTransform().getUp() * speed);
+        }
+        if (input.isKeyPressed(input::KeyCode::E))
+        {
+            // move down
+            viewerNode.getTransform().translate(viewerNode.getTransform().getUp() * -speed);
+        }
     }
 
     stage.update(dt);
@@ -768,8 +1077,43 @@ void EngineInstance::renderFrame()
 
             SceneRenderData sceneRenderData;
             activeScene->getSceneRenderData(sceneRenderData);
+
+            // update pbr lights
+            {
+                auto pbrMaterial = resourceManager.getMaterialByName("pbrMaterial")->getMaterial();
+
+                constexpr int MAX_LIGHTS = 10;
+
+                struct LightStruct
+                {
+                    alignas(16) glm::vec3 position;
+                    alignas(16) glm::vec3 color;
+                };
+                struct LightsUBO
+                {
+                    int numLights;
+                    LightStruct lights[MAX_LIGHTS];
+                };
+
+                LightsUBO lightsUBO{};
+
+                for (int i = 0; i < sceneRenderData.lights.size(); i++)
+                {
+                    auto item = sceneRenderData.lights[i];
+                    LightStruct light{};
+                    light.position = item.position;
+                    light.color = item.light->getColor();
+                    lightsUBO.lights[i] = light;
+                    ++lightsUBO.numLights;
+                }
+
+                pbrMaterial->setUniformBytes("Lights", &lightsUBO, sizeof(lightsUBO), 6); // binding 6
+            }
+
             renderer.begin(camera.getRenderTarget());
-            sceneRenderer.render(renderer, sceneRenderData, {glm::inverse(cameraNode->getWorldTransform().getModel()), camera.getCamera()->getProjection(), camera.getCamera()->getViewportWidth(), camera.getCamera()->getViewportHeight()});
+            sceneRenderer.render(renderer, sceneRenderData, {cameraNode->getWorldTransform().getPosition(),
+                                                             cameraNode->getWorldTransform().getForward(),
+                                                             glm::inverse(cameraNode->getWorldTransform().getModel()), camera.getCamera()->getProjection(), camera.getCamera()->getViewportWidth(), camera.getCamera()->getViewportHeight()});
             renderer.end();
         }
 
@@ -780,7 +1124,9 @@ void EngineInstance::renderFrame()
             activeScene->getSceneRenderData(sceneRenderData);
             renderer.begin();
             renderer.bindViewport({0,0, static_cast<float>(desc.width), static_cast<float>(desc.height)});
-            sceneRenderer.render(renderer, sceneRenderData, {glm::inverse(mainCamera->getWorldTransform().getModel()), camera.getCamera()->getProjection(), camera.getCamera()->getViewportWidth(), camera.getCamera()->getViewportHeight()});
+            sceneRenderer.render(renderer, sceneRenderData, {mainCamera->getWorldTransform().getPosition(),
+                                                             mainCamera->getWorldTransform().getForward(),
+                                                             glm::inverse(mainCamera->getWorldTransform().getModel()), camera.getCamera()->getProjection(), camera.getCamera()->getViewportWidth(), camera.getCamera()->getViewportHeight()});
             renderer.end();
         }
     }

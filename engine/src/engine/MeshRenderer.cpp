@@ -8,7 +8,7 @@
 #include "engine/graphics/ShaderProgram.h"
 #include "engine/graphics/VertexDataLayout.h"
 
-void MeshRenderer::render(graphics::Renderer& renderer, const std::shared_ptr<MeshResource>& mesh, const std::shared_ptr<MaterialResource>& material, const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection)
+void MeshRenderer::render(graphics::Renderer& renderer, const std::shared_ptr<MeshResource>& mesh, const std::shared_ptr<MaterialResource>& material, const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection, const glm::vec3& cameraPosition, const glm::vec3& cameraDirection)
 {
     struct UniformBufferObject {
         glm::mat4 model;
@@ -17,9 +17,11 @@ void MeshRenderer::render(graphics::Renderer& renderer, const std::shared_ptr<Me
     } ubo(model, view, projection);
 
     struct Constants {
+        glm::vec3 cameraPos;
+        glm::vec3 cameraDirection;
         glm::vec3 lightDir;
         float shininess = 32.0f;
-    } constants(glm::vec3(-0.7f, -0.5f, -0.5f), 320.0f);
+    } constants(cameraPosition, cameraDirection, glm::vec3(-0.7f, -0.5f, -0.5f), 320.0f);
 
     material->getMaterial()->setUniformBytes("ubo", &ubo, sizeof(ubo), 0);
     material->getMaterial()->setUniformBytes("constants", &constants, sizeof(constants), 1);

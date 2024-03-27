@@ -54,7 +54,7 @@ add_library(
         src/engine/graphics/VertexDataLayout.cpp
         include/engine/graphics/VertexDataLayout.h
         src/engine/LineRenderer.cpp
-        src/engine/LineRenderer.h
+        include/engine/LineRenderer.h
         src/engine/util/Math.cpp
         include/engine/util/Math.h
         src/engine/Bounds.cpp
@@ -76,7 +76,11 @@ add_library(
         src/engine/graphics/DeviceManager.cpp
         include/engine/graphics/DeviceManager.h
         src/engine/ImageResource.cpp
-        src/engine/ImageResource.h
+        include/engine/ImageResource.h
+        src/engine/components/LightComponent.cpp
+        include/engine/components/LightComponent.h
+        src/engine/Light.cpp
+        include/engine/Light.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)

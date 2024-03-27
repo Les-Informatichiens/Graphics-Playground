@@ -4,12 +4,14 @@
 
 #pragma once
 
+#include "Light.h"
+#include "engine/graphics/Material.h"
 #include <glm/glm.hpp>
 #include <vector>
-#include "engine/graphics/Material.h"
 
 class MeshResource;
 class MaterialResource;
+class Light;
 
 struct Mesh;
 
@@ -26,15 +28,25 @@ struct LineRenderData
     glm::vec4 color;
 };
 
+struct LightData
+{
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    glm::vec3 position;
+    glm::vec3 direction;
+    const Light* light;
+};
+
 struct SceneRenderData
 {
     std::vector<LineRenderData> lineRenderData;
     std::vector<MeshRenderData> meshRenderData;
+    std::vector<LightData> lights;
 
 public:
     void reset()
     {
         lineRenderData.clear();
         meshRenderData.clear();
+        lights.clear();
     }
 };

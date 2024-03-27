@@ -18,6 +18,8 @@ public:
         glm::vec3 position;
         glm::vec3 normal;
         glm::vec2 texCoords;
+//        glm::vec3 tangent;
+//        glm::vec3 bitangent;
     };
 
 public:
@@ -26,6 +28,7 @@ public:
     Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices);
 
     void normalize();
+//    void calculateTangents();
 
     static std::shared_ptr<Mesh> createCube(float size = 1.0f);
     static std::shared_ptr<Mesh> createQuad(float size = 1.0f);

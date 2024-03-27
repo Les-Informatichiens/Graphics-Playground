@@ -2,7 +2,7 @@
 // Created by Jonathan Richard on 2024-03-07.
 //
 
-#include "LineRenderer.h"
+#include "engine/LineRenderer.h"
 #include "engine/util/Math.h"
 #include <algorithm>
 

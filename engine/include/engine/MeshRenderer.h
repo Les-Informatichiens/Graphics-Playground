@@ -17,5 +17,5 @@ class MeshRenderer
 public:
     MeshRenderer() = default;
 
-    void render(graphics::Renderer& renderer, const std::shared_ptr<MeshResource>& mesh, const std::shared_ptr<MaterialResource>&, const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection);
+    void render(graphics::Renderer& renderer, const std::shared_ptr<MeshResource>& mesh, const std::shared_ptr<MaterialResource>&, const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection, const glm::vec3& cameraPosition, const glm::vec3& cameraDirection);
 };

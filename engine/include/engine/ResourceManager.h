@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "engine/ImageResource.h"
 #include "engine/Mesh.h"
 #include "engine/ResourceHandle.h"
 #include "engine/graphics/MeshResource.h"
@@ -46,6 +47,13 @@ public:
     std::shared_ptr<MaterialResource> getMaterialByName(const std::string& name);
     void releaseMaterial(ResourceHandle handle);
 
+    //image
+    std::shared_ptr<ImageResource> createImage(const std::string& name, ImageResource::Format format = ImageResource::Format::RGBA);
+    std::shared_ptr<ImageResource> createExternalImage(const std::string& name, ImageResource::Format format = ImageResource::Format::RGBA);
+    std::shared_ptr<ImageResource> getImageByHandle(ResourceHandle handle);
+    std::shared_ptr<ImageResource> getImageByName(const std::string& name);
+    void releaseImage(ResourceHandle handle);
+
 private:
     ResourceHandle getNewHandle();
 
@@ -55,6 +63,10 @@ private:
 
     std::unordered_map<ResourceHandle, std::shared_ptr<MaterialResource>> materialsByHandle;
     std::unordered_map<std::string, std::shared_ptr<MaterialResource>> materialsByName;
+
+    //image
+    std::unordered_map<ResourceHandle, std::shared_ptr<ImageResource>> imagesByHandle;
+    std::unordered_map<std::string, std::shared_ptr<ImageResource>> imagesByName;
 
     // more resource types
 

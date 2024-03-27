@@ -104,6 +104,54 @@ void ResourceManager::releaseMaterial(ResourceHandle handle)
     }
 }
 
+std::shared_ptr<ImageResource> ResourceManager::createImage(const std::string& name, ImageResource::Format format)
+{
+    auto handle = getNewHandle();
+    auto image = std::make_shared<ImageResource>(this, name, handle, false);
+    imagesByName[name] = image;
+    imagesByHandle[handle] = image;
+    return image;
+}
+
+std::shared_ptr<ImageResource> ResourceManager::createExternalImage(const std::string& name, ImageResource::Format format)
+{
+    auto handle = getNewHandle();
+    auto image = std::make_shared<ImageResource>(this, name, handle, true, format);
+    imagesByName[name] = image;
+    imagesByHandle[handle] = image;
+    return image;
+}
+
+std::shared_ptr<ImageResource> ResourceManager::getImageByHandle(ResourceHandle handle)
+{
+    auto it = imagesByHandle.find(handle);
+    if (it != imagesByHandle.end())
+    {
+        return it->second;
+    }
+    return nullptr;
+}
+
+std::shared_ptr<ImageResource> ResourceManager::getImageByName(const std::string& name)
+{
+    auto it = imagesByName.find(name);
+    if (it != imagesByName.end())
+    {
+        return it->second;
+    }
+    return nullptr;
+}
+
+void ResourceManager::releaseImage(ResourceHandle handle)
+{
+    auto it = imagesByHandle.find(handle);
+    if (it != imagesByHandle.end())
+    {
+        it->second->unload();
+        imagesByHandle.erase(it);
+    }
+}
+
 ResourceHandle ResourceManager::getNewHandle()
 {
     return ResourceHandle(nextId.getId() + 1);

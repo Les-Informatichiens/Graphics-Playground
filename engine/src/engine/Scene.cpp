@@ -7,6 +7,7 @@
 #include "engine/SceneNode.h"
 #include "engine/SceneRenderData.h"
 #include "engine/components/CameraComponent.h"
+#include "engine/components/LightComponent.h"
 #include "engine/components/MeshComponent.h"
 
 
@@ -78,6 +79,19 @@ void Scene::getSceneRenderData(SceneRenderData& sceneRenderData) const
                 sceneRenderData.lineRenderData.push_back({{model * glm::vec4(points[i], 1.0f), model * glm::vec4(points[i + 1], 1.0f)}, {1.0f, 0.0f, 0.0f, 1.0f}});
             }
         }
+    });
+
+    // iterate over all entities with a SceneNode and LightComponent
+    registry.view<SceneNode, LightComponent>().each([&sceneRenderData](const SceneNode& node, const LightComponent& light){
+        if (!node.isVisible())
+            return;
+
+        LightData lightData;
+        lightData.modelMatrix = node.getWorldTransform().getModel();
+        lightData.position = node.getWorldTransform().getPosition();
+        lightData.direction = node.getWorldTransform().getForward();
+        lightData.light = light.getLight();
+        sceneRenderData.lights.push_back(lightData);
     });
 }
 

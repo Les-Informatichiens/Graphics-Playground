@@ -37,6 +37,8 @@ public:
     void bind();
     void unbind();
     void bindTextureUnit(size_t unit, uint8_t bindTarget);
+    int getTextureUnitLocation(size_t unit, uint8_t bindTarget);
+
     void bindTextureSamplerAndUnit(size_t location, uint8_t bindTarget);
     void unbindTextureUnit(size_t location, uint8_t bindTarget);
 
