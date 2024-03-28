@@ -2,7 +2,10 @@
 // Created by Jonathan Richard on 2024-02-09.
 //
 
+#pragma once
+
 #include "Camera.h"
+#include "Input.h"
 #include "Mesh.h"
 #include "MeshRenderer.h"
 #include "Model.h"
@@ -20,6 +23,7 @@ struct InstanceDesc
 
 class EngineInstance
 {
+    friend class SceneEditor;
 public:
     explicit EngineInstance(InstanceDesc desc);
     ~EngineInstance();
@@ -33,8 +37,11 @@ public:
 
     graphics::Renderer& getRenderer();
     Stage& getStage();
+    Input& getInput();
 
 private:
+    Input input;
+
     graphics::Renderer renderer;
     TestRenderPass testRenderPass;
 

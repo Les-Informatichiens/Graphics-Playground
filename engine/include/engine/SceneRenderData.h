@@ -17,8 +17,15 @@ struct MeshRenderData
     std::shared_ptr<graphics::Material> material;
 };
 
+struct LineRenderData
+{
+    std::vector<glm::vec3> points;
+    glm::vec4 color;
+};
+
 struct SceneRenderData
 {
+    std::vector<LineRenderData> lineRenderData;
     std::vector<MeshRenderData> meshRenderData;
 
 public:

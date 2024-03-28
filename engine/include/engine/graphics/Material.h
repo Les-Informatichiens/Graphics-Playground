@@ -157,7 +157,7 @@ public:
             auto tempData = std::vector<uint8_t>(size);
             std::copy(static_cast<const uint8_t*>(data), static_cast<const uint8_t*>(data) + size, tempData.begin());
             uniformBuffers[name] = {size, tempData, nullptr, bindingPoint};
-            std::cout << "Created new uniform buffer: " << name << std::endl;
+//            std::cout << "Created new uniform buffer: " << name << std::endl;
         }
         else
         {
@@ -170,7 +170,7 @@ public:
         textureSamplers[name] = {index, std::move(texture), std::move(samplerState)};
     }
 
-    void bind(IDevice& device, ICommandBuffer& commandBuffer)
+    void bind(IDevice& device, IGraphicsCommandBuffer& commandBuffer)
     {
         // build the pipeline if it's not built yet
 //        build(device);
@@ -190,6 +190,8 @@ public:
                     .storage = ResourceStorage::Shared,
                 };
                 bufferDesc.buffer = device.createBuffer(newBufferDesc);
+//                std::cout << "Created new uniform buffer: " << name << std::endl;
+
             }
             commandBuffer.bindBuffer(bufferDesc.bindingPoint, bufferDesc.buffer, 0);
         }

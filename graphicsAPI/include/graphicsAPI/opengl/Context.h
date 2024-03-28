@@ -5,7 +5,8 @@
 #pragma once
 
 #include "GL/glew.h"
-#include "graphicsAPI/common/CommandBuffer.h"
+#include "graphicsAPI/common/GraphicsCommandBuffer.h"
+#include "graphicsAPI/common/ComputeCommandBuffer.h"
 
 #include <vector>
 #include <memory>
@@ -19,8 +20,12 @@ public:
     ~Context() = default;
     void init();
 
-    auto& getCommandBufferPool() {
-        return commandBuffers;
+    auto& getGraphicsCommandBufferPool() {
+        return graphicsCommandBuffers;
+    }
+
+    auto& getComputeCommandBufferPool() {
+        return computeCommandBuffers;
     }
 
 public: // OpenGL functions
@@ -58,6 +63,7 @@ public: // OpenGL functions
     void uniform3f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2);
     void uniform4f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
     void uniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
+    void getUniformiv(GLuint program, GLint location, GLint* params);
     void bindImageTexture(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
     void deleteShader(GLuint shader);
     void deleteProgram(GLuint program);
@@ -69,6 +75,7 @@ public: // OpenGL functions
     void getProgramiv(GLuint program, GLenum pname, GLint* params);
     void getProgramResourceiv(GLuint program, GLenum programInterface, GLuint index, GLsizei propCount, const GLenum* props, GLsizei bufSize, GLsizei* length, GLint* params);
     void getProgramResourceName(GLuint program, GLenum programInterface, GLuint index, GLsizei bufSize, GLsizei* length, GLchar* name);
+    GLuint getProgramResourceIndex(GLuint program, GLenum programInterface, const GLchar* name);
     void getProgramInfoLog(GLuint program, GLsizei bufSize, GLsizei* length, GLchar* infoLog);
     void attachShader(GLuint program, GLuint shader);
     void detachShader(GLuint program, GLuint shader);
@@ -133,12 +140,16 @@ public: // OpenGL functions
     void blendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha);
     void polygonFillMode(GLenum mode);
     void getIntegerv(GLenum pname, GLint* data);
+    void getProgramInterfaceiv(GLuint program, GLenum programInterface, GLenum pname, GLint* params);
+    void dispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
+    void memoryBarrier(GLbitfield barriers);
 
 
 private:
     bool isInit = false;
 
-    std::vector<std::unique_ptr<ICommandBuffer>> commandBuffers;
+    std::vector<std::unique_ptr<IGraphicsCommandBuffer>> graphicsCommandBuffers;
+    std::vector<std::unique_ptr<IComputeCommandBuffer>> computeCommandBuffers;
 };
 
 class WithContext {

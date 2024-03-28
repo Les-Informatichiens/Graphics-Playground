@@ -5,7 +5,7 @@
 #include "GraphicsPipeline.h"
 #include "ShaderStage.h"
 #include "VertexInputState.h"
-#include "graphicsAPI/common/CommandBuffer.h"
+#include "graphicsAPI/common/GraphicsCommandBuffer.h"
 
 namespace opengl {
 

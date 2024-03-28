@@ -41,6 +41,12 @@ public:
         return std::make_shared<VertexData>(getDevice(), layout, indexFormat, vertexCount, indexCount);
     }
 
+    std::shared_ptr<VertexData> createVertexData(const VertexDataLayout& layout, uint32_t vertexCount = 0) const
+    {
+        return std::make_shared<VertexData>(getDevice(), layout, IndexFormat::UInt32, vertexCount, 0);
+    }
+
+
     std::shared_ptr<IGraphicsPipeline> acquireGraphicsPipeline(const GraphicsPipelineDesc& desc);
 
     void shutdown();
@@ -51,7 +57,7 @@ public:
 private:
     std::unique_ptr<IDevice> device;
     std::shared_ptr<ICommandPool> activeCommandPool;
-    std::unique_ptr<ICommandBuffer> activeCommandBuffer;
+    std::unique_ptr<IGraphicsCommandBuffer> activeCommandBuffer;
     std::shared_ptr<IFramebuffer> activeFramebuffer;
 
     std::unordered_map<size_t /*pipeline hash*/, std::shared_ptr<IGraphicsPipeline>> graphicsPipelines;

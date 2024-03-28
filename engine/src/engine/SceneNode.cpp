@@ -2,9 +2,9 @@
 // Created by Jonathan Richard on 2024-02-13.
 //
 
+#include "engine/SceneNode.h"
 #include "engine/graphics/Renderer.h"
 #include <iostream>
-#include "engine/SceneNode.h"
 
 SceneNode::SceneNode(const EntityView& entityView)
     : ownEntityView(std::move(entityView)), transform(), worldTransform(), parent(nullptr), children()
@@ -29,10 +29,10 @@ void SceneNode::update(float dt)
     }
     for (auto& child: children)
     {
-//        std::cout << child->name << std::endl;
+        //        std::cout << child->name << std::endl;
         child->update(dt);
     }
-//    std::cout << "DONE UPD" << std::endl;
+    //    std::cout << "DONE UPD" << std::endl;
 }
 
 SceneNode* SceneNode::findNode(const std::string& name)
@@ -41,7 +41,7 @@ SceneNode* SceneNode::findNode(const std::string& name)
     {
         return this;
     }
-    for (auto& child : children)
+    for (auto& child: children)
     {
         auto node = child->findNode(name);
         if (node)
@@ -55,10 +55,20 @@ SceneNode* SceneNode::findNode(const std::string& name)
 void SceneNode::visit(SceneNode::VisitorCallback visitor)
 {
     visitor(*this);
-    for (auto& child : children)
+    for (auto& child: children)
     {
         child->visit(visitor);
     }
+}
+
+void SceneNode::visitAndLeave(SceneNode::VisitorCallback callback, SceneNode::VisitorCallback leaveCallback)
+{
+    callback(*this);
+    for (auto& child: children)
+    {
+        child->visitAndLeave(callback, leaveCallback);
+    }
+    leaveCallback(*this);
 }
 
 std::string SceneNode::getName() const

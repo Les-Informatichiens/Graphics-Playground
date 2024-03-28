@@ -128,6 +128,12 @@ void TextureBuffer::bind()
     getContext().bindTexture(target, handle);
 }
 
+void TextureBuffer::bindImage(size_t unit)
+{
+    assert(getUsage() & TextureDesc::TextureUsageBits::Storage && "TextureBuffer::bindImage: Texture must have storage to be bound as image");
+    getContext().bindImageTexture(static_cast<GLuint>(unit), getHandle(), 0, getTarget() == GL_TEXTURE_2D ? GL_TRUE : GL_FALSE, 0, GL_READ_WRITE, glInternalFormat);
+}
+
 void TextureBuffer::unbind()
 {
     getContext().bindTexture(target, 0);

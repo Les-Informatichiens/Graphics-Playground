@@ -18,12 +18,19 @@ Renderable::Renderable(std::shared_ptr<Material> material, std::shared_ptr<Verte
 //    elementCount = elementCount_;
 //}
 
-void Renderable::draw(IDevice& device, ICommandBuffer& cmdBuffer) const
+void Renderable::draw(IDevice& device, IGraphicsCommandBuffer& cmdBuffer) const
 {
     cmdBuffer.bindGraphicsPipeline(graphicsPipeline);
     material->bind(device, cmdBuffer);
     cmdBuffer.bindBuffer(0, vertexData->getVertexBuffer(), 0);
-    cmdBuffer.drawIndexed(PrimitiveType::Triangle, vertexData->getIndexCount(), vertexData->getIndexFormat(), *vertexData->getIndexBuffer(), 0);
+    if (vertexData->getIndexCount() > 0)
+    {
+        cmdBuffer.drawIndexed(PrimitiveType::Triangle, vertexData->getIndexCount(), vertexData->getIndexFormat(), *vertexData->getIndexBuffer(), 0);
+    }
+    else
+    {
+        cmdBuffer.draw(PrimitiveType::Triangle, 0, vertexData->getVertexCount());
+    }
 }
 
 GraphicsPipelineDesc Renderable::buildGraphicsPipelineDesc() const

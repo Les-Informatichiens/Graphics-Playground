@@ -53,6 +53,14 @@ add_library(
         include/engine/graphics/VertexData.h
         src/engine/graphics/VertexDataLayout.cpp
         include/engine/graphics/VertexDataLayout.h
+        src/engine/LineRenderer.cpp
+        src/engine/LineRenderer.h
+        src/engine/util/Math.cpp
+        include/engine/util/Math.h
+        src/engine/Bounds.cpp
+        include/engine/Bounds.h
+        src/engine/Input.cpp
+        include/engine/Input.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)

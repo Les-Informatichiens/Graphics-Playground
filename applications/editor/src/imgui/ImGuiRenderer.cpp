@@ -127,7 +127,7 @@ void ImGuiRenderer::newFrame()
 {
 }
 
-void ImGuiRenderer::setupRenderState(ImDrawData* drawData, std::shared_ptr<IGraphicsPipeline>& pipeline, ICommandBuffer& commandBuffer, uint32_t fbWidth, uint32_t fbHeight)
+void ImGuiRenderer::setupRenderState(ImDrawData* drawData, std::shared_ptr<IGraphicsPipeline>& pipeline, IGraphicsCommandBuffer& commandBuffer, uint32_t fbWidth, uint32_t fbHeight)
 {
     // Bind pipeline
     {
@@ -173,7 +173,7 @@ void ImGuiRenderer::setupRenderState(ImDrawData* drawData, std::shared_ptr<IGrap
     }
 }
 
-void ImGuiRenderer::renderDrawData(ImDrawData* drawData, IDevice& device, ICommandBuffer& commandBuffer, std::shared_ptr<IGraphicsPipeline> pipeline_)
+void ImGuiRenderer::renderDrawData(ImDrawData* drawData, IDevice& device, IGraphicsCommandBuffer& commandBuffer, std::shared_ptr<IGraphicsPipeline> pipeline_)
 {
     int fbWidth = (int)(drawData->DisplaySize.x * drawData->FramebufferScale.x);
     int fbHeight = (int)(drawData->DisplaySize.y * drawData->FramebufferScale.y);

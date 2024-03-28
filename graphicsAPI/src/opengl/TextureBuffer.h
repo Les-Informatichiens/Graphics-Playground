@@ -29,6 +29,7 @@ public:
     [[nodiscard]] TextureType getType() const override;
 
     void bind() override;
+    void bindImage(size_t unit) override;
     void unbind() override;
 
 private:

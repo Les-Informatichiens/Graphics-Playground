@@ -133,6 +133,7 @@ void ArrayBuffer::bindBase(uint32_t index) const noexcept
     if (target_ != GL_SHADER_STORAGE_BUFFER && target_ != GL_UNIFORM_BUFFER)
     {
         // err, can only bind to shader storage buffers or uniform buffers
+        std::cerr << "Can only bind to shader storage buffers or uniform buffers" << std::endl;
         return;
     }
     savePreviousBuffer();
@@ -151,6 +152,7 @@ void ArrayBuffer::bindRange(uint32_t index, uint32_t offset) const noexcept
     if (target_ != GL_SHADER_STORAGE_BUFFER && target_ != GL_UNIFORM_BUFFER)
     {
         // err, can only bind to shader storage buffers or uniform buffers
+        std::cerr << "Can only bind to shader storage buffers or uniform buffers" << std::endl;
         return;
     }
     savePreviousBuffer();

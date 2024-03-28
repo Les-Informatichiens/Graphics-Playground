@@ -19,6 +19,7 @@ public:
     void create(const TextureDesc& desc, bool hasStorageAlready) override;
 
     void bind() override;
+    void bindImage(size_t unit) override;
     void unbind() override;
 
     [[nodiscard]] TextureType getType() const override;

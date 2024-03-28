@@ -17,8 +17,8 @@ public:
 
     void initialize(IDevice& device, uint32_t width, uint32_t height);
     void newFrame();
-    void setupRenderState(ImDrawData* drawData, std::shared_ptr<IGraphicsPipeline>& pipeline, ICommandBuffer& commandBuffer, uint32_t fbWidth, uint32_t fbHeight);
-    void renderDrawData(ImDrawData* drawData, IDevice& device, ICommandBuffer& commandBuffer, std::shared_ptr<IGraphicsPipeline> pipeline);
+    void setupRenderState(ImDrawData* drawData, std::shared_ptr<IGraphicsPipeline>& pipeline, IGraphicsCommandBuffer& commandBuffer, uint32_t fbWidth, uint32_t fbHeight);
+    void renderDrawData(ImDrawData* drawData, IDevice& device, IGraphicsCommandBuffer& commandBuffer, std::shared_ptr<IGraphicsPipeline> pipeline);
 
 private:
     std::shared_ptr<IBuffer> vertexBuffer;

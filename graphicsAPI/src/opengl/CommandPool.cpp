@@ -4,7 +4,8 @@
 
 #include "CommandPool.h"
 
-#include "CommandBuffer.h"
+#include "ComputeCommandBuffer.h"
+#include "GraphicsCommandBuffer.h"
 
 #include <utility>
 
@@ -13,14 +14,14 @@ opengl::CommandPool::CommandPool(const std::shared_ptr<Context>& context, const 
     this->context = context;
 }
 
-std::unique_ptr<ICommandBuffer> opengl::CommandPool::acquireCommandBuffer(const CommandBufferDesc& desc)
+std::unique_ptr<IGraphicsCommandBuffer> opengl::CommandPool::acquireGraphicsCommandBuffer(const CommandBufferDesc& desc)
 {
-    auto& pool = context->getCommandBufferPool();
+    auto& pool = context->getGraphicsCommandBufferPool();
 
-    std::unique_ptr<ICommandBuffer> commandBuffer;
+    std::unique_ptr<IGraphicsCommandBuffer> commandBuffer;
     if (pool.empty())
     {
-        commandBuffer = std::make_unique<CommandBuffer>(context);
+        commandBuffer = std::make_unique<GraphicsCommandBuffer>(context);
     }
     else
     {
@@ -35,8 +36,32 @@ std::unique_ptr<ICommandBuffer> opengl::CommandPool::acquireCommandBuffer(const 
 //    return commandBuffer;
 }
 
-void opengl::CommandPool::submitCommandBuffer(std::unique_ptr<ICommandBuffer> commandBuffer)
+void opengl::CommandPool::submitCommandBuffer(std::unique_ptr<IGraphicsCommandBuffer> commandBuffer)
 {
-    context->getCommandBufferPool().push_back(std::move(commandBuffer));
+    context->getGraphicsCommandBufferPool().push_back(std::move(commandBuffer));
+    --activeCommandBufferCount;
+}
+
+std::unique_ptr<IComputeCommandBuffer> opengl::CommandPool::acquireComputeCommandBuffer(const CommandBufferDesc& desc)
+{
+    auto& pool = context->getComputeCommandBufferPool();
+
+    std::unique_ptr<IComputeCommandBuffer> commandBuffer;
+    if (pool.empty())
+    {
+        commandBuffer = std::make_unique<ComputeCommandBuffer>(context);
+    }
+    else
+    {
+        commandBuffer = std::move(pool[pool.size() - 1]);
+        pool.pop_back();
+    }
+    ++activeCommandBufferCount;
+    return commandBuffer;
+}
+
+void opengl::CommandPool::submitCommandBuffer(std::unique_ptr<IComputeCommandBuffer> commandBuffer)
+{
+    context->getComputeCommandBufferPool().push_back(std::move(commandBuffer));
     --activeCommandBufferCount;
 }
