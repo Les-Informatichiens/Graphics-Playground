@@ -65,6 +65,16 @@ private:
     std::shared_ptr<graphics::Material> floorMaterial;
     std::shared_ptr<graphics::Material> portalMaterial;
 
+    std::shared_ptr<IComputePipeline> computePipeline;
+
+    struct Settings {
+        int blockSize;
+        int resultWidth;
+        int resultHeight;
+    };
+
+    std::shared_ptr<IBuffer> computeSettingsBuffer;
+
     float pitch = 0.0f;
     float yaw = 0.0f;
     float roll = 0.0f;

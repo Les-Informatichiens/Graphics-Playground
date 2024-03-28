@@ -514,6 +514,130 @@ void EngineInstance::initialize()
         matres->load();
     }
 
+    // create compute pipeline
+    {
+        // a test compute pass to transform the testRenderTextureImage, which is a texture that will be used to render view of a camera
+        // we will will make a pixelation effect with this compute shader
+        // the input image is read-write
+
+        // reference : "#pragma kernel Pixelate
+        //
+        //RWTexture2D<float4> _Result;
+        //
+        //int _BlockSize;
+        //int _ResultWidth;
+        //int _ResultHeight;
+        //
+        //[numthreads(8,8,1)]
+        //void Pixelate (uint3 id : SV_DispatchThreadID)
+        //{
+        //    if (id.x >= _ResultWidth || id.y >= _ResultHeight)
+        //        return;
+        //
+        //    const float2 startPos = id.xy * _BlockSize;
+        //
+        //    if (startPos.x >= _ResultWidth || startPos.y >= _ResultHeight)
+        //        return;
+        //
+        //    const int blockWidth = min(_BlockSize, _ResultWidth - startPos.x);
+        //    const int blockHeight = min(_BlockSize, _ResultHeight - startPos.y);
+        //    const int numPixels = blockHeight * blockWidth;
+        //
+        //    float4 colour = float4(0, 0, 0, 0);
+        //    for (int i = 0; i < blockWidth; ++i)
+        //    {
+        //        for (int j = 0; j < blockHeight; ++j)
+        //        {
+        //            const uint2 pixelPos = uint2(startPos.x + i, startPos.y + j);
+        //            colour += _Result[pixelPos];
+        //        }
+        //    }
+        //    colour /= numPixels;
+        //
+        //    for (int i = 0; i < blockWidth; ++i)
+        //    {
+        //        for (int j = 0; j < blockHeight; ++j)
+        //        {
+        //            const uint2 pixelPos = uint2(startPos.x + i, startPos.y + j);
+        //            _Result[pixelPos] = colour;
+        //        }
+        //    }
+        //}"
+        auto cs = R"(
+            #version 450
+            layout(local_size_x = 16, local_size_y = 16) in;
+
+            layout(binding = 0, rgba8) uniform image2D rwImage;
+
+            layout(binding = 0) buffer Settings {
+                int blockSize;
+                int resultWidth;
+                int resultHeight;
+            };
+
+            void main() {
+                ivec2 id = ivec2(gl_GlobalInvocationID.xy);
+                if (id.x >= resultWidth || id.y >= resultHeight)
+                    return;
+
+                ivec2 startPos = id.xy * blockSize;
+
+                if (startPos.x >= resultWidth || startPos.y >= resultHeight)
+                    return;
+
+                int blockWidth = min(blockSize, resultWidth - startPos.x);
+                int blockHeight = min(blockSize, resultHeight - startPos.y);
+                int numPixels = blockHeight * blockWidth;
+
+                vec4 colour = vec4(0.0, 0.0, 0.0, 0.0);
+                for (int i = 0; i < blockWidth; ++i)
+                {
+                    for (int j = 0; j < blockHeight; ++j)
+                    {
+                        ivec2 pixelPos = ivec2(startPos.x + i, startPos.y + j);
+                        colour += imageLoad(rwImage, pixelPos);
+                    }
+                }
+                colour /= float(numPixels);
+
+                for (int i = 0; i < blockWidth; ++i)
+                {
+                    for (int j = 0; j < blockHeight; ++j)
+                    {
+                        ivec2 pixelPos = ivec2(startPos.x + i, startPos.y + j);
+                        imageStore(rwImage, pixelPos, colour);
+                    }
+                }
+            }
+        )";
+
+        auto computeShader = renderer.getDevice().createShaderModule({
+            .type = ShaderModuleType::Compute,
+            .code = cs
+        });
+
+        auto computeShaderStage = renderer.getDevice().createPipelineShaderStages(PipelineShaderStagesDesc::fromComputeModule(computeShader));
+
+        computePipeline = renderer.getDevice().createComputePipeline({
+                .shaderStages = computeShaderStage,
+                .imagesMap = {
+                        {0, "rwImage"}
+                },
+                .buffersMap = {
+                        {0, "Settings"}
+                }
+        });
+
+
+
+        computeSettingsBuffer = renderer.getDevice().createBuffer(BufferDesc{
+                .type = BufferDesc::BufferTypeBits::Storage,
+                .data = nullptr,
+                .size = sizeof(int) * 3,
+                .storage = ResourceStorage::Shared
+        });
+    }
+
     {// Portal Mesh
         auto portalMesh = Mesh::createQuad();
         portalMesh->vertices[0].texCoords = {0.0f, 0.0f};
@@ -825,7 +949,7 @@ void EngineInstance::initialize()
         auto& teapotPOVNode = teapotPOV.getSceneNode();
         {
             auto testRenderTextureCamera = std::make_shared<Camera>("testRenderTextureCamera");
-            testRenderTexture = renderer.getDevice().createTexture(TextureDesc::new2D(TextureFormat::RGBA_UNorm8, desc.width, desc.height, TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled));
+            testRenderTexture = renderer.getDevice().createTexture(TextureDesc::new2D(TextureFormat::RGBA_UNorm8, desc.width, desc.height, TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled | TextureDesc::TextureUsageBits::Storage));
             auto testRenderTextureCameraTarget = graphics::RenderTarget{
                     .colorTexture = testRenderTexture,
                     .clearColor = {0.0f, 0.2f, 0.2f, 1.0f},
@@ -1115,6 +1239,30 @@ void EngineInstance::renderFrame()
                                                              cameraNode->getWorldTransform().getForward(),
                                                              glm::inverse(cameraNode->getWorldTransform().getModel()), camera.getCamera()->getProjection(), camera.getCamera()->getViewportWidth(), camera.getCamera()->getViewportHeight()});
             renderer.end();
+        }
+
+
+        {
+            Settings computeSettings = {
+                    .blockSize = 32,
+                    .resultWidth = static_cast<int>(testRenderTexture->getWidth()),
+                    .resultHeight = static_cast<int>(testRenderTexture->getHeight())
+            };
+
+            computeSettingsBuffer->data(&computeSettings, sizeof(computeSettings), 0);
+
+            auto cmdPool = renderer.getDevice().createCommandPool({});
+
+            auto cmdBuffer = cmdPool->acquireComputeCommandBuffer({});
+            cmdBuffer->begin();
+
+            cmdBuffer->bindComputePipeline(computePipeline);
+            cmdBuffer->bindTexture(0, testRenderTexture);
+            cmdBuffer->bindBuffer(0, computeSettingsBuffer, 0);
+            cmdBuffer->dispatch({static_cast<uint32_t>(testRenderTexture->getWidth() / 16), static_cast<uint32_t>(testRenderTexture->getHeight() / 16), 1});
+
+            cmdBuffer->end();
+            cmdPool->submitCommandBuffer(std::move(cmdBuffer));
         }
 
         if (mainCamera)
