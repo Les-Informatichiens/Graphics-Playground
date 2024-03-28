@@ -22,6 +22,7 @@ public:
     std::shared_ptr<IShaderModule> createShaderModule(const ShaderModuleDesc& desc) override;
     std::shared_ptr<IPipelineShaderStages> createPipelineShaderStages(const PipelineShaderStagesDesc& desc) override;
     std::shared_ptr<IGraphicsPipeline> createGraphicsPipeline(const GraphicsPipelineDesc& desc) override;
+    std::shared_ptr<IComputePipeline> createComputePipeline(const ComputePipelineDesc& desc) override;
     std::shared_ptr<IFramebuffer> createFramebuffer(const FramebufferDesc& desc) override;
     std::shared_ptr<ITexture> createTexture(const TextureDesc& desc) override;
     std::shared_ptr<IVertexInputState> createVertexInputState(const VertexInputStateDesc& desc) override;

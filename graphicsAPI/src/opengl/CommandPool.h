@@ -17,8 +17,11 @@ class CommandPool : public ICommandPool
 public:
     explicit CommandPool(const std::shared_ptr<Context>& context, const CommandPoolDesc& desc);
 
-    std::unique_ptr<ICommandBuffer> acquireCommandBuffer(const CommandBufferDesc& desc) override;
-    void submitCommandBuffer(std::unique_ptr<ICommandBuffer> commandBuffer) override;
+    std::unique_ptr<IGraphicsCommandBuffer> acquireGraphicsCommandBuffer(const CommandBufferDesc& desc) override;
+    void submitCommandBuffer(std::unique_ptr<IGraphicsCommandBuffer> commandBuffer) override;
+
+    std::unique_ptr<IComputeCommandBuffer> acquireComputeCommandBuffer(const CommandBufferDesc& desc) override;
+    void submitCommandBuffer(std::unique_ptr<IComputeCommandBuffer> commandBuffer) override;
 
 private:
     std::shared_ptr<Context> context;

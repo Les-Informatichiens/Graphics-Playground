@@ -11,7 +11,8 @@
 #include "Texture.h"
 #include "UniformBinder.h"
 #include "VertexArrayObject.h"
-#include "graphicsAPI/common/CommandBuffer.h"
+#include "graphicsAPI/common/ComputePipeline.h"
+#include "graphicsAPI/common/GraphicsCommandBuffer.h"
 #include "graphicsAPI/opengl/Buffer.h"
 #include "graphicsAPI/opengl/Context.h"
 
@@ -26,7 +27,7 @@
 
 namespace opengl {
 
-class CommandBuffer : public ICommandBuffer
+class GraphicsCommandBuffer : public IGraphicsCommandBuffer
 {
     struct TextureState
     {
@@ -36,7 +37,6 @@ class CommandBuffer : public ICommandBuffer
     };
     using TextureStates = std::array<TextureState, MAX_TEXTURE_SAMPLERS>;
 
-public:
     enum DirtyFlag : uint32_t
     {
         DirtyBits_None = 0,
@@ -46,7 +46,16 @@ public:
         DirtyBits_Scissor = 1 << 4,
     };
 
-    explicit CommandBuffer(const std::shared_ptr<Context>& context);
+    enum class RecordState
+    {
+        None,
+        Graphics,
+        Compute
+    };
+
+public:
+
+    explicit GraphicsCommandBuffer(const std::shared_ptr<Context>& context);
 
     void beginRenderPass(const RenderPassBeginDesc& renderPass) override;
     void endRenderPass() override;
@@ -93,7 +102,6 @@ private:
     bool scissorEnabled = false;
 
     bool isRecordingRenderCommands = false;
-    bool isRecordingComputeCommands = false;
 };
 
 }// namespace opengl

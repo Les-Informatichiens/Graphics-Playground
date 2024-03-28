@@ -29,10 +29,10 @@ enum BindTarget : uint8_t
     BindTarget_Fragment = 1 << 2,
 };
 
-class ICommandBuffer
+class IGraphicsCommandBuffer
 {
 public:
-    virtual ~ICommandBuffer() = default;
+    virtual ~IGraphicsCommandBuffer() = default;
 
     virtual void beginRenderPass(const RenderPassBeginDesc& renderPass) = 0;
     virtual void endRenderPass() = 0;

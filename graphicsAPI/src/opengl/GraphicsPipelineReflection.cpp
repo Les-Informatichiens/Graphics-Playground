@@ -80,6 +80,7 @@ GraphicsPipelineReflection::GraphicsPipelineReflection(Context& context, const P
     generateUniformDictionary(context, desc);
     generateUniformBlocksDictionary(context, desc);
     generateAttributeDictionary(context, desc);
+    generateShaderStorageBufferObjectDictionary(context, desc);
 
     // --------------------------------------------------------------------------------------------
 
@@ -120,6 +121,12 @@ uint32_t GraphicsPipelineReflection::getLocation(const std::string& name) const
     if (attribute != attributeDictionary.end())
     {
         return attribute->second;
+    }
+
+    const auto ssbo = shaderStorageBufferObjectDictionary.find(name);
+    if (ssbo != shaderStorageBufferObjectDictionary.end())
+    {
+        return ssbo->second;
     }
 
     return -1;
@@ -164,14 +171,43 @@ void GraphicsPipelineReflection::generateUniformBlocksDictionary(Context& contex
 
     GLuint pid = desc.getProgram();
 
+    // todo
 }
 
 void GraphicsPipelineReflection::generateAttributeDictionary(Context& context, const PipelineShaderStages& desc)
 {
+    // todo
+}
+
+void GraphicsPipelineReflection::generateShaderStorageBufferObjectDictionary(Context& context, const PipelineShaderStages& desc)
+{
+    shaderStorageBufferObjectDictionary.clear();
+
+    GLuint pid = desc.getProgram();
+
+    GLint maxSSBONameLength = 0;
+    context.getProgramInterfaceiv(
+            pid, GL_SHADER_STORAGE_BLOCK, GL_MAX_NAME_LENGTH, &maxSSBONameLength);
+    GLint count = 0;
+    context.getProgramInterfaceiv(pid, GL_SHADER_STORAGE_BLOCK, GL_ACTIVE_RESOURCES, &count);
+
+    std::vector<GLchar> cname(maxSSBONameLength);
+    for (int i = 0; i < count; ++i)
+    {
+        GLsizei length = 0;
+        context.getProgramResourceName(pid, GL_SHADER_STORAGE_BLOCK, i, maxSSBONameLength, &length, cname.data());
+        GLint index = context.getProgramResourceIndex(pid, GL_SHADER_STORAGE_BLOCK, cname.data());
+
+        if (index == GL_INVALID_INDEX)
+        {
+            continue;
+        }
+
+        shaderStorageBufferObjectDictionary.emplace(std::string(cname.data(), cname.data() + length), index);
+    }
 }
 
 // --------------------------------------------------------------------------------------------
-
 void GraphicsPipelineReflection::reflectShader(const std::shared_ptr<ShaderModuleReflection>& reflection)
 {
     // append all the shader reflection data to the pipeline reflection
@@ -216,6 +252,7 @@ GLuint GraphicsPipelineReflection::getSamplerBinding(uint32_t resourceId, bool e
     }
     return retVal;
 }
+
 GLuint GraphicsPipelineReflection::getStorageImageBinding(uint32_t resourceId, bool exceptionIfNotFound) const
 {
     const auto resource = storageImageResources.find(resourceId);

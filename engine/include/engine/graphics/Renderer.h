@@ -57,7 +57,7 @@ public:
 private:
     std::unique_ptr<IDevice> device;
     std::shared_ptr<ICommandPool> activeCommandPool;
-    std::unique_ptr<ICommandBuffer> activeCommandBuffer;
+    std::unique_ptr<IGraphicsCommandBuffer> activeCommandBuffer;
     std::shared_ptr<IFramebuffer> activeFramebuffer;
 
     std::unordered_map<size_t /*pipeline hash*/, std::shared_ptr<IGraphicsPipeline>> graphicsPipelines;
