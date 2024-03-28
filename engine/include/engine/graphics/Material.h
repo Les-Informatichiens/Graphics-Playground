@@ -170,7 +170,7 @@ public:
         textureSamplers[name] = {index, std::move(texture), std::move(samplerState)};
     }
 
-    void bind(IDevice& device, ICommandBuffer& commandBuffer)
+    void bind(IDevice& device, IGraphicsCommandBuffer& commandBuffer)
     {
         // build the pipeline if it's not built yet
 //        build(device);

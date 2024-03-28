@@ -2,7 +2,7 @@
 // Created by Jonathan Richard on 2024-02-05.
 //
 
-#include "CommandBuffer.h"
+#include "GraphicsCommandBuffer.h"
 
 
 #include "Framebuffer.h"
@@ -42,7 +42,7 @@ static GLenum toOpenGLIndexFormat(IndexFormat format)
     }
 }
 
-CommandBuffer::CommandBuffer(const std::shared_ptr<Context>& context)
+GraphicsCommandBuffer::GraphicsCommandBuffer(const std::shared_ptr<Context>& context)
 {
     activeVAO = std::make_shared<VertexArrayObject>(*context);
     activeVAO->create();
@@ -52,7 +52,7 @@ CommandBuffer::CommandBuffer(const std::shared_ptr<Context>& context)
     this->context = context;
 }
 
-void CommandBuffer::beginRenderPass(const RenderPassBeginDesc& desc)
+void GraphicsCommandBuffer::beginRenderPass(const RenderPassBeginDesc& desc)
 {
     // save the current state
     scissorEnabled = context->isEnabled(GL_SCISSOR_TEST);
@@ -111,7 +111,7 @@ void CommandBuffer::beginRenderPass(const RenderPassBeginDesc& desc)
     isRecordingRenderCommands = true;
 }
 
-void CommandBuffer::endRenderPass()
+void GraphicsCommandBuffer::endRenderPass()
 {
     // restore the previous state
     if (scissorEnabled)
@@ -140,14 +140,14 @@ void CommandBuffer::endRenderPass()
     isRecordingRenderCommands = false;
 }
 
-void CommandBuffer::bindGraphicsPipeline(std::shared_ptr<IGraphicsPipeline> pipeline)
+void GraphicsCommandBuffer::bindGraphicsPipeline(std::shared_ptr<IGraphicsPipeline> pipeline)
 {
     auto glPipeline = std::static_pointer_cast<GraphicsPipeline>(pipeline);
     activeGraphicsPipeline = glPipeline;
     setDirty(DirtyFlag::DirtyBits_GraphicsPipeline);
 }
 
-void CommandBuffer::bindBuffer(uint32_t index, std::shared_ptr<IBuffer> buffer, uint32_t offset)
+void GraphicsCommandBuffer::bindBuffer(uint32_t index, std::shared_ptr<IBuffer> buffer, uint32_t offset)
 {
     auto glBuffer = std::static_pointer_cast<Buffer>(buffer);
     auto bufferType = glBuffer->getType();
@@ -163,13 +163,13 @@ void CommandBuffer::bindBuffer(uint32_t index, std::shared_ptr<IBuffer> buffer, 
     }
 }
 
-void CommandBuffer::draw(PrimitiveType primitiveType, size_t vertexStart, size_t vertexCount)
+void GraphicsCommandBuffer::draw(PrimitiveType primitiveType, size_t vertexStart, size_t vertexCount)
 {
     prepareForDraw();
     context->drawArrays(toOpenGLPrimitiveType(primitiveType), vertexStart, vertexCount);
 }
 
-void CommandBuffer::drawIndexed(PrimitiveType primitiveType, size_t indexCount, IndexFormat indexFormat, IBuffer& indexBuffer, size_t indexBufferOffset)
+void GraphicsCommandBuffer::drawIndexed(PrimitiveType primitiveType, size_t indexCount, IndexFormat indexFormat, IBuffer& indexBuffer, size_t indexBufferOffset)
 {
     prepareForDraw();
     auto glBuffer = dynamic_cast<ArrayBuffer*>(&indexBuffer);
@@ -178,7 +178,7 @@ void CommandBuffer::drawIndexed(PrimitiveType primitiveType, size_t indexCount, 
     context->drawElements(toOpenGLPrimitiveType(primitiveType), indexCount, toOpenGLIndexFormat(indexFormat), offsetPtr);
 }
 
-void CommandBuffer::prepareForDraw()
+void GraphicsCommandBuffer::prepareForDraw()
 {
     // bind vertex buffers and graphics pipeline
     if (activeGraphicsPipeline)
@@ -262,7 +262,7 @@ void CommandBuffer::prepareForDraw()
     }
 }
 
-void CommandBuffer::clearPipelineResources(const std::shared_ptr<GraphicsPipeline>& newPipeline)
+void GraphicsCommandBuffer::clearPipelineResources(const std::shared_ptr<GraphicsPipeline>& newPipeline)
 {
     auto currentGlPipeline = dynamic_cast<GraphicsPipeline*>(activeGraphicsPipeline.get());
     auto newGlPipeline = dynamic_cast<GraphicsPipeline*>(newPipeline.get());
@@ -276,18 +276,18 @@ void CommandBuffer::clearPipelineResources(const std::shared_ptr<GraphicsPipelin
     }
 }
 
-void CommandBuffer::bindDepthStencilState(const std::shared_ptr<IDepthStencilState>& depthStencilState)
+void GraphicsCommandBuffer::bindDepthStencilState(const std::shared_ptr<IDepthStencilState>& depthStencilState)
 {
     activeDepthStencilState = std::static_pointer_cast<DepthStencilState>(depthStencilState);
     setDirty(DirtyFlag::DirtyBits_DepthStencilState);
 }
 
-void CommandBuffer::bindViewport(const Viewport& viewport)
+void GraphicsCommandBuffer::bindViewport(const Viewport& viewport)
 {
     context->viewport(static_cast<GLint>(viewport.x), static_cast<GLint>(viewport.y), static_cast<GLint>(viewport.width), static_cast<GLint>(viewport.height));
 }
 
-void CommandBuffer::bindScissor(const ScissorRect& scissor)
+void GraphicsCommandBuffer::bindScissor(const ScissorRect& scissor)
 {
     if (scissor.isNull())
     {
@@ -298,7 +298,7 @@ void CommandBuffer::bindScissor(const ScissorRect& scissor)
     context->scissor(static_cast<GLint>(scissor.x), static_cast<GLint>(scissor.y), static_cast<GLint>(scissor.width), static_cast<GLint>(scissor.height));
 }
 
-void CommandBuffer::bindTexture(uint32_t index, uint8_t target, std::shared_ptr<ITexture> texture)
+void GraphicsCommandBuffer::bindTexture(uint32_t index, uint8_t target, std::shared_ptr<ITexture> texture)
 {
     if (freeTextureUnits.empty())
     {
@@ -324,7 +324,7 @@ void CommandBuffer::bindTexture(uint32_t index, uint8_t target, std::shared_ptr<
     }
 }
 
-void CommandBuffer::bindSamplerState(uint32_t index, uint8_t target, std::shared_ptr<ISamplerState> samplerState)
+void GraphicsCommandBuffer::bindSamplerState(uint32_t index, uint8_t target, std::shared_ptr<ISamplerState> samplerState)
 {
     if ((target & BindTarget::BindTarget_Vertex) != 0)
     {
@@ -338,15 +338,15 @@ void CommandBuffer::bindSamplerState(uint32_t index, uint8_t target, std::shared
     }
 }
 
-bool CommandBuffer::isDirty(opengl::CommandBuffer::DirtyFlag flag) const
+bool GraphicsCommandBuffer::isDirty(opengl::GraphicsCommandBuffer::DirtyFlag flag) const
 {
     return dirtyFlags & flag;
 }
-void CommandBuffer::setDirty(opengl::CommandBuffer::DirtyFlag flag)
+void GraphicsCommandBuffer::setDirty(opengl::GraphicsCommandBuffer::DirtyFlag flag)
 {
     dirtyFlags |= flag;
 }
-void CommandBuffer::clearDirty(CommandBuffer::DirtyFlag flag)
+void GraphicsCommandBuffer::clearDirty(GraphicsCommandBuffer::DirtyFlag flag)
 {
     dirtyFlags &= ~flag;
 }

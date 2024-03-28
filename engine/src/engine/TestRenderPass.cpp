@@ -156,7 +156,7 @@ void TestRenderPass::render(IDevice& device) {
 
 
     Ref<ICommandPool> commandPool = device.createCommandPool({});
-    std::unique_ptr<ICommandBuffer> commandBuffer = commandPool->acquireCommandBuffer({});
+    std::unique_ptr<IGraphicsCommandBuffer> commandBuffer = commandPool->acquireGraphicsCommandBuffer({});
 
     // begin offscreen render pass
     commandBuffer->beginRenderPass({

@@ -10,6 +10,7 @@
 #include <limits>
 #include <stdexcept>
 #include <iostream>
+#include <assert.h>
 
 enum class DataType
 {
@@ -130,9 +131,17 @@ using ScissorRect = Rect<uint32_t>;
 
 constexpr size_t MAX_TEXTURE_SAMPLERS = 16;
 constexpr size_t MAX_TEXTURE_UNITS = 16;
+constexpr size_t MAX_VERTEX_BUFFERS = 32;
 
 // Get value of enum by stripping enum class type
 template<typename E>
 constexpr typename std::underlying_type<E>::type EnumToValue(E enumerator) noexcept {
     return static_cast<typename std::underlying_type<E>::type>(enumerator);
+}
+
+template <class T>
+inline void hash_combine(std::size_t& seed, const T& v)
+{
+    std::hash<T> hasher;
+    seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
 }
