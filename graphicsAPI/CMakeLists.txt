@@ -13,7 +13,7 @@ add_library(
         src/common/ShaderModule.cpp
         include/graphicsAPI/common/ShaderModule.h
         include/graphicsAPI/common/Device.h
-        include/graphicsAPI/common/CommandBuffer.h
+        include/graphicsAPI/common/GraphicsCommandBuffer.h
         include/graphicsAPI/common/CommandPool.h
         include/graphicsAPI/common/GraphicsPipeline.h
         include/graphicsAPI/common/RenderPass.h
@@ -47,8 +47,8 @@ add_library(
         include/graphicsAPI/common/Common.h
         src/opengl/VertexArrayObject.cpp
         src/opengl/VertexArrayObject.h
-        src/opengl/CommandBuffer.cpp
-        src/opengl/CommandBuffer.h
+        src/opengl/GraphicsCommandBuffer.cpp
+        src/opengl/GraphicsCommandBuffer.h
         src/opengl/CommandPool.cpp
         src/opengl/CommandPool.h
         src/opengl/UniformBinder.cpp
@@ -72,6 +72,12 @@ add_library(
         src/opengl/SamplerState.cpp
         src/opengl/SamplerState.h
         include/graphicsAPI/common/Uniform.h
+        include/graphicsAPI/common/ComputePipeline.h
+        src/opengl/ComputePipeline.cpp
+        src/opengl/ComputePipeline.h
+        include/graphicsAPI/common/ComputeCommandBuffer.h
+        src/opengl/ComputeCommandBuffer.cpp
+        src/opengl/ComputeCommandBuffer.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)

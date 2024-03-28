@@ -81,4 +81,9 @@ GLuint Renderbuffer::getHandle() const
     return handle;
 }
 
+void Renderbuffer::bindImage(size_t unit)
+{
+    throw std::runtime_error("Renderbuffer does not support binding as image");
+}
+
 }// namespace opengl

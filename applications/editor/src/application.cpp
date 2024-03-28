@@ -543,7 +543,7 @@ void application::renderImGuiFrame()
     // Jonathan Richard 2024-02-10
 
     auto commandPool = gameEngine.getRenderer().getDevice().createCommandPool({});
-    auto commandBuffer = commandPool->acquireCommandBuffer({});
+    auto commandBuffer = commandPool->acquireGraphicsCommandBuffer({});
 
     const RenderPassBeginDesc renderPassDesc = {
             .renderPass = {

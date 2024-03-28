@@ -6,6 +6,7 @@
 
 #include "Buffer.h"
 #include "CommandPool.h"
+#include "ComputePipeline.h"
 #include "DepthStencilState.h"
 #include "DeviceFeatures.h"
 #include "Framebuffer.h"
@@ -29,6 +30,7 @@ public:
 
 //    virtual std::shared_ptr<IRenderPass> createRenderPass(const RenderPassDesc& desc) = 0;
     virtual std::shared_ptr<IGraphicsPipeline> createGraphicsPipeline(const GraphicsPipelineDesc& desc) = 0;
+    virtual std::shared_ptr<IComputePipeline> createComputePipeline(const ComputePipelineDesc& desc) = 0;
 
     virtual std::shared_ptr<IFramebuffer> createFramebuffer(const FramebufferDesc& desc) = 0;
     virtual std::shared_ptr<ITexture> createTexture(const TextureDesc& desc) = 0;

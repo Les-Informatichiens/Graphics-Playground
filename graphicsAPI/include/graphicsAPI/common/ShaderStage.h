@@ -36,4 +36,6 @@ public:
     [[nodiscard]] virtual const std::shared_ptr<IShaderModule>& getFragmentShader() const = 0;
     [[nodiscard]] virtual const std::shared_ptr<IShaderModule>& getGeometryShader() const = 0;
     [[nodiscard]] virtual const std::shared_ptr<IShaderModule>& getComputeShader() const = 0;
+
+    [[nodiscard]] virtual ShaderStagesType getType() const = 0;
 };

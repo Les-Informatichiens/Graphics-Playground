@@ -18,7 +18,7 @@ Renderable::Renderable(std::shared_ptr<Material> material, std::shared_ptr<Verte
 //    elementCount = elementCount_;
 //}
 
-void Renderable::draw(IDevice& device, ICommandBuffer& cmdBuffer) const
+void Renderable::draw(IDevice& device, IGraphicsCommandBuffer& cmdBuffer) const
 {
     cmdBuffer.bindGraphicsPipeline(graphicsPipeline);
     material->bind(device, cmdBuffer);

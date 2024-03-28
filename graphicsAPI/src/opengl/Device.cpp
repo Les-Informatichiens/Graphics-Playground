@@ -4,6 +4,7 @@
 
 #include "graphicsAPI/opengl/Device.h"
 #include "CommandPool.h"
+#include "ComputePipeline.h"
 #include "DepthStencilState.h"
 #include "Framebuffer.h"
 #include "GraphicsPipeline.h"
@@ -168,6 +169,12 @@ TextureDesc Device::sanitizeTextureDesc(const TextureDesc& desc) const
     }
 
     return sanitized;
+}
+
+std::shared_ptr<IComputePipeline> Device::createComputePipeline(const ComputePipelineDesc& desc)
+{
+    auto computePipeline = std::make_shared<ComputePipeline>(getContext(), desc);
+    return computePipeline;
 }
 
 }// namespace opengl

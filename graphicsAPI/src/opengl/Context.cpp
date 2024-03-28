@@ -616,6 +616,30 @@ void Context::getIntegerv(GLenum pname, GLint* data)
     glLog(glGetIntegerv(pname, data));
 }
 
+void Context::getUniformiv(GLuint program, GLint location, GLint* params)
+{
+    glLog(glGetUniformiv(program, location, params));
+}
+
+void Context::getProgramInterfaceiv(GLuint program, GLenum programInterface, GLenum pname, GLint* params)
+{
+    glLog(glGetProgramInterfaceiv(program, programInterface, pname, params));
+}
+
+GLuint Context::getProgramResourceIndex(GLuint program, GLenum programInterface, const GLchar* name)
+{
+    return glLog(glGetProgramResourceIndex(program, programInterface, name));
+}
+
+void Context::dispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z)
+{
+    glLog(glDispatchCompute(num_groups_x, num_groups_y, num_groups_z));
+}
+
+void Context::memoryBarrier(GLbitfield barriers)
+{
+    glLog(glMemoryBarrier(barriers));
+}
 
 WithContext::WithContext(Context& context) : context_(&context)
 {

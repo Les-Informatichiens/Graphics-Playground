@@ -108,10 +108,16 @@ public:
 
     uint32_t getLocation(const std::string& name) const;
 
+    const std::unordered_map<std::string, UniformDesc>& getUniformDictionary() const { return uniformDictionary; }
+    const std::unordered_map<std::string, UniformBlockDesc>& getUniformBlocksDictionary() const { return uniformBlocksDictionary; }
+    const std::unordered_map<std::string, uint32_t>& getAttributeDictionary() const { return attributeDictionary; }
+    const std::unordered_map<std::string, uint32_t>& getShaderStorageBufferObjectDictionary() const { return shaderStorageBufferObjectDictionary; }
+
 private:
     void generateUniformDictionary(Context& context, const PipelineShaderStages& desc);
     void generateUniformBlocksDictionary(Context& context, const PipelineShaderStages& desc);
     void generateAttributeDictionary(Context& context, const PipelineShaderStages& desc);
+    void generateShaderStorageBufferObjectDictionary(Context& context, const PipelineShaderStages& desc);
 
     // --------------------------------------------------------------------------------------------
 

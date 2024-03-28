@@ -23,7 +23,7 @@ void Renderer::initialize(graphics::RendererDesc desc)
 
 void Renderer::begin()
 {
-    activeCommandBuffer = activeCommandPool->acquireCommandBuffer({});
+    activeCommandBuffer = activeCommandPool->acquireGraphicsCommandBuffer({});
 
     RenderPassBeginDesc renderPassBegin = {
             .renderPass = {
@@ -37,7 +37,7 @@ void Renderer::begin()
 
 void Renderer::begin(const graphics::RenderTarget& renderTarget)
 {
-    activeCommandBuffer = activeCommandPool->acquireCommandBuffer({});
+    activeCommandBuffer = activeCommandPool->acquireGraphicsCommandBuffer({});
 
     // create default depth texture
     auto depthAttachment = getDevice().createTexture(TextureDesc::new2D(
