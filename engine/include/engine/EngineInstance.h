@@ -60,10 +60,10 @@ private:
 
     SceneRenderer sceneRenderer;
 
-    std::shared_ptr<graphics::Material> normalMaterial;
-    std::shared_ptr<graphics::Material> testMaterial;
-    std::shared_ptr<graphics::Material> floorMaterial;
-    std::shared_ptr<graphics::Material> portalMaterial;
+//    std::shared_ptr<graphics::Material> normalMaterial;
+//    std::shared_ptr<graphics::Material> testMaterial;
+//    std::shared_ptr<graphics::Material> floorMaterial;
+//    std::shared_ptr<graphics::Material> portalMaterial;
 
     std::shared_ptr<IComputePipeline> computePipeline;
 

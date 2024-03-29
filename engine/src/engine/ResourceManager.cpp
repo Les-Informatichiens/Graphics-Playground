@@ -152,6 +152,93 @@ void ResourceManager::releaseImage(ResourceHandle handle)
     }
 }
 
+std::shared_ptr<TextureResource> ResourceManager::createTexture(const std::string& name)
+{
+    auto handle = getNewHandle();
+    auto texture = std::make_shared<TextureResource>(this, name, handle, false);
+    texturesByName[name] = texture;
+    texturesByHandle[handle] = texture;
+    return texture;
+}
+
+std::shared_ptr<TextureResource> ResourceManager::getTextureByHandle(ResourceHandle handle)
+{
+    auto it = texturesByHandle.find(handle);
+    if (it != texturesByHandle.end())
+    {
+        return it->second;
+    }
+    return nullptr;
+}
+
+std::shared_ptr<TextureResource> ResourceManager::getTextureByName(const std::string& name)
+{
+    auto it = texturesByName.find(name);
+    if (it != texturesByName.end())
+    {
+        return it->second;
+    }
+    return nullptr;
+}
+
+void ResourceManager::releaseTexture(ResourceHandle handle)
+{
+    auto it = texturesByHandle.find(handle);
+    if (it != texturesByHandle.end())
+    {
+        it->second->unload();
+        texturesByHandle.erase(it);
+    }
+}
+
+std::shared_ptr<ShaderResource> ResourceManager::createShader(const std::string& name)
+{
+    auto handle = getNewHandle();
+    auto shader = std::make_shared<ShaderResource>(this, name, handle, false);
+    shadersByName[name] = shader;
+    shadersByHandle[handle] = shader;
+    return shader;
+}
+
+std::shared_ptr<ShaderResource> ResourceManager::createExternalShader(const std::string& name)
+{
+    auto handle = getNewHandle();
+    auto shader = std::make_shared<ShaderResource>(this, name, handle, true);
+    shadersByName[name] = shader;
+    shadersByHandle[handle] = shader;
+    return shader;
+}
+
+std::shared_ptr<ShaderResource> ResourceManager::getShaderByHandle(ResourceHandle handle)
+{
+    auto it = shadersByHandle.find(handle);
+    if (it != shadersByHandle.end())
+    {
+        return it->second;
+    }
+    return nullptr;
+}
+
+std::shared_ptr<ShaderResource> ResourceManager::getShaderByName(const std::string& name)
+{
+    auto it = shadersByName.find(name);
+    if (it != shadersByName.end())
+    {
+        return it->second;
+    }
+    return nullptr;
+}
+
+void ResourceManager::releaseShader(ResourceHandle handle)
+{
+    auto it = shadersByHandle.find(handle);
+    if (it != shadersByHandle.end())
+    {
+        it->second->unload();
+        shadersByHandle.erase(it);
+    }
+}
+
 ResourceHandle ResourceManager::getNewHandle()
 {
     return ResourceHandle(nextId.getId() + 1);

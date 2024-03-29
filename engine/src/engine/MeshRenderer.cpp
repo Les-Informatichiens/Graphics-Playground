@@ -23,8 +23,8 @@ void MeshRenderer::render(graphics::Renderer& renderer, const std::shared_ptr<Me
         float shininess = 32.0f;
     } constants(cameraPosition, cameraDirection, glm::vec3(-0.7f, -0.5f, -0.5f), 320.0f);
 
-    material->getMaterial()->setUniformBytes("ubo", &ubo, sizeof(ubo), 0);
-    material->getMaterial()->setUniformBytes("constants", &constants, sizeof(constants), 1);
+    material->setUniformBuffer("ubo", &ubo, sizeof(ubo), 0);
+    material->setUniformBuffer("constants", &constants, sizeof(constants), 1);
 //    material->setCullMode(CullMode::None);
 //    material->setBlendMode(graphics::BlendMode::Opaque());
 //    material->setDepthTestConfig(graphics::DepthTestConfig::Enable);
@@ -41,6 +41,8 @@ void MeshRenderer::render(graphics::Renderer& renderer, const std::shared_ptr<Me
 //
 //    vertexData->pushVertices(mesh.vertices);
 //    vertexData->pushIndices(mesh.indices);
+
+    material->use(renderer);
 
     graphics::Renderable meshRenderable(material->getMaterial(), mesh->getVertexData());
 

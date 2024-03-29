@@ -218,10 +218,13 @@ void EngineInstance::initialize()
             }
         )";
 
-        auto shaderProgram = renderer.getDeviceManager().createShaderProgram(vs, fs);
+        auto shaderRes = resourceManager.createShader("pbrShader");
+        shaderRes->loadFromManagedResource(renderer.getDeviceManager().createShaderProgram(vs, fs));
         {
-            auto pbrMaterial = renderer.getDeviceManager().createMaterial(shaderProgram);
             auto matres = resourceManager.createMaterial("pbrMaterial");
+            matres->loadFromManagedResource(renderer.getDeviceManager().createMaterial(nullptr));
+
+            matres->setShader(shaderRes);
 
             // PBR test textures
             auto albedoImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/rustedmetal/albedo.png");
@@ -236,43 +239,51 @@ void EngineInstance::initialize()
             aoImage->load();
 
             // create textures from image data
+            auto samplerState = renderer.getDevice().createSamplerState(SamplerStateDesc::newLinear());
 
             TextureDesc albedoTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, albedoImage->getWidth(), albedoImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
             auto albedoTex = renderer.getDeviceManager().getDevice().createTexture(albedoTexDesc);
             albedoTex->upload(albedoImage->getData(), TextureRangeDesc::new2D(0, 0, albedoImage->getWidth(), albedoImage->getHeight()));
+            auto albedoTexRes = resourceManager.createTexture("rustedmetal/albedoMap");
+            albedoTexRes->loadFromManagedResource(albedoTex, samplerState);
 
             TextureDesc normalTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, normalImage->getWidth(), normalImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
             auto normalTex = renderer.getDeviceManager().getDevice().createTexture(normalTexDesc);
             normalTex->upload(normalImage->getData(), TextureRangeDesc::new2D(0, 0, normalImage->getWidth(), normalImage->getHeight()));
+            auto normalTexRes = resourceManager.createTexture("rustedmetal/normalMap");
+            normalTexRes->loadFromManagedResource(normalTex, samplerState);
 
             TextureDesc metallicTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, metallicImage->getWidth(), metallicImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
             auto metallicTex = renderer.getDeviceManager().getDevice().createTexture(metallicTexDesc);
             metallicTex->upload(metallicImage->getData(), TextureRangeDesc::new2D(0, 0, metallicImage->getWidth(), metallicImage->getHeight()));
+            auto metallicTexRes = resourceManager.createTexture("rustedmetal/metallicMap");
+            metallicTexRes->loadFromManagedResource(metallicTex, samplerState);
 
             TextureDesc roughnessTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, roughnessImage->getWidth(), roughnessImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
             auto roughnessTex = renderer.getDeviceManager().getDevice().createTexture(roughnessTexDesc);
             roughnessTex->upload(roughnessImage->getData(), TextureRangeDesc::new2D(0, 0, roughnessImage->getWidth(), roughnessImage->getHeight()));
+            auto roughnessTexRes = resourceManager.createTexture("rustedmetal/roughnessMap");
+            roughnessTexRes->loadFromManagedResource(roughnessTex, samplerState);
 
             TextureDesc aoTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, aoImage->getWidth(), aoImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
             auto aoTex = renderer.getDeviceManager().getDevice().createTexture(aoTexDesc);
             aoTex->upload(aoImage->getData(), TextureRangeDesc::new2D(0, 0, aoImage->getWidth(), aoImage->getHeight()));
-
-            auto samplerState = renderer.getDevice().createSamplerState(SamplerStateDesc::newLinear());
+            auto aoTexRes = resourceManager.createTexture("rustedmetal/aoMap");
+            aoTexRes->loadFromManagedResource(aoTex, samplerState);
 
             // set textures to material
-            pbrMaterial->setTextureSampler("albedoMap", albedoTex, samplerState, 1);
-            pbrMaterial->setTextureSampler("normalMap", normalTex, samplerState, 2);
-            pbrMaterial->setTextureSampler("metallicMap", metallicTex, samplerState, 3);
-            pbrMaterial->setTextureSampler("roughnessMap", roughnessTex, samplerState, 4);
-            pbrMaterial->setTextureSampler("aoMap", aoTex, samplerState, 5);
-
-            matres->setMaterial(pbrMaterial);
-            matres->load();
+            matres->setTextureSampler("albedoMap", albedoTexRes, 1);
+            matres->setTextureSampler("normalMap", normalTexRes, 2);
+            matres->setTextureSampler("metallicMap", metallicTexRes, 3);
+            matres->setTextureSampler("roughnessMap", roughnessTexRes, 4);
+            matres->setTextureSampler("aoMap", aoTexRes, 5);
         }
 
         {
-            auto pbrMaterial = renderer.getDeviceManager().createMaterial(shaderProgram);
             auto matres = resourceManager.createMaterial("pbrMaterial2");
+            matres->loadFromManagedResource(renderer.getDeviceManager().createMaterial(nullptr));
+
+            matres->setShader(shaderRes);
 
             // PBR test textures
             auto albedoImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/polishedconcrete/albedo.png");
@@ -287,38 +298,45 @@ void EngineInstance::initialize()
             aoImage->load();
 
             // create textures from image data
+            auto samplerState = renderer.getDevice().createSamplerState(SamplerStateDesc::newLinear());
 
             TextureDesc albedoTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, albedoImage->getWidth(), albedoImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
             auto albedoTex = renderer.getDeviceManager().getDevice().createTexture(albedoTexDesc);
             albedoTex->upload(albedoImage->getData(), TextureRangeDesc::new2D(0, 0, albedoImage->getWidth(), albedoImage->getHeight()));
+            auto albedoTexRes = resourceManager.createTexture("polishedconcrete/albedoMap");
+            albedoTexRes->loadFromManagedResource(albedoTex, samplerState);
 
             TextureDesc normalTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, normalImage->getWidth(), normalImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
             auto normalTex = renderer.getDeviceManager().getDevice().createTexture(normalTexDesc);
             normalTex->upload(normalImage->getData(), TextureRangeDesc::new2D(0, 0, normalImage->getWidth(), normalImage->getHeight()));
+            auto normalTexRes = resourceManager.createTexture("polishedconcrete/normalMap");
+            normalTexRes->loadFromManagedResource(normalTex, samplerState);
 
             TextureDesc metallicTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, metallicImage->getWidth(), metallicImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
             auto metallicTex = renderer.getDeviceManager().getDevice().createTexture(metallicTexDesc);
             metallicTex->upload(metallicImage->getData(), TextureRangeDesc::new2D(0, 0, metallicImage->getWidth(), metallicImage->getHeight()));
+            auto metallicTexRes = resourceManager.createTexture("polishedconcrete/metallicMap");
+            metallicTexRes->loadFromManagedResource(metallicTex, samplerState);
 
             TextureDesc roughnessTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, roughnessImage->getWidth(), roughnessImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
             auto roughnessTex = renderer.getDeviceManager().getDevice().createTexture(roughnessTexDesc);
             roughnessTex->upload(roughnessImage->getData(), TextureRangeDesc::new2D(0, 0, roughnessImage->getWidth(), roughnessImage->getHeight()));
+            auto roughnessTexRes = resourceManager.createTexture("polishedconcrete/roughnessMap");
+            roughnessTexRes->loadFromManagedResource(roughnessTex, samplerState);
 
             TextureDesc aoTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, aoImage->getWidth(), aoImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
             auto aoTex = renderer.getDeviceManager().getDevice().createTexture(aoTexDesc);
             aoTex->upload(aoImage->getData(), TextureRangeDesc::new2D(0, 0, aoImage->getWidth(), aoImage->getHeight()));
+            auto aoTexRes = resourceManager.createTexture("polishedconcrete/aoMap");
+            aoTexRes->loadFromManagedResource(aoTex, samplerState);
 
-            auto samplerState = renderer.getDevice().createSamplerState(SamplerStateDesc::newLinear());
 
             // set textures to material
-            pbrMaterial->setTextureSampler("albedoMap", albedoTex, samplerState, 1);
-            pbrMaterial->setTextureSampler("normalMap", normalTex, samplerState, 2);
-            pbrMaterial->setTextureSampler("metallicMap", metallicTex, samplerState, 3);
-            pbrMaterial->setTextureSampler("roughnessMap", roughnessTex, samplerState, 4);
-            pbrMaterial->setTextureSampler("aoMap", aoTex, samplerState, 5);
-
-            matres->setMaterial(pbrMaterial);
-            matres->load();
+            matres->setTextureSampler("albedoMap", albedoTexRes, 1);
+            matres->setTextureSampler("normalMap", normalTexRes, 2);
+            matres->setTextureSampler("metallicMap", metallicTexRes, 3);
+            matres->setTextureSampler("roughnessMap", roughnessTexRes, 4);
+            matres->setTextureSampler("aoMap", aoTexRes, 5);
         }
     }
 
@@ -356,11 +374,13 @@ void EngineInstance::initialize()
             }
         )";
 
-        auto shaderProgram = renderer.getDeviceManager().createShaderProgram(vs, fs);
-        normalMaterial = renderer.getDeviceManager().createMaterial(shaderProgram);
+        auto shaderRes = resourceManager.createShader("normalShader");
+        shaderRes->loadFromManagedResource(renderer.getDeviceManager().createShaderProgram(vs, fs));
+
         auto matres = resourceManager.createMaterial("normalMaterial");
-        matres->setMaterial(normalMaterial);
-        matres->load();
+        matres->loadFromManagedResource(renderer.getDeviceManager().createMaterial(nullptr));
+
+        matres->setShader(shaderRes);
     }
 
     // test teapot material
@@ -411,11 +431,13 @@ void EngineInstance::initialize()
             }
         )";
 
-        auto shaderProgram = renderer.getDeviceManager().createShaderProgram(vs, fs);
-        testMaterial = renderer.getDeviceManager().createMaterial(shaderProgram);
+        auto shaderRes = resourceManager.createShader("testShader");
+        shaderRes->loadFromManagedResource(renderer.getDeviceManager().createShaderProgram(vs, fs));
+
         auto matres = resourceManager.createMaterial("testMaterial");
-        matres->setMaterial(testMaterial);
-        matres->load();
+        matres->loadFromManagedResource(renderer.getDeviceManager().createMaterial(nullptr));
+
+        matres->setShader(shaderRes);
     }
 
     // floor material with checkered pattern
@@ -459,14 +481,13 @@ void EngineInstance::initialize()
             }
         )";
 
-        auto shaderProgram = renderer.getDeviceManager().createShaderProgram(vs, fs);
-        floorMaterial = renderer.getDeviceManager().createMaterial(shaderProgram);
-
-        floorMaterial->setCullMode(CullMode::None);
+        auto shaderRes = resourceManager.createShader("floorShader");
+        shaderRes->loadFromManagedResource(renderer.getDeviceManager().createShaderProgram(vs, fs));
 
         auto matres = resourceManager.createMaterial("floorMaterial");
-        matres->setMaterial(floorMaterial);
-        matres->load();
+        matres->loadFromManagedResource(renderer.getDeviceManager().createMaterial(nullptr));
+
+        matres->setShader(shaderRes);
     }
 
     // portal material: usage will be a simple textured mesh
@@ -507,11 +528,13 @@ void EngineInstance::initialize()
             }
         )";
 
-        auto shaderProgram = renderer.getDeviceManager().createShaderProgram(vs, fs);
-        portalMaterial = renderer.getDeviceManager().createMaterial(shaderProgram);
+        auto shaderRes = resourceManager.createShader("portalShader");
+        shaderRes->loadFromManagedResource(renderer.getDeviceManager().createShaderProgram(vs, fs));
+
         auto matres = resourceManager.createMaterial("portalMaterial");
-        matres->setMaterial(portalMaterial);
-        matres->load();
+        matres->loadFromManagedResource(renderer.getDeviceManager().createMaterial(nullptr));
+
+        matres->setShader(shaderRes);
     }
 
     // create compute pipeline

@@ -81,6 +81,8 @@ add_library(
         include/engine/components/LightComponent.h
         src/engine/Light.cpp
         include/engine/Light.h
+        src/engine/graphics/ShaderResource.cpp
+        include/engine/graphics/ShaderResource.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)

@@ -8,6 +8,8 @@
 #include "engine/Mesh.h"
 #include "engine/ResourceHandle.h"
 #include "engine/graphics/MeshResource.h"
+#include "engine/graphics/ShaderResource.h"
+#include "engine/graphics/TextureResource.h"
 
 #include <algorithm>
 #include <memory>
@@ -54,6 +56,19 @@ public:
     std::shared_ptr<ImageResource> getImageByName(const std::string& name);
     void releaseImage(ResourceHandle handle);
 
+    //texture
+    std::shared_ptr<TextureResource> createTexture(const std::string& name);
+    std::shared_ptr<TextureResource> getTextureByHandle(ResourceHandle handle);
+    std::shared_ptr<TextureResource> getTextureByName(const std::string& name);
+    void releaseTexture(ResourceHandle handle);
+
+    //shader
+    std::shared_ptr<ShaderResource> createShader(const std::string& name);
+    std::shared_ptr<ShaderResource> createExternalShader(const std::string& name);
+    std::shared_ptr<ShaderResource> getShaderByHandle(ResourceHandle handle);
+    std::shared_ptr<ShaderResource> getShaderByName(const std::string& name);
+    void releaseShader(ResourceHandle handle);
+
 private:
     ResourceHandle getNewHandle();
 
@@ -67,6 +82,14 @@ private:
     //image
     std::unordered_map<ResourceHandle, std::shared_ptr<ImageResource>> imagesByHandle;
     std::unordered_map<std::string, std::shared_ptr<ImageResource>> imagesByName;
+
+    //texture
+    std::unordered_map<ResourceHandle, std::shared_ptr<TextureResource>> texturesByHandle;
+    std::unordered_map<std::string, std::shared_ptr<TextureResource>> texturesByName;
+
+    //shaders
+    std::unordered_map<ResourceHandle, std::shared_ptr<ShaderResource>> shadersByHandle;
+    std::unordered_map<std::string, std::shared_ptr<ShaderResource>> shadersByName;
 
     // more resource types
 
