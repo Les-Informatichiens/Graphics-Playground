@@ -155,25 +155,25 @@ struct GraphicsPipelineDescHash
             hash_combine(hash, unit);
             hash_combine(hash, sampler);
         }
-
-        // print all individual hashes
-        std::cout << "hash: " << hash << std::endl;
-        std::cout << "ShaderStages: " << std::hash<std::shared_ptr<IPipelineShaderStages>>{}(desc.shaderStages) << std::endl;
-        std::cout << "VertexInputState: " << std::hash<std::shared_ptr<IVertexInputState>>{}(desc.vertexInputState) << std::endl;
-        for (const auto& colorBlendAttachmentState : desc.colorBlendAttachmentStates)
-        {
-            std::cout << "ColorBlendAttachmentState: " << ColorBlendAttachmentStateDescHash{}(colorBlendAttachmentState) << std::endl;
-        }
-        std::cout << "RasterizationState: " << RasterizationStateDescHash{}(desc.rasterizationState) << std::endl;
-        for (const auto& [unit, sampler] : desc.vertexUnitSamplerMap)
-        {
-            std::cout << "VertexUnitSamplerMap: " << unit << " " << sampler << std::endl;
-        }
-        for (const auto& [unit, sampler] : desc.fragmentUnitSamplerMap)
-        {
-            std::cout << "FragmentUnitSamplerMap: " << unit << " " << sampler << std::endl;
-        }
-
+//
+//        // print all individual hashes
+//        std::cout << "hash: " << hash << std::endl;
+//        std::cout << "ShaderStages: " << std::hash<std::shared_ptr<IPipelineShaderStages>>{}(desc.shaderStages) << std::endl;
+//        std::cout << "VertexInputState: " << std::hash<std::shared_ptr<IVertexInputState>>{}(desc.vertexInputState) << std::endl;
+//        for (const auto& colorBlendAttachmentState : desc.colorBlendAttachmentStates)
+//        {
+//            std::cout << "ColorBlendAttachmentState: " << ColorBlendAttachmentStateDescHash{}(colorBlendAttachmentState) << std::endl;
+//        }
+//        std::cout << "RasterizationState: " << RasterizationStateDescHash{}(desc.rasterizationState) << std::endl;
+//        for (const auto& [unit, sampler] : desc.vertexUnitSamplerMap)
+//        {
+//            std::cout << "VertexUnitSamplerMap: " << unit << " " << sampler << std::endl;
+//        }
+//        for (const auto& [unit, sampler] : desc.fragmentUnitSamplerMap)
+//        {
+//            std::cout << "FragmentUnitSamplerMap: " << unit << " " << sampler << std::endl;
+//        }
+//
 
 
         return hash;

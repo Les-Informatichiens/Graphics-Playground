@@ -168,26 +168,27 @@ size_t ArrayBuffer::getSize() const
 
 void ArrayBuffer::savePreviousBuffer() const
 {
-    GLenum queryTarget;
-    switch (target_)
-    {
-        case GL_ARRAY_BUFFER:
-            queryTarget = GL_ARRAY_BUFFER_BINDING;
-            break;
-        case GL_ELEMENT_ARRAY_BUFFER:
-            queryTarget = GL_ELEMENT_ARRAY_BUFFER_BINDING;
-            break;
-        case GL_UNIFORM_BUFFER:
-            queryTarget = GL_UNIFORM_BUFFER_BINDING;
-            break;
-        case GL_SHADER_STORAGE_BUFFER:
-            queryTarget = GL_SHADER_STORAGE_BUFFER_BINDING;
-            break;
-        default:
-            throw std::runtime_error("Unknown buffer type");
-    }
+//    GLenum queryTarget;
+//    switch (target_)
+//    {
+//        case GL_ARRAY_BUFFER:
+//            queryTarget = GL_ARRAY_BUFFER_BINDING;
+//            break;
+//        case GL_ELEMENT_ARRAY_BUFFER:
+//            queryTarget = GL_ELEMENT_ARRAY_BUFFER_BINDING;
+//            break;
+//        case GL_UNIFORM_BUFFER:
+//            queryTarget = GL_UNIFORM_BUFFER_BINDING;
+//            break;
+//        case GL_SHADER_STORAGE_BUFFER:
+//            queryTarget = GL_SHADER_STORAGE_BUFFER_BINDING;
+//            break;
+//        default:
+//            throw std::runtime_error("Unknown buffer type");
+//    }
 //    // this method is a wrap around getContext().bindBuffer(getTarget(), id_); to ensure we dont alter the current state
 //    getContext().getIntegerv(queryTarget, &lastBoundBuffer_);
+    lastBoundBuffer_ = getContext().getBoundBuffer(target_);
 }
 
 void ArrayBuffer::restorePreviousBuffer() const
