@@ -586,6 +586,11 @@ void application::onKey(int key, int scancode, int action, int mods)
 void application::onMouseButton(int button, int action, int mods)
 {
     bool pressed = (action == GLFW_PRESS) && action != GLFW_RELEASE;
+
+    // return if ontop of imgui
+    if (ImGui::GetIO().WantCaptureMouse)
+        return;
+
     gameEngine.getInput().setMouseButtonPressed(button, pressed);
 }
 
@@ -596,5 +601,8 @@ void application::onMouseMove(double xpos, double ypos)
 
 void application::onMouseScroll(double xoffset, double yoffset)
 {
+    // return if ontop of imgui
+    if (ImGui::GetIO().WantCaptureMouse)
+        return;
     gameEngine.getInput().setMouseWheel(yoffset);
 }
