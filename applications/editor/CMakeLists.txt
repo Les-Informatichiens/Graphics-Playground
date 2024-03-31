@@ -155,6 +155,11 @@ set(
 
         "assets/test/textures/default/metallic.png"
 
+        "assets/test/textures/metalgrid/albedo.png"
+        "assets/test/textures/metalgrid/normal.png"
+        "assets/test/textures/metalgrid/roughness.png"
+        "assets/test/textures/metalgrid/metallic.png"
+        "assets/test/textures/metalgrid/ao.png"
         "assets/test/textures/rustedmetal/albedo.png"
         "assets/test/textures/rustedmetal/normal.png"
         "assets/test/textures/rustedmetal/roughness.png"

@@ -170,7 +170,11 @@ std::shared_ptr<Mesh> Mesh::createCube(float size)
         20, 21, 22, 22, 23, 20,
     };
 
-    return std::make_shared<Mesh>(vertices, indices);
+    auto mesh = std::make_shared<Mesh>(vertices, indices);
+
+//    mesh->calculateTangents();
+
+    return mesh;
 }
 
 void Mesh::recalculateBounds() const

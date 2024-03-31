@@ -60,13 +60,26 @@ void EngineInstance::initialize()
     {
         auto vs = R"(
             #version 450
+
+            const int MAX_LIGHTS = 10;
+
+
             layout(location = 0) in vec3 inPosition;
             layout(location = 1) in vec3 inNormal;
             layout(location = 2) in vec2 inTexCoord;
+//            layout(location = 3) in vec3 inTangent;
+//            layout(location = 4) in vec3 inBitangent;
 
             layout(location = 0) out vec2 fragTexCoord;
             layout(location = 1) out vec3 fragWorldPos;
             layout(location = 2) out vec3 fragNormal;
+
+            // normal mapping
+//            layout(location = 3) out vec3 tangentViewPos;
+//            layout(location = 4) out vec3 tangentLightPos[10];
+//            layout(location = 5) out vec3 tangentFragPos;
+
+
 
             layout(binding = 0) uniform UBO {
                 mat4 model;
@@ -74,20 +87,52 @@ void EngineInstance::initialize()
                 mat4 proj;
             } ubo;
 
+
+            struct Light {
+                vec3 position;
+                vec3 color;
+            };
+
+            layout(binding = 6) uniform Lights {
+                int lightCount;
+                Light lights[MAX_LIGHTS];
+            };
+
             void main() {
                 gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
                 fragTexCoord = inTexCoord;
                 fragWorldPos = vec3(ubo.model * vec4(inPosition, 1.0));
                 mat3 normalMatrix = transpose(inverse(mat3(ubo.model)));
                 fragNormal = normalMatrix * inNormal;
+
+//                // Gram-Schmidt Orthogonalisation
+//                vec3 T = normalize(normalMatrix * inTangent);
+//                vec3 N = normalize(normalMatrix * inNormal);
+//                T = normalize(T - dot(T, N) * N);
+//                vec3 B = cross(N, T);
+//
+//                mat3 TBN = transpose(mat3(T, B, N));
+//
+//                tangentViewPos = TBN * vec3(ubo.view * vec4(fragWorldPos, 1.0));
+//                tangentFragPos = TBN * vec3(ubo.model * vec4(inPosition, 1.0));
+//                for (int i = 0; i < lightCount; ++i) {
+//                    tangentLightPos[i] = TBN * lights[i].position;
+//                }
             }
         )";
 
         auto fs = R"(
             #version 450
+
+            const int MAX_LIGHTS = 10;
+
             layout(location = 0) in vec2 fragTexCoord;
             layout(location = 1) in vec3 fragWorldPos;
             layout(location = 2) in vec3 fragNormal;
+//            layout(location = 3) in vec3 tangentViewPos;
+//            layout(location = 4) in vec3 tangentLightPos[10];
+//            layout(location = 5) in vec3 tangentFragPos;
+
             out vec4 fragColor;
 
             layout(binding = 1) uniform sampler2D albedoMap;
@@ -108,7 +153,6 @@ void EngineInstance::initialize()
                 vec3 color;
             };
 
-            const int MAX_LIGHTS = 10;
             layout(binding = 6) uniform Lights {
                 int lightCount;
                 Light lights[MAX_LIGHTS];
@@ -122,6 +166,23 @@ void EngineInstance::initialize()
             } constants;
 
             const float PI = 3.14159265359;
+
+            vec3 getNormalFromMap()
+            {
+                vec3 tangentNormal = texture(normalMap, fragTexCoord).xyz * 2.0 - 1.0;
+
+                vec3 Q1  = dFdx(fragWorldPos);
+                vec3 Q2  = dFdy(fragWorldPos);
+                vec2 st1 = dFdx(fragTexCoord);
+                vec2 st2 = dFdy(fragTexCoord);
+
+                vec3 N   = normalize(fragNormal);
+                vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
+                vec3 B  = -normalize(cross(N, T));
+                mat3 TBN = mat3(T, B, N);
+
+                return normalize(TBN * tangentNormal);
+            }
             // ----------------------------------------------------------------------------
             float DistributionGGX(vec3 N, vec3 H, float roughness)
             {
@@ -167,7 +228,7 @@ void EngineInstance::initialize()
             void main() {
                 vec3 albedo = pow(texture(albedoMap, fragTexCoord).rgb, vec3(2.2));
 
-                vec3 normal = texture(normalMap, fragTexCoord).rgb;
+//                vec3 normal = texture(normalMap, fragTexCoord).rgb;
                 float metallic = texture(metallicMap, fragTexCoord).r;
                 float roughness = texture(roughnessMap, fragTexCoord).r;
                 float ao = texture(aoMap, fragTexCoord).r;
@@ -176,7 +237,7 @@ void EngineInstance::initialize()
 
                 vec3 camPos = constants.cameraPos;
 
-                vec3 N = normalize(fragNormal);
+                vec3 N = getNormalFromMap();
                 vec3 V = normalize(camPos - fragWorldPos);
 
                 vec3 F0 = vec3(0.04);
@@ -328,6 +389,65 @@ void EngineInstance::initialize()
             auto aoTex = renderer.getDeviceManager().getDevice().createTexture(aoTexDesc);
             aoTex->upload(aoImage->getData(), TextureRangeDesc::new2D(0, 0, aoImage->getWidth(), aoImage->getHeight()));
             auto aoTexRes = resourceManager.createTexture("polishedconcrete/aoMap");
+            aoTexRes->loadFromManagedResource(aoTex, samplerState);
+
+
+            // set textures to material
+            matres->setTextureSampler("albedoMap", albedoTexRes, 1);
+            matres->setTextureSampler("normalMap", normalTexRes, 2);
+            matres->setTextureSampler("metallicMap", metallicTexRes, 3);
+            matres->setTextureSampler("roughnessMap", roughnessTexRes, 4);
+            matres->setTextureSampler("aoMap", aoTexRes, 5);
+        }
+        {
+            auto matres = resourceManager.createMaterial("pbrMaterial3");
+            matres->loadFromManagedResource(renderer.getDeviceManager().createMaterial(nullptr));
+
+            matres->setShader(shaderRes);
+
+            // PBR test textures
+            auto albedoImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/metalgrid/albedo.png");
+            albedoImage->load();
+            auto normalImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/metalgrid/normal.png");
+            normalImage->load();
+            auto metallicImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/metalgrid/metallic.png");
+            metallicImage->load();
+            auto roughnessImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/metalgrid/roughness.png");
+            roughnessImage->load();
+            auto aoImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/metalgrid/ao.png");
+            aoImage->load();
+
+            // create textures from image data
+            auto samplerState = renderer.getDevice().createSamplerState(SamplerStateDesc::newLinear());
+
+            TextureDesc albedoTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, albedoImage->getWidth(), albedoImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
+            auto albedoTex = renderer.getDeviceManager().getDevice().createTexture(albedoTexDesc);
+            albedoTex->upload(albedoImage->getData(), TextureRangeDesc::new2D(0, 0, albedoImage->getWidth(), albedoImage->getHeight()));
+            auto albedoTexRes = resourceManager.createTexture("metalgrid/albedoMap");
+            albedoTexRes->loadFromManagedResource(albedoTex, samplerState);
+
+            TextureDesc normalTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, normalImage->getWidth(), normalImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
+            auto normalTex = renderer.getDeviceManager().getDevice().createTexture(normalTexDesc);
+            normalTex->upload(normalImage->getData(), TextureRangeDesc::new2D(0, 0, normalImage->getWidth(), normalImage->getHeight()));
+            auto normalTexRes = resourceManager.createTexture("metalgrid/normalMap");
+            normalTexRes->loadFromManagedResource(normalTex, samplerState);
+
+            TextureDesc metallicTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, metallicImage->getWidth(), metallicImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
+            auto metallicTex = renderer.getDeviceManager().getDevice().createTexture(metallicTexDesc);
+            metallicTex->upload(metallicImage->getData(), TextureRangeDesc::new2D(0, 0, metallicImage->getWidth(), metallicImage->getHeight()));
+            auto metallicTexRes = resourceManager.createTexture("metalgrid/metallicMap");
+            metallicTexRes->loadFromManagedResource(metallicTex, samplerState);
+
+            TextureDesc roughnessTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, roughnessImage->getWidth(), roughnessImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
+            auto roughnessTex = renderer.getDeviceManager().getDevice().createTexture(roughnessTexDesc);
+            roughnessTex->upload(roughnessImage->getData(), TextureRangeDesc::new2D(0, 0, roughnessImage->getWidth(), roughnessImage->getHeight()));
+            auto roughnessTexRes = resourceManager.createTexture("metalgrid/roughnessMap");
+            roughnessTexRes->loadFromManagedResource(roughnessTex, samplerState);
+
+            TextureDesc aoTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, aoImage->getWidth(), aoImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
+            auto aoTex = renderer.getDeviceManager().getDevice().createTexture(aoTexDesc);
+            aoTex->upload(aoImage->getData(), TextureRangeDesc::new2D(0, 0, aoImage->getWidth(), aoImage->getHeight()));
+            auto aoTexRes = resourceManager.createTexture("metalgrid/aoMap");
             aoTexRes->loadFromManagedResource(aoTex, samplerState);
 
 
@@ -833,7 +953,9 @@ void EngineInstance::initialize()
         graphics::VertexDataLayout attribLayout({
                 { "inPosition", 0, VertexAttributeFormat::Float3 },
                 { "inNormal", 1, VertexAttributeFormat::Float3 },
-                { "inTexCoords", 2, VertexAttributeFormat::Float2 }
+                { "inTexCoords", 2, VertexAttributeFormat::Float2 },
+//                { "inTangents", 3, VertexAttributeFormat::Float3 },
+//                { "inBitangents", 4, VertexAttributeFormat::Float3 }
         });
 
         auto vertexData = renderer.getDeviceManager().createVertexData(attribLayout);
@@ -853,7 +975,9 @@ void EngineInstance::initialize()
         graphics::VertexDataLayout attribLayout({
                 { "inPosition", 0, VertexAttributeFormat::Float3 },
                 { "inNormal", 1, VertexAttributeFormat::Float3 },
-                { "inTexCoords", 2, VertexAttributeFormat::Float2 }
+                { "inTexCoords", 2, VertexAttributeFormat::Float2 },
+//                { "inTangents", 3, VertexAttributeFormat::Float3 },
+//                { "inBitangents", 4, VertexAttributeFormat::Float3 }
         });
 
         auto vertexData = renderer.getDeviceManager().createVertexData(attribLayout);
@@ -873,7 +997,9 @@ void EngineInstance::initialize()
         graphics::VertexDataLayout attribLayout({
                 { "inPosition", 0, VertexAttributeFormat::Float3 },
                 { "inNormal", 1, VertexAttributeFormat::Float3 },
-                { "inTexCoords", 2, VertexAttributeFormat::Float2 }
+                { "inTexCoords", 2, VertexAttributeFormat::Float2 },
+//                { "inTangents", 3, VertexAttributeFormat::Float3 },
+//                { "inBitangents", 4, VertexAttributeFormat::Float3 }
         });
 
         auto vertexData = renderer.getDeviceManager().createVertexData(attribLayout);
@@ -1019,7 +1145,7 @@ void EngineInstance::initialize()
     // floor
     {
         auto floor = defaultScene->createEntity("floor");
-        floor.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrMaterial2"));
+        floor.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrMaterial3"));
         {
             auto& floorNode = floor.getSceneNode();
             floorNode.getTransform().setPosition({0.0f, -5.0f, 0.0f});
