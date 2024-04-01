@@ -4,6 +4,7 @@
 
 #include "SceneEditor.h"
 #include "engine/components/CameraComponent.h"
+#include "engine/components/LightComponent.h"
 #include "engine/components/MeshComponent.h"
 #include "imgui.h"
 
@@ -141,6 +142,35 @@ void SceneEditor::draw()
                             ImGui::EndTooltip();
                         }
                         ImGui::Text("Material: %d", mesh.getMaterial().get());
+                    }
+                }
+                if (entity->hasComponent<LightComponent>())
+                {
+                    auto& light = entity->getComponent<LightComponent>();
+                    if (ImGui::CollapsingHeader("Light"))
+                    {
+                        ImGui::TextDisabled("Light properties");
+
+                        ImGui::Combo("Type", (int*)&light.getLight()->type, "Directional\0Point\0Spot\0");
+
+                        ImGui::ColorEdit3("Color", &light.getLight()->color.r,
+                                          ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_AlphaBar);
+
+
+                        ImGui::DragFloat("Intensity", &light.getLight()->intensity, 0.1f);
+
+                        if (light.getLight()->type != LightType::Directional)
+                        {
+                            ImGui::DragFloat("Constant", &light.getLight()->constant, 0.1f);
+                            ImGui::DragFloat("Linear", &light.getLight()->linear, 0.1f);
+                            ImGui::DragFloat("Quadratic", &light.getLight()->quadratic, 0.1f);
+                        }
+
+                        if (light.getLight()->type == LightType::Spot)
+                        {
+                            ImGui::DragFloat("Cutoff", &light.getLight()->cutOff, 0.1f);
+                            ImGui::DragFloat("Outer Cutoff", &light.getLight()->outerCutOff, 0.1f);
+                        }
                     }
                 }
                 ImGui::PopID();

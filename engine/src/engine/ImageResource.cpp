@@ -5,6 +5,8 @@
 #include "engine/ImageResource.h"
 #include "engine/stb_image.h"
 
+#include <iostream>
+
 ImageResource::ImageResource(ResourceManager* manager, const std::string& name, ResourceHandle handle_, bool external, Format format)
     : Resource(manager, name, handle_, external), format_(format)
 {
@@ -29,6 +31,18 @@ void ImageResource::load()
     }
 
     data_ = stbi_load(path.c_str(), &width_, &height_, &channels_, stbiFormat);
+    // error handling
+    // get error from stbi_failure_reason()
+    if (!data_)
+    {
+        if (const char* failure = stbi_failure_reason())
+        {
+            std::cerr << "Failed to load image: " << path << " Reason: " << failure << std::endl;
+            return;
+        }
+        return;
+    }
+
     setState(LoadingState::Loaded);
 }
 

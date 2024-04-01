@@ -93,6 +93,24 @@ void Scene::getSceneRenderData(SceneRenderData& sceneRenderData) const
         lightData.light = light.getLight();
         sceneRenderData.lights.push_back(lightData);
     });
+
+
+    // draw a circle with the lines for testing
+    {
+        int numPoints = 100;
+        float pi = glm::pi<float>();
+        float radius = 100.0f;
+        glm::vec4 color = {0.0f, 1.0f, 0.0f, 1.0f};
+        for (int i = 0; i < numPoints; i++)
+        {
+            float angle = 2.0f * pi * i / numPoints;
+            glm::vec3 p1 = glm::vec3(radius * cos(angle), 0.0f, radius * sin(angle));
+            glm::vec3 p2 = glm::vec3(radius * cos(angle + 2.0f * pi / numPoints), 0.0f, radius * sin(angle + 2.0f * pi / numPoints));
+            //hueshift color
+            color = {color[1], color[2], color[0], color[3]};
+            sceneRenderData.lineRenderData.push_back({{p1, p2}, color});
+        }
+    }
 }
 
 void Scene::linkSceneNodeWithEntity(entt::registry& reg, entt::entity e)

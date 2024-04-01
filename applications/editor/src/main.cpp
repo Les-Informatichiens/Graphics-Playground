@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
 
     // find a better way to init things this is needed right now to create the opengl context
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1);
+    glfwSwapInterval(0);
 
     // Renderer init
 //    auto oglContext = std::make_unique<opengl::Context>();

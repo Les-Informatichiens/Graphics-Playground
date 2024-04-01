@@ -88,7 +88,7 @@ private:
     int height{};
 
     // imgui state
-    bool show_demo_window = true;
+    bool show_demo_window = false;
     bool show_another_window = false;
     bool show_editor = false;
     bool show_pov_cam = false;

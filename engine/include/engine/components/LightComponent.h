@@ -14,6 +14,11 @@ public:
         this->light = light;
     }
 
+    [[nodiscard]] Light* getLight()
+    {
+        return &light;
+    }
+
     [[nodiscard]] const Light* getLight() const
     {
         return &light;

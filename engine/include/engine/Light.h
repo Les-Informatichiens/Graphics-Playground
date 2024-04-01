@@ -6,41 +6,82 @@
 
 #include "glm/vec3.hpp"
 
-// for now this class is just a container for point light properties
+enum class LightType
+{
+    Directional = 0,
+    Point = 1,
+    Spot = 2
+};
+
 class Light
 {
+    friend class SceneEditor;
 public:
     Light() = default;
     ~Light() = default;
 
-    void setAmbient(float ambient)
+    void setIntensity(float intensity)
     {
-        this->ambient = ambient;
+        this->intensity = intensity;
     }
 
-    [[nodiscard]] float getAmbient() const
+    [[nodiscard]] float getIntensity() const
     {
-        return ambient;
+        return intensity;
     }
 
-    void setDiffuse(float diffuse)
+    [[nodiscard]] LightType getType() const
     {
-        this->diffuse = diffuse;
+        return type;
     }
 
-    [[nodiscard]] float getDiffuse() const
+    void setAttenuation(float constant, float linear, float quadratic)
     {
-        return diffuse;
+        this->constant = constant;
+        this->linear = linear;
+        this->quadratic = quadratic;
     }
 
-    void setSpecular(float specular)
+    void setSpot(float cutOff, float outerCutOff)
     {
-        this->specular = specular;
+        this->cutOff = cutOff;
+        this->outerCutOff = outerCutOff;
+        this->type = LightType::Spot;
     }
 
-    [[nodiscard]] float getSpecular() const
+    void setPoint()
     {
-        return specular;
+        this->type = LightType::Point;
+    }
+
+    void setDirectional()
+    {
+        this->type = LightType::Directional;
+    }
+
+    [[nodiscard]] float getConstant() const
+    {
+        return constant;
+    }
+
+    [[nodiscard]] float getLinear() const
+    {
+        return linear;
+    }
+
+    [[nodiscard]] float getQuadratic() const
+    {
+        return quadratic;
+    }
+
+    [[nodiscard]] float getCutOff() const
+    {
+        return cutOff;
+    }
+
+    [[nodiscard]] float getOuterCutOff() const
+    {
+        return outerCutOff;
     }
 
     void setColor(float r, float g, float b)
@@ -59,8 +100,15 @@ public:
     }
 
 private:
-    float ambient = 0.1f;
-    float diffuse = 0.5f;
-    float specular = 1.0f;
     glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
+    float intensity = 1.0f;
+    float constant = 1.0f;
+    float linear = 0.09f;
+    float quadratic = 0.032f;
+
+    LightType type = LightType::Point;
+
+    // Spot
+    float cutOff = 12.5f;
+    float outerCutOff = 17.5f;
 };

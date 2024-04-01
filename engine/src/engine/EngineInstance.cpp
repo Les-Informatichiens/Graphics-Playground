@@ -88,15 +88,15 @@ void EngineInstance::initialize()
             } ubo;
 
 
-            struct Light {
-                vec3 position;
-                vec3 color;
-            };
-
-            layout(binding = 6) uniform Lights {
-                int lightCount;
-                Light lights[MAX_LIGHTS];
-            };
+//            struct Light {
+//                vec3 position;
+//                vec3 color;
+//            };
+//
+//            layout(binding = 6) uniform Lights {
+//                int lightCount;
+//                Light lights[MAX_LIGHTS];
+//            };
 
             void main() {
                 gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
@@ -151,12 +151,47 @@ void EngineInstance::initialize()
             struct Light {
                 vec3 position;
                 vec3 color;
+                float intensity;
+                float constant;
+                float linear;
+                float quadratic;
             };
 
-            layout(binding = 6) uniform Lights {
+            struct Spotlight {
+                vec3 position;
+                vec3 direction;
+                vec3 color;
+
+                float cutoff;
+                float outerCutoff;
+
+                float intensity;
+                float constant;
+                float linear;
+                float quadratic;
+            };
+
+            layout(binding = 6, std140) uniform Lights {
                 int lightCount;
                 Light lights[MAX_LIGHTS];
+            } pointLights;
+
+
+            layout(binding = 7, std140) uniform Spotlights {
+                int lightCount;
+                Spotlight lights[MAX_LIGHTS];
+            } spotlights;
+
+            struct DirectionalLight {
+                vec3 color;
+                vec3 direction;
+                float intensity;
             };
+
+            layout(binding = 8, std140) uniform DirectionalLights {
+                DirectionalLight directionalLight;
+            } directionalLights;
+
 
             layout(binding = 1) uniform Constants {
                 vec3 cameraPos;
@@ -165,7 +200,49 @@ void EngineInstance::initialize()
                 float shininess;
             } constants;
 
+//            layout(binding = 2) uniform Settings {
+//                bool useDirectionalLight;
+//                bool useEnvironmentMap;
+//                bool useAlbedoMap;
+//                bool useNormalMap;
+//                bool useMetallicMap;
+//                bool useRoughnessMap;
+//                bool useAOMap;
+//
+//                vec3 albedo;
+//                float metallic;
+//                float roughness;
+//                float ao;
+//            } settings;
+
             const float PI = 3.14159265359;
+
+            mat3 cotangentFrame(vec3 N, vec3 p, vec2 uv)
+            {
+                vec3 dp1 = dFdx(p);
+                vec3 dp2 = dFdy(p);
+                vec2 duv1 = dFdx(uv);
+                vec2 duv2 = dFdy(uv);
+
+                vec3 dp2perp = cross(dp2, N);
+                vec3 dp1perp = cross(N, dp1);
+                vec3 T = dp2perp * duv1.x + dp1perp * duv2.x;
+                vec3 B = dp2perp * duv1.y + dp1perp * duv2.y;
+
+                float invmax = inversesqrt(max(dot(T, T), dot(B, B)));
+                return mat3(T * invmax, B * invmax, N);
+            }
+
+            vec3 perturbNormal(vec3 N, vec3 V, vec2 uv)
+            {
+                vec3 map = texture(normalMap, uv).xyz;
+                map = map * 255./127. - 128./127.;
+                mat3 TBN = cotangentFrame(N, -V, uv);
+
+                map.y = -map.y;
+
+                return normalize(TBN * map);
+            }
 
             vec3 getNormalFromMap()
             {
@@ -183,6 +260,28 @@ void EngineInstance::initialize()
 
                 return normalize(TBN * tangentNormal);
             }
+
+            //http://pocket.gl/normal-maps/
+            vec3 perturbNormal2( vec3 eye_pos, vec3 surf_norm, vec2 uv_coords, sampler2D tex){
+                vec3 pNorm	= texture( tex, uv_coords ).rgb * 2.0 - 1.0;
+
+                vec2 st0	= dFdx( uv_coords.st ),
+                     st1	= dFdy( uv_coords.st );
+                vec3 q0		= dFdx( eye_pos.xyz ),
+                     q1		= dFdy( eye_pos.xyz ),
+                     S		= normalize(  q0 * st1.t - q1 * st0.t ),
+                     T		= normalize( -q0 * st1.s + q1 * st0.s ),
+                     N		= normalize( surf_norm );
+
+//                vec3 NfromST = cross( S, T );
+//                if( dot( NfromST, N ) < 0.0 ) {
+//                S *= -1.0;
+//                T *= -1.0;
+//                }
+
+                return normalize( mat3( S, T, N ) * pNorm );
+            }
+
             // ----------------------------------------------------------------------------
             float DistributionGGX(vec3 N, vec3 H, float roughness)
             {
@@ -225,10 +324,105 @@ void EngineInstance::initialize()
             }
             // ----------------------------------------------------------------------------
 
+            // function that calculates the lighting for point lights
+            // using the Cook-Torrance model
+            // and light properties such as
+            // position, color, intensity, constant, linear, quadratic
+            vec3 calcPointLight(Light light, vec3 normal, vec3 viewDir, vec3 fragPos, Material material, vec3 F0)
+            {
+                vec3 lightDir = normalize(light.position - fragPos);
+                vec3 reflectDir = reflect(-lightDir, normal);
+                vec3 halfwayDir = normalize(lightDir + viewDir);
+
+                float distance = length(light.position - fragPos);
+                float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
+
+                float NDF = DistributionGGX(normal, halfwayDir, material.roughness);
+                float G = GeometrySmith(normal, viewDir, lightDir, material.roughness);
+                vec3 F = fresnelSchlick(clamp(dot(halfwayDir, viewDir), 0.0, 1.0), F0);
+
+                vec3 kS = F;
+                vec3 kD = vec3(1.0) - kS;
+                kD *= 1.0 - material.metallic;
+
+                float NdotL = max(dot(normal, lightDir), 0.0);
+                float NdotV = max(dot(normal, viewDir), 0.0);
+                float NdotH = max(dot(normal, halfwayDir), 0.0);
+                float VdotH = max(dot(viewDir, halfwayDir), 0.0);
+
+                vec3 numerator = NDF * G * F;
+                float denominator = 4.0 * max(dot(normal, viewDir), 0.0) * max(dot(normal, lightDir), 0.0) + 0.0001;
+                vec3 specular = numerator / denominator;
+
+                return (kD * material.albedo / PI + specular) * light.color * light.intensity * NdotL * attenuation;
+            }
+
+            // function that calculates the lighting for spot lights
+            // and spotlight properties such as
+            // position, direction, color, intensity, constant, linear, quadratic, cutoff, outerCutoff
+            vec3 calcSpotlight(Spotlight spotlight, vec3 normal, vec3 viewDir, vec3 fragPos, Material material, vec3 F0)
+            {
+                vec3 lightDir = normalize(spotlight.position - fragPos);
+                vec3 reflectDir = reflect(-lightDir, normal);
+                vec3 halfwayDir = normalize(lightDir + viewDir);
+
+                float distance = length(spotlight.position - fragPos);
+                float attenuation = 1.0 / (spotlight.constant + spotlight.linear * distance + spotlight.quadratic * (distance * distance));
+
+                float theta = dot(lightDir, normalize(-spotlight.direction));
+                float epsilon = spotlight.cutoff - spotlight.outerCutoff;
+                float intensity = clamp((theta - spotlight.outerCutoff) / epsilon, 0.0, 1.0);
+
+                float NDF = DistributionGGX(normal, halfwayDir, material.roughness);
+                float G = GeometrySmith(normal, viewDir, lightDir, material.roughness);
+                vec3 F = fresnelSchlick(clamp(dot(halfwayDir, viewDir), 0.0, 1.0), F0);
+
+                vec3 kS = F;
+                vec3 kD = vec3(1.0) - kS;
+                kD *= 1.0 - material.metallic;
+
+                float NdotL = max(dot(normal, lightDir), 0.0);
+                float NdotV = max(dot(normal, viewDir), 0.0);
+                float NdotH = max(dot(normal, halfwayDir), 0.0);
+                float VdotH = max(dot(viewDir, halfwayDir), 0.0);
+
+                vec3 numerator = NDF * G * F;
+                float denominator = 4.0 * max(dot(normal, viewDir), 0.0) * max(dot(normal, lightDir), 0.0) + 0.0001;
+                vec3 specular = numerator / denominator;
+
+                return (kD * material.albedo / PI + specular) * spotlight.color * spotlight.intensity * NdotL * attenuation * intensity;
+            }
+
+            // function that calculates the lighting for directional lights
+            vec3 calcDirLight(DirectionalLight light, vec3 normal, vec3 viewDir, vec3 fragPos, Material material, vec3 F0)
+            {
+                vec3 lightDir = normalize(-light.direction);
+                vec3 reflectDir = reflect(-lightDir, normal);
+                vec3 halfwayDir = normalize(lightDir + viewDir);
+
+                float NDF = DistributionGGX(normal, halfwayDir, material.roughness);
+                float G = GeometrySmith(normal, viewDir, lightDir, material.roughness);
+                vec3 F = fresnelSchlick(clamp(dot(halfwayDir, viewDir), 0.0, 1.0), F0);
+
+                vec3 kS = F;
+                vec3 kD = vec3(1.0) - kS;
+                kD *= 1.0 - material.metallic;
+
+                float NdotL = max(dot(normal, lightDir), 0.0);
+                float NdotV = max(dot(normal, viewDir), 0.0);
+                float NdotH = max(dot(normal, halfwayDir), 0.0);
+                float VdotH = max(dot(viewDir, halfwayDir), 0.0);
+
+                vec3 numerator = NDF * G * F;
+                float denominator = 4.0 * max(dot(normal, viewDir), 0.0) * max(dot(normal, lightDir), 0.0) + 0.0001;
+                vec3 specular = numerator / denominator;
+
+                return (kD * material.albedo / PI + specular) * light.color * light.intensity * NdotL;
+            }
+
             void main() {
                 vec3 albedo = pow(texture(albedoMap, fragTexCoord).rgb, vec3(2.2));
 
-//                vec3 normal = texture(normalMap, fragTexCoord).rgb;
                 float metallic = texture(metallicMap, fragTexCoord).r;
                 float roughness = texture(roughnessMap, fragTexCoord).r;
                 float ao = texture(aoMap, fragTexCoord).r;
@@ -237,35 +431,24 @@ void EngineInstance::initialize()
 
                 vec3 camPos = constants.cameraPos;
 
-                vec3 N = getNormalFromMap();
                 vec3 V = normalize(camPos - fragWorldPos);
+                vec3 N = perturbNormal(normalize(fragNormal), camPos - fragWorldPos, fragTexCoord);
 
                 vec3 F0 = vec3(0.04);
                 F0 = mix(F0, albedo, metallic);
 
                 vec3 Lo = vec3(0.0);
-                for (int i = 0; i < lightCount; ++i) {
-                    vec3 L = normalize(lights[i].position - fragWorldPos);
-                    vec3 H = normalize(V + L);
-                    float distance = length(lights[i].position - fragWorldPos);
-                    float attenuation = 1.0 / (distance * distance);
-                    vec3 radiance = lights[i].color * attenuation;
 
-                    float NDF = DistributionGGX(N, H, material.roughness);
-                    float G = GeometrySmith(N, V, L, material.roughness);
-                    vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
+                for (int i = 0; i < 1; ++i) {
+                    Lo += calcDirLight(directionalLights.directionalLight, N, V, fragWorldPos, material, F0);
+                }
 
-                    vec3 numerator = NDF * G * F;
-                    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
-                    vec3 specular = numerator / denominator;
+                for (int i = 0; i < pointLights.lightCount; ++i) {
+                    Lo += calcPointLight(pointLights.lights[i], N, V, fragWorldPos, material, F0);
+                }
 
-                    vec3 kS = F;
-                    vec3 kD = vec3(1.0) - kS;
-                    kD *= 1.0 - material.metallic;
-
-                    float NdotL = max(dot(N, L), 0.0);
-
-                    Lo += (kD * material.albedo / PI + specular) * radiance * NdotL;
+                for (int i = 0; i < spotlights.lightCount; ++i) {
+                    Lo += calcSpotlight(spotlights.lights[i], N, V, fragWorldPos, material, F0);
                 }
 
                 vec3 ambient = vec3(0.03) * material.albedo * material.ao;
@@ -1059,26 +1242,31 @@ void EngineInstance::initialize()
 
     // teapot gobbledygook
     {
+        Light spotlight;
+        spotlight.setSpot(12.5, 17.5);
+//        spotlight.setDirectional();
+        spotlight.setColor({1.0f, 1.0f, 1.0f});
+        spotlight.setIntensity(2.0f);
         EntityView viewer = defaultScene->createEntity("viewer");
         viewer.addComponent<CameraComponent>(activeCamera);
-        viewer.addComponent<LightComponent>(Light{});
+        viewer.addComponent<LightComponent>(spotlight);
         viewer.getSceneNode().getTransform().setPosition({0.0f, 6.0f, 3.0f});
         viewer.getSceneNode().getTransform().setRotation({glm::radians(-20.0f), 0, 0.0f});
 
         EntityView cow = defaultScene->createEntity("cow");
-        cow.addComponent<MeshComponent>(resourceManager.getMeshByName("spider"), resourceManager.getMaterialByName("testMaterial"));
+        cow.addComponent<MeshComponent>(resourceManager.getMeshByName("spider"), resourceManager.getMaterialByName("pbrMaterial"));
         cow.getSceneNode().getTransform().setPosition({-7.0f, 0.0f, -4.0f});
         cow.getSceneNode().getTransform().setScale(glm::vec3(1.0f));
         cow.getSceneNode().getTransform().setRotation({0.0f, glm::radians(20.0f), 0.0f});
 
         EntityView bunny = defaultScene->createEntity("bunny");
-        bunny.addComponent<MeshComponent>(resourceManager.getMeshByName("bunny"), resourceManager.getMaterialByName("testMaterial"));
+        bunny.addComponent<MeshComponent>(resourceManager.getMeshByName("bunny"), resourceManager.getMaterialByName("pbrMaterial"));
         bunny.getSceneNode().getTransform().setPosition({0.0f, 0.0f, 0.0f});
         bunny.getSceneNode().getTransform().setScale(glm::vec3(2.0f));
         bunny.getSceneNode().getTransform().setRotation({0.0f, 3.0f, 0.0f});
 
         EntityView root = defaultScene->createEntity("teapot");
-        root.addComponent<MeshComponent>(resourceManager.getMeshByName("teapot"), resourceManager.getMaterialByName("testMaterial"));
+        root.addComponent<MeshComponent>(resourceManager.getMeshByName("teapot"), resourceManager.getMaterialByName("pbrMaterial"));
 
         auto& rootNode = root.getSceneNode();
         rootNode.getTransform().setPosition({-3.0f, 0.0f, 10.0f});
@@ -1116,7 +1304,10 @@ void EngineInstance::initialize()
         // Create a child node
         EntityView spherePortal = defaultScene->createEntity("spherePortal");
 
-        spherePortal.addComponent<MeshComponent>(resourceManager.getMeshByName("sphere"), resourceManager.getMaterialByName("pbrMaterial"));
+        Light dirLight;
+        dirLight.setDirectional();
+        spherePortal.addComponent<MeshComponent>(resourceManager.getMeshByName("sphere"), resourceManager.getMaterialByName("pbrMaterial3"));
+        spherePortal.addComponent<LightComponent>(dirLight);
         auto& spherePortalNode = spherePortal.getSceneNode();
         spherePortalNode.getTransform().setPosition({10.0f, 3.0f, 10.0f});
         spherePortalNode.getTransform().setScale({1.f, 1.f, 1.f});
@@ -1145,11 +1336,11 @@ void EngineInstance::initialize()
     // floor
     {
         auto floor = defaultScene->createEntity("floor");
-        floor.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrMaterial3"));
+        floor.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrMaterial2"));
         {
             auto& floorNode = floor.getSceneNode();
             floorNode.getTransform().setPosition({0.0f, -5.0f, 0.0f});
-            floorNode.getTransform().setScale({20.0f, 20.0f, 1.0f});
+            floorNode.getTransform().setScale({20.0f, 20.0f, 20.0f});
             floorNode.getTransform().setRotation({glm::radians(90.0f), 0.0f, 0.0f});
         }
     }
@@ -1257,8 +1448,8 @@ void EngineInstance::updateSimulation(float dt)
 
         if (input.isMouseDragging(0))
         {
-            std::cout << "Mouse dragging" << std::endl;
-            std::cout << "Mouse drag delta: " << input.getMouseDragDeltaX() << ", " << input.getMouseDragDeltaY() << std::endl;
+//            std::cout << "Mouse dragging" << std::endl;
+//            std::cout << "Mouse drag delta: " << input.getMouseDragDeltaX() << ", " << input.getMouseDragDeltaY() << std::endl;
             auto& transform = viewerNode.getTransform();
 
             // Create quaternions representing the x and y rotations
@@ -1286,12 +1477,12 @@ void EngineInstance::updateSimulation(float dt)
         if (input.isKeyPressed(input::KeyCode::W))
         {
             // move forward relative to orientation
-            viewerNode.getTransform().translate(viewerNode.getTransform().getForward() * -speed);
+            viewerNode.getTransform().translate(viewerNode.getTransform().getForward() * speed);
         }
         if (input.isKeyPressed(input::KeyCode::S))
         {
             // move backward relative to orientation
-            viewerNode.getTransform().translate(viewerNode.getTransform().getForward() * speed);
+            viewerNode.getTransform().translate(viewerNode.getTransform().getForward() * -speed);
         }
         if (input.isKeyPressed(input::KeyCode::A))
         {
@@ -1305,15 +1496,15 @@ void EngineInstance::updateSimulation(float dt)
         }
 
         // up and down
-        if (input.isKeyPressed(input::KeyCode::Q))
+        if (input.isKeyPressed(input::KeyCode::Space))
         {
             // move up
-            viewerNode.getTransform().translate(viewerNode.getTransform().getUp() * speed);
+            viewerNode.getTransform().translate(glm::vec3(0.0, 1.0, 0.0) * speed);
         }
-        if (input.isKeyPressed(input::KeyCode::E))
+        if (input.isKeyPressed(input::KeyCode::LeftControl))
         {
             // move down
-            viewerNode.getTransform().translate(viewerNode.getTransform().getUp() * -speed);
+            viewerNode.getTransform().translate(glm::vec3(0.0, 1.0, 0.0) * -speed);
         }
     }
 
@@ -1357,30 +1548,110 @@ void EngineInstance::renderFrame()
 
                 constexpr int MAX_LIGHTS = 10;
 
+                struct LightUniform {
+                    alignas(16) glm::vec3 position;
+                    alignas(16) glm::vec3 color;
+                    float intensity;
+                    float constant;
+                    float linear;
+                    float quadratic;
+                };
+
+                struct SpotlightUniform {
+                    alignas(16) glm::vec3 position;
+                    alignas(16) glm::vec3 direction;
+                    alignas(16) glm::vec3 color;
+
+                    float cutoff;
+                    float outerCutoff;
+
+                    float intensity;
+                    float constant;
+                    float linear;
+                    float quadratic;
+                };
+
                 struct LightStruct
                 {
                     alignas(16) glm::vec3 position;
                     alignas(16) glm::vec3 color;
+
                 };
-                struct LightsUBO
+                struct PointLightsUBO
                 {
                     int numLights;
-                    LightStruct lights[MAX_LIGHTS];
+                    LightUniform lights[MAX_LIGHTS];
                 };
 
-                LightsUBO lightsUBO{};
+                struct SpotlightsUBO
+                {
+                    int numLights;
+                    SpotlightUniform lights[MAX_LIGHTS];
+                };
+
+                struct DirecitonalLightUniform
+                {
+                    alignas(16) glm::vec3 color;
+                    alignas(16) glm::vec3 direction;
+                    float intensity;
+                };
+
+                struct DirectionalLightsUBO
+                {
+                    DirecitonalLightUniform light;
+                };
+
+                PointLightsUBO pointLightsUbo{};
+                SpotlightsUBO spotlightsUbo{};
+                DirectionalLightsUBO directionalLightsUbo{};
+
 
                 for (int i = 0; i < sceneRenderData.lights.size(); i++)
                 {
                     auto item = sceneRenderData.lights[i];
-                    LightStruct light{};
-                    light.position = item.position;
-                    light.color = item.light->getColor();
-                    lightsUBO.lights[i] = light;
-                    ++lightsUBO.numLights;
+                    switch (item.light->getType())
+                    {
+                        case LightType::Point:
+                        {
+                            auto& pointLight = item.light;
+                            pointLightsUbo.lights[pointLightsUbo.numLights].position = item.position;
+                            pointLightsUbo.lights[pointLightsUbo.numLights].color = pointLight->getColor();
+                            pointLightsUbo.lights[pointLightsUbo.numLights].intensity = pointLight->getIntensity();
+                            pointLightsUbo.lights[pointLightsUbo.numLights].constant = pointLight->getConstant();
+                            pointLightsUbo.lights[pointLightsUbo.numLights].linear = pointLight->getLinear();
+                            pointLightsUbo.lights[pointLightsUbo.numLights].quadratic = pointLight->getQuadratic();
+                            pointLightsUbo.numLights++;
+                            break;
+                        }
+                        case LightType::Spot:
+                        {
+                            auto& spotlight = item.light;
+                            spotlightsUbo.lights[spotlightsUbo.numLights].position = item.position;
+                            spotlightsUbo.lights[spotlightsUbo.numLights].direction = item.direction;
+                            spotlightsUbo.lights[spotlightsUbo.numLights].color = spotlight->getColor();
+                            spotlightsUbo.lights[spotlightsUbo.numLights].cutoff = glm::cos(glm::radians(spotlight->getCutOff()));
+                            spotlightsUbo.lights[spotlightsUbo.numLights].outerCutoff = glm::cos(glm::radians(spotlight->getOuterCutOff()));
+                            spotlightsUbo.lights[spotlightsUbo.numLights].intensity = spotlight->getIntensity();
+                            spotlightsUbo.lights[spotlightsUbo.numLights].constant = spotlight->getConstant();
+                            spotlightsUbo.lights[spotlightsUbo.numLights].linear = spotlight->getLinear();
+                            spotlightsUbo.lights[spotlightsUbo.numLights].quadratic = spotlight->getQuadratic();
+                            spotlightsUbo.numLights++;
+                            break;
+                        }
+                        case LightType::Directional:
+                        {
+                            auto& directionalLight = item.light;
+                            directionalLightsUbo.light.color = directionalLight->getColor();
+                            directionalLightsUbo.light.direction = item.direction;
+                            directionalLightsUbo.light.intensity = directionalLight->getIntensity();
+                            break;
+                        }
+                    }
                 }
 
-                pbrMaterial->setUniformBytes("Lights", &lightsUBO, sizeof(lightsUBO), 6); // binding 6
+                pbrMaterial->setUniformBytes("Lights", &pointLightsUbo, sizeof(pointLightsUbo), 6); // binding 6
+                pbrMaterial->setUniformBytes("Spotlights", &spotlightsUbo, sizeof(spotlightsUbo), 7); // binding 7
+                pbrMaterial->setUniformBytes("DirectionalLight", &directionalLightsUbo, sizeof(directionalLightsUbo), 8); // binding 8
             }
 
             renderer.begin(camera.getRenderTarget());
