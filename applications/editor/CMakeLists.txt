@@ -160,6 +160,14 @@ set(
         "assets/test/textures/metalgrid/roughness.png"
         "assets/test/textures/metalgrid/metallic.png"
         "assets/test/textures/metalgrid/ao.png"
+
+        "assets/test/textures/metalgrid/Sci-fi_Wall_011_basecolor.jpg"
+        "assets/test/textures/metalgrid/Sci-fi_Wall_011_normal.jpg"
+        "assets/test/textures/metalgrid/Sci-fi_Wall_011_roughness.jpg"
+        "assets/test/textures/metalgrid/Sci-fi_Wall_011_metallic.jpg"
+        "assets/test/textures/metalgrid/Sci-fi_Wall_011_ambientOcclusion.jpg"
+        "assets/test/textures/metalgrid/Sci-fi_Wall_011_emissive.jpg"
+
         "assets/test/textures/rustedmetal/albedo.png"
         "assets/test/textures/rustedmetal/normal.png"
         "assets/test/textures/rustedmetal/roughness.png"

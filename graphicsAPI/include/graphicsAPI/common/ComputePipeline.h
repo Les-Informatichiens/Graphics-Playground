@@ -16,6 +16,7 @@ struct ComputePipelineDesc
     std::shared_ptr<IPipelineShaderStages> shaderStages;
 
     std::unordered_map<size_t, std::string> imagesMap;
+    std::unordered_map<size_t, std::string> texturesMap;
     std::unordered_map<size_t, std::string> buffersMap;
 };
 

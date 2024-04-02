@@ -129,6 +129,13 @@ public:
 
 using ScissorRect = Rect<uint32_t>;
 
+enum ImageAccessFlags : uint8_t
+{
+    ReadOnly = 1 << 0,
+    WriteOnly = 1 << 1,
+    ReadWrite = ReadOnly | WriteOnly
+};
+
 constexpr size_t MAX_TEXTURE_SAMPLERS = 16;
 constexpr size_t MAX_TEXTURE_UNITS = 16;
 constexpr size_t MAX_VERTEX_BUFFERS = 32;

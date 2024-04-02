@@ -81,7 +81,7 @@ GLuint Renderbuffer::getHandle() const
     return handle;
 }
 
-void Renderbuffer::bindImage(size_t unit)
+void Renderbuffer::bindImage(size_t unit, uint8_t accessFlags, uint32_t mipLevel, uint32_t layer)
 {
     throw std::runtime_error("Renderbuffer does not support binding as image");
 }

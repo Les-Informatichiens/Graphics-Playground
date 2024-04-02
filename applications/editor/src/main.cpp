@@ -8,8 +8,8 @@
 int main(int argc, char* argv[])
 {
     // Window init
-    int width = 1280;
-    int height = 720;
+    int width = 1920;
+    int height = 1080;
 
     GLFWwindow* window;
     if (!glfwInit())

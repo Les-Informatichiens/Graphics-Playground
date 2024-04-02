@@ -34,7 +34,7 @@ public:
 
     virtual void create(const TextureDesc& desc, bool hasStorageAlready) = 0;
     virtual void bind() =  0;
-    virtual void bindImage(size_t unit) = 0;
+    virtual void bindImage(size_t unit, uint8_t accessFlags, uint32_t mipLevel, uint32_t layer) = 0;
     virtual void unbind() = 0;
 
     [[nodiscard]] virtual BufferType getBufferType() const = 0;

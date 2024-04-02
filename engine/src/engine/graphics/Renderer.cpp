@@ -35,6 +35,13 @@ void Renderer::begin()
     //    std::cout << "begin" << std::endl;
 }
 
+void Renderer::begin(const RenderPassBeginDesc& desc)
+{
+    activeCommandBuffer = activeCommandPool->acquireGraphicsCommandBuffer({});
+
+    activeCommandBuffer->beginRenderPass(desc);
+}
+
 void Renderer::begin(const graphics::RenderTarget& renderTarget)
 {
     activeCommandBuffer = activeCommandPool->acquireGraphicsCommandBuffer({});
@@ -84,16 +91,15 @@ void Renderer::end()
 void Renderer::shutdown()
 {
 }
-
 IDevice& Renderer::getDevice() const
 {
     return deviceManager.getDevice();
 }
+
 void Renderer::bindViewport(const Viewport& viewport)
 {
     this->activeCommandBuffer->bindViewport(viewport);
 }
-
 std::shared_ptr<IGraphicsPipeline> Renderer::acquireGraphicsPipeline(const GraphicsPipelineDesc& desc)
 {
     auto hash = GraphicsPipelineDescHash{}(desc);

@@ -47,6 +47,138 @@ void EngineInstance::initialize()
     renderer.initialize(rendererDesc);
     testRenderPass.initialize(renderer.getDevice());
 
+
+    // screen quad vertex buffer
+    {
+        auto vs = R"(
+            #version 450
+
+            layout(location = 0) in vec3 inPosition;
+            layout(location = 1) in vec2 inTexCoords;
+
+            layout(location = 0) out vec2 fragTexCoord;
+
+            void main() {
+                gl_Position = vec4(inPosition, 1.0);
+                fragTexCoord = inTexCoords;
+            }
+        )";
+
+        auto fs = R"(
+            #version 450
+
+            in vec2 fragTexCoord;
+            out vec4 frag_color;
+
+            layout(binding = 0) uniform sampler2D screenTexture;
+
+            layout(binding = 0) uniform Settings {
+                float u_exposure;
+                float u_gamma;
+            };
+
+            vec3 gammaCorrect(vec3 color)
+            {
+                return pow(color, vec3(1.0/u_gamma));
+            }
+
+            // sRGB => XYZ => D65_2_D60 => AP1 => RRT_SAT
+            mat3 ACESInputMat =
+            {
+                {0.59719, 0.07600, 0.02840},
+                {0.35458, 0.90834, 0.13383},
+                {0.04823, 0.01566, 0.83777}
+            };
+
+            // ODT_SAT => XYZ => D60_2_D65 => sRGB
+            mat3 ACESOutputMat =
+            {
+                { 1.60475, -0.10208, -0.00327},
+                {-0.53108,  1.10813, -0.07276},
+                {-0.07367, -0.00605,  1.07602 }
+            };
+
+            vec3 RRTAndODTFit(vec3 v)
+            {
+                vec3 a = v * (v + 0.0245786f) - 0.000090537f;
+                vec3 b = v * (0.983729f * v + 0.4329510f) + 0.238081f;
+                return a / b;
+            }
+
+            void main()
+            {
+                vec4 x = u_exposure * texture(screenTexture, fragTexCoord);
+
+                vec3 color = ACESInputMat * x.rgb;
+                     color = RRTAndODTFit(color);
+                     color = ACESOutputMat * color;
+
+                     color = gammaCorrect(color);
+                     color = clamp(color, 0.0, 1.0);
+
+                frag_color = vec4(color, 1.0);
+            }
+        )";
+
+        auto shaderRes = resourceManager.createShader("screenQuadShader");
+        shaderRes->loadFromManagedResource(renderer.getDeviceManager().createShaderProgram(vs, fs));
+
+        float quadVertices[] = {
+                // positions        // texture Coords
+                -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+                -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+                1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+
+                -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+                1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+                1.0f, 1.0f, 0.0f, 1.0f, 1.0f
+        };
+        graphics::VertexDataLayout attribLayout({
+                { "inPosition", 0, VertexAttributeFormat::Float3 },
+                { "inTexCoords", 1, VertexAttributeFormat::Float2 }
+        });
+        screenQuadBuffer = renderer.getDeviceManager().createVertexData(attribLayout, 6);
+        screenQuadBuffer->pushVertices(quadVertices, 6);
+
+        auto matres = resourceManager.createMaterial("screenQuadMaterial");
+        matres->loadFromManagedResource(renderer.getDeviceManager().createMaterial(nullptr));
+        matres->setShader(shaderRes);
+    }
+
+    // ----------- Initializing HDR FBO ------------
+    {
+        auto colorBufferDesc = TextureDesc::new2D(
+                TextureFormat::RGBA_F32,
+                desc.width,
+                desc.height,
+                TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled | TextureDesc::TextureUsageBits::Storage);
+        colorBufferDesc.numMipLevels = calculateMipmapLevels(desc.width, desc.height);
+                //TextureDesc::calcNumMipLevels(desc.width, desc.height);
+        hdrColorBuffers = {
+                renderer.getDevice().createTexture(colorBufferDesc),
+                renderer.getDevice().createTexture(colorBufferDesc)
+        };
+
+        hdrSampler = renderer.getDevice().createSamplerState(SamplerStateDesc::newLinearMipmapped());
+
+        auto hdrTexRes = resourceManager.createTexture("hdrColorBuffer0");
+        hdrTexRes->loadFromManagedResource(hdrColorBuffers[0], renderer.getDevice().createSamplerState(SamplerStateDesc::newLinear()));
+
+        hdrDepthBuffer = renderer.getDevice().createTexture(TextureDesc::new2D(
+                TextureFormat::Z_UNorm24,
+                desc.width,
+                desc.height,
+                TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled));
+
+        hdrFramebuffer = renderer.getDevice().createFramebuffer({
+                .colorAttachments = {
+                        {0, {hdrColorBuffers[0], nullptr}},
+//                        {1, {hdrColorBuffers[1], nullptr}}
+                },
+                .depthAttachment = {hdrDepthBuffer, nullptr}
+        });
+    }
+
     // ----------- Initializing scene objects ------------
 
     // Setup camera
@@ -140,6 +272,7 @@ void EngineInstance::initialize()
             layout(binding = 3) uniform sampler2D metallicMap;
             layout(binding = 4) uniform sampler2D roughnessMap;
             layout(binding = 5) uniform sampler2D aoMap;
+            layout(binding = 6) uniform sampler2D emissiveMap;
 
             struct Material {
                 vec3 albedo;
@@ -200,20 +333,21 @@ void EngineInstance::initialize()
                 float shininess;
             } constants;
 
-//            layout(binding = 2) uniform Settings {
-//                bool useDirectionalLight;
-//                bool useEnvironmentMap;
-//                bool useAlbedoMap;
-//                bool useNormalMap;
-//                bool useMetallicMap;
-//                bool useRoughnessMap;
-//                bool useAOMap;
-//
-//                vec3 albedo;
-//                float metallic;
-//                float roughness;
-//                float ao;
-//            } settings;
+            layout(binding = 2, std140) uniform Settings {
+                bool useAlbedoMap;
+                bool useNormalMap;
+                bool useMetallicMap;
+                bool useRoughnessMap;
+                bool useAOMap;
+                bool useEmissiveMap;
+
+                vec3 baseColor;
+                float metallic;
+                float roughness;
+                float ao;
+                vec3 emissionColor;
+                float emissionIntensity;
+            } settings;
 
             const float PI = 3.14159265359;
 
@@ -239,7 +373,7 @@ void EngineInstance::initialize()
                 map = map * 255./127. - 128./127.;
                 mat3 TBN = cotangentFrame(N, -V, uv);
 
-                map.y = -map.y;
+//                map.y = -map.y;
 
                 return normalize(TBN * map);
             }
@@ -421,18 +555,26 @@ void EngineInstance::initialize()
             }
 
             void main() {
-                vec3 albedo = pow(texture(albedoMap, fragTexCoord).rgb, vec3(2.2));
 
-                float metallic = texture(metallicMap, fragTexCoord).r;
-                float roughness = texture(roughnessMap, fragTexCoord).r;
-                float ao = texture(aoMap, fragTexCoord).r;
+                vec3 camPos = constants.cameraPos;
+                vec3 fragNormal = normalize(fragNormal);
+
+                vec3 albedo =  settings.useAlbedoMap ? pow(texture(albedoMap, fragTexCoord).rgb, vec3(2.2)) : vec3(1.0);
+//                vec3 albedo = texture(albedoMap, fragTexCoord).rgb;
+                albedo = albedo * settings.baseColor;
+
+                vec3 normal = settings.useNormalMap ? perturbNormal(fragNormal, camPos - fragWorldPos, fragTexCoord) : fragNormal;
+                float metallic = settings.useMetallicMap ? texture(metallicMap, fragTexCoord).r : settings.metallic;
+                float roughness = settings.useRoughnessMap ? texture(roughnessMap, fragTexCoord).r : settings.roughness;
+                float ao = settings.useAOMap ? texture(aoMap, fragTexCoord).r : settings.ao;
+                vec3 emission = settings.useEmissiveMap ? texture(emissiveMap, fragTexCoord).rgb : vec3(1.0);
+                emission = emission * clamp(settings.emissionColor, 0.0, 1.0) * settings.emissionIntensity;
 
                 Material material = Material(albedo, metallic, roughness, ao);
 
-                vec3 camPos = constants.cameraPos;
 
                 vec3 V = normalize(camPos - fragWorldPos);
-                vec3 N = perturbNormal(normalize(fragNormal), camPos - fragWorldPos, fragTexCoord);
+                vec3 N = normal;
 
                 vec3 F0 = vec3(0.04);
                 F0 = mix(F0, albedo, metallic);
@@ -451,19 +593,168 @@ void EngineInstance::initialize()
                     Lo += calcSpotlight(spotlights.lights[i], N, V, fragWorldPos, material, F0);
                 }
 
-                vec3 ambient = vec3(0.03) * material.albedo * material.ao;
+                vec3 ambient = vec3(0.00) * material.albedo * material.ao;
 
                 vec3 color = ambient + Lo;
 
                 color = color / (color + vec3(1.0));
                 color = pow(color, vec3(1.0 / 2.2));
 
+                color += emission;
+
+                color.r = max(color.r, 0.0);
+                color.g = max(color.g, 0.0);
+                color.b = max(color.b, 0.0);
+
                 fragColor = vec4(color, 1.0);
+
+//                // Calculate direct lighting...
+//                vec3 directLighting = vec3(0.0);
+//                for (int i = 0; i < 1; ++i) {
+//                    directLighting += calcDirLight(directionalLights.directionalLight, N, V, fragWorldPos, material, F0);
+//                }
+//                for (int i = 0; i < pointLights.lightCount; ++i) {
+//                    directLighting += calcPointLight(pointLights.lights[i], N, V, fragWorldPos, material, F0);
+//                }
+//                for (int i = 0; i < spotlights.lightCount; ++i) {
+//                    directLighting += calcSpotlight(spotlights.lights[i], N, V, fragWorldPos, material, F0);
+//                }
+//
+//                // Calculate ambient lighting...
+//                vec3 ambient = vec3(0.03) * material.albedo * material.ao;
+//
+//                // Combine ambient and direct lighting...
+//                vec3 colorLinear = ambient + directLighting;
+//
+//                // Convert linear color to gamma space...
+//                vec3 colorGamma = pow(colorLinear, vec3(1.0 / 2.2));
+//
+//                // Output final color...
+//                fragColor = vec4(colorGamma, 1.0);
+
             }
         )";
 
         auto shaderRes = resourceManager.createShader("pbrShader");
         shaderRes->loadFromManagedResource(renderer.getDeviceManager().createShaderProgram(vs, fs));
+
+        struct alignas(16) PBRSettings {
+            // Flags
+            int useAlbedoMap = true;
+            int useNormalMap = true;
+            int useMetallicMap = true;
+            int useRoughnessMap = true;
+            int useAOMap = true;
+            int useEmissiveMap = true;
+
+            // Data
+            alignas(16) glm::vec3 baseColor = glm::vec3(1.0f);
+            float metallic = 0.0f;
+            float roughness = 0.5f;
+            float ao = 1.0f;
+            alignas(16) glm::vec3 emissionColor = glm::vec3(1.0f);
+            float emissionIntensity = 1.0f;
+        };
+
+        {
+            auto matres = resourceManager.createMaterial("pbrDefaultMaterial");
+            matres->loadFromManagedResource(renderer.getDeviceManager().createMaterial(nullptr));
+            matres->setShader(shaderRes);
+
+            PBRSettings settings;
+            settings.useAlbedoMap = false;
+            settings.useNormalMap = false;
+            settings.useMetallicMap = false;
+            settings.useRoughnessMap = false;
+            settings.useAOMap = false;
+            settings.useEmissiveMap = false;
+
+            settings.baseColor = glm::vec3(0.5f, 0.0f, 0.0f);
+            settings.emissionIntensity = 0.0f;
+            matres->setUniformBuffer("Settings", &settings, sizeof(PBRSettings), 2);
+        }
+
+        {
+            auto matres = resourceManager.createMaterial("pbrBlack");
+            matres->loadFromManagedResource(renderer.getDeviceManager().createMaterial(nullptr));
+            matres->setShader(shaderRes);
+
+            PBRSettings settings;
+            settings.useAlbedoMap = false;
+            settings.useNormalMap = false;
+            settings.useMetallicMap = false;
+            settings.useRoughnessMap = false;
+            settings.useAOMap = false;
+            settings.useEmissiveMap = false;
+
+            settings.metallic = 0.875f;
+            settings.roughness = 0.01f;
+            settings.ao = 1.0f;
+            settings.baseColor = glm::vec3(0.0f, 0.0f, 0.0f);
+            settings.emissionColor = glm::vec3(0.f);
+            settings.emissionIntensity = 0.0f;
+            matres->setUniformBuffer("Settings", &settings, sizeof(PBRSettings), 2);
+        }
+
+
+        {
+            auto matres = resourceManager.createMaterial("pbrGlowMaterial");
+            matres->loadFromManagedResource(renderer.getDeviceManager().createMaterial(nullptr));
+            matres->setShader(shaderRes);
+
+            PBRSettings settings;
+            settings.useAlbedoMap = false;
+            settings.useNormalMap = false;
+            settings.useMetallicMap = false;
+            settings.useRoughnessMap = false;
+            settings.useAOMap = false;
+            settings.useEmissiveMap = false;
+
+            settings.baseColor = glm::vec3(1.0f, 0.0f, 0.0f);
+            settings.emissionColor = settings.baseColor;
+            settings.emissionIntensity = 10.0f;
+            matres->setUniformBuffer("Settings", &settings, sizeof(PBRSettings), 2);
+        }
+
+        {
+            auto matres = resourceManager.createMaterial("pbrGlowMaterialBlue");
+            matres->loadFromManagedResource(renderer.getDeviceManager().createMaterial(nullptr));
+            matres->setShader(shaderRes);
+
+            PBRSettings settings;
+            settings.useAlbedoMap = false;
+            settings.useNormalMap = false;
+            settings.useMetallicMap = false;
+            settings.useRoughnessMap = false;
+            settings.useAOMap = false;
+            settings.useEmissiveMap = false;
+
+            settings.baseColor = glm::vec3(0.01f, 0.01f, 1.0f);
+            settings.emissionColor = settings.baseColor;
+            settings.emissionIntensity = 20.0f;
+            matres->setUniformBuffer("Settings", &settings, sizeof(PBRSettings), 2);
+        }
+
+
+        {
+            auto matres = resourceManager.createMaterial("pbrGlowMaterialGreen");
+            matres->loadFromManagedResource(renderer.getDeviceManager().createMaterial(nullptr));
+            matres->setShader(shaderRes);
+
+            PBRSettings settings;
+            settings.useAlbedoMap = false;
+            settings.useNormalMap = false;
+            settings.useMetallicMap = false;
+            settings.useRoughnessMap = false;
+            settings.useAOMap = false;
+            settings.useEmissiveMap = false;
+
+            settings.baseColor = glm::vec3(0.0f, 1.0f, 0.0f);
+            settings.emissionColor = settings.baseColor;
+            settings.emissionIntensity = 5.0f;
+            matres->setUniformBuffer("Settings", &settings, sizeof(PBRSettings), 2);
+        }
+
         {
             auto matres = resourceManager.createMaterial("pbrMaterial");
             matres->loadFromManagedResource(renderer.getDeviceManager().createMaterial(nullptr));
@@ -521,6 +812,10 @@ void EngineInstance::initialize()
             matres->setTextureSampler("metallicMap", metallicTexRes, 3);
             matres->setTextureSampler("roughnessMap", roughnessTexRes, 4);
             matres->setTextureSampler("aoMap", aoTexRes, 5);
+
+            PBRSettings settings;
+            settings.useEmissiveMap = false;
+            matres->setUniformBuffer("Settings", &settings, sizeof(PBRSettings), 2);
         }
 
         {
@@ -581,6 +876,11 @@ void EngineInstance::initialize()
             matres->setTextureSampler("metallicMap", metallicTexRes, 3);
             matres->setTextureSampler("roughnessMap", roughnessTexRes, 4);
             matres->setTextureSampler("aoMap", aoTexRes, 5);
+
+            PBRSettings settings;
+            settings.useEmissiveMap = false;
+            settings.emissionIntensity = 0.0f;
+            matres->setUniformBuffer("Settings", &settings, sizeof(PBRSettings), 2);
         }
         {
             auto matres = resourceManager.createMaterial("pbrMaterial3");
@@ -588,17 +888,31 @@ void EngineInstance::initialize()
 
             matres->setShader(shaderRes);
 
+//            // PBR test textures
+//            auto albedoImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/metalgrid/albedo.png");
+//            albedoImage->load();
+//            auto normalImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/metalgrid/normal.png");
+//            normalImage->load();
+//            auto metallicImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/metalgrid/metallic.png");
+//            metallicImage->load();
+//            auto roughnessImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/metalgrid/roughness.png");
+//            roughnessImage->load();
+//            auto aoImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/metalgrid/ao.png");
+//            aoImage->load();
+
             // PBR test textures
-            auto albedoImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/metalgrid/albedo.png");
+            auto albedoImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/metalgrid/Sci-fi_Wall_011_basecolor.jpg");
             albedoImage->load();
-            auto normalImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/metalgrid/normal.png");
+            auto normalImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/metalgrid/Sci-fi_Wall_011_normal.jpg");
             normalImage->load();
-            auto metallicImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/metalgrid/metallic.png");
+            auto metallicImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/metalgrid/Sci-fi_Wall_011_metallic.jpg");
             metallicImage->load();
-            auto roughnessImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/metalgrid/roughness.png");
+            auto roughnessImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/metalgrid/Sci-fi_Wall_011_roughness.jpg");
             roughnessImage->load();
-            auto aoImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/metalgrid/ao.png");
+            auto aoImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/metalgrid/Sci-fi_Wall_011_ambientOcclusion.jpg");
             aoImage->load();
+            auto emissiveImage = resourceManager.createExternalImage(desc.assetPath + "/test/textures/metalgrid/Sci-fi_Wall_011_emissive.jpg");
+            emissiveImage->load();
 
             // create textures from image data
             auto samplerState = renderer.getDevice().createSamplerState(SamplerStateDesc::newLinear());
@@ -633,6 +947,11 @@ void EngineInstance::initialize()
             auto aoTexRes = resourceManager.createTexture("metalgrid/aoMap");
             aoTexRes->loadFromManagedResource(aoTex, samplerState);
 
+            TextureDesc emissiveTexDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, emissiveImage->getWidth(), emissiveImage->getHeight(), TextureDesc::TextureUsageBits::Sampled);
+            auto emissiveTex = renderer.getDeviceManager().getDevice().createTexture(emissiveTexDesc);
+            emissiveTex->upload(emissiveImage->getData(), TextureRangeDesc::new2D(0, 0, emissiveImage->getWidth(), emissiveImage->getHeight()));
+            auto emissiveTexRes = resourceManager.createTexture("metalgrid/emissiveMap");
+            emissiveTexRes->loadFromManagedResource(emissiveTex, samplerState);
 
             // set textures to material
             matres->setTextureSampler("albedoMap", albedoTexRes, 1);
@@ -640,6 +959,11 @@ void EngineInstance::initialize()
             matres->setTextureSampler("metallicMap", metallicTexRes, 3);
             matres->setTextureSampler("roughnessMap", roughnessTexRes, 4);
             matres->setTextureSampler("aoMap", aoTexRes, 5);
+            matres->setTextureSampler("emissiveMap", emissiveTexRes, 6);
+
+            PBRSettings settings;
+            settings.useEmissiveMap = true;
+            matres->setUniformBuffer("Settings", &settings, sizeof(PBRSettings), 2);
         }
     }
 
@@ -964,6 +1288,283 @@ void EngineInstance::initialize()
         });
     }
 
+    // bloom compute pipelines
+    {
+        // downscale
+        {
+            auto cs = R"(
+            #version 460
+
+            layout(binding = 0)			 uniform sampler2D u_input_texture;
+            layout(rgba32f, binding = 0) uniform writeonly image2D u_output_image;
+
+            // settings uniform block
+            layout(binding = 0) buffer Settings {
+                vec4 u_threshold;
+                vec2 u_texel_size;
+                int u_mip_level;
+                int u_use_threshold;
+            };
+
+//            uniform vec4  u_threshold; // x -> threshold, yzw -> (threshold - knee, 2.0 * knee, 0.25 * knee)
+//            uniform vec2  u_texel_size;
+//            uniform int   u_mip_level;
+//            uniform bool  u_use_threshold;
+
+            const float epsilon = 1.0e-4;
+
+            // Curve = (threshold - knee, knee * 2.0, knee * 0.25)
+            vec4 quadratic_threshold(vec4 color, float threshold, vec3 curve)
+            {
+                // Pixel brightness
+                float br = max(color.r, max(color.g, color.b));
+
+                // Under-threshold part: quadratic curve
+                float rq = clamp(br - curve.x, 0.0, curve.y);
+                rq = curve.z * rq * rq;
+
+                // Combine and apply the brightness response curve.
+                color *= max(rq, br - threshold) / max(br, epsilon);
+
+                return color;
+            }
+
+            float luma(vec3 c)
+            {
+                return dot(c, vec3(0.2126729, 0.7151522, 0.0721750));
+            }
+
+            // [Karis2013] proposed reducing the dynamic range before averaging
+            vec4 karis_avg(vec4 c)
+            {
+                return c / (1.0 + luma(c.rgb));
+            }
+
+            #define GROUP_SIZE         8
+            #define GROUP_THREAD_COUNT (GROUP_SIZE * GROUP_SIZE)
+            #define FILTER_SIZE        3
+            #define FILTER_RADIUS      (FILTER_SIZE / 2)
+            #define TILE_SIZE          (GROUP_SIZE + 2 * FILTER_RADIUS)
+            #define TILE_PIXEL_COUNT   (TILE_SIZE * TILE_SIZE)
+
+            shared float sm_r[TILE_PIXEL_COUNT];
+            shared float sm_g[TILE_PIXEL_COUNT];
+            shared float sm_b[TILE_PIXEL_COUNT];
+
+            void store_lds(int idx, vec4 c)
+            {
+                sm_r[idx] = c.r;
+                sm_g[idx] = c.g;
+                sm_b[idx] = c.b;
+            }
+
+            vec4 load_lds(uint idx)
+            {
+                return vec4(sm_r[idx], sm_g[idx], sm_b[idx], 1.0);
+            }
+
+            layout(local_size_x = GROUP_SIZE, local_size_y = GROUP_SIZE) in;
+            void main()
+            {
+                ivec2 pixel_coords = ivec2(gl_GlobalInvocationID);
+                ivec2 base_index   = ivec2(gl_WorkGroupID) * GROUP_SIZE - FILTER_RADIUS;
+
+                // The first (TILE_PIXEL_COUNT - GROUP_THREAD_COUNT) threads load at most 2 texel values
+                for (int i = int(gl_LocalInvocationIndex); i < TILE_PIXEL_COUNT; i += GROUP_THREAD_COUNT)
+                {
+                    vec2 uv        = (vec2(base_index) + 0.5) * u_texel_size;
+                    vec2 uv_offset = vec2(i % TILE_SIZE, i / TILE_SIZE) * u_texel_size;
+
+                    vec4 color = textureLod(u_input_texture, uv + uv_offset, u_mip_level);
+                    store_lds(i, color);
+                }
+
+                memoryBarrierShared();
+                barrier();
+
+                // Based on [Jimenez14] http://goo.gl/eomGso
+                // center texel
+                uint sm_idx = (gl_LocalInvocationID.x + FILTER_RADIUS) + (gl_LocalInvocationID.y + FILTER_RADIUS) * TILE_SIZE;
+
+                vec4 A = load_lds(sm_idx - TILE_SIZE - 1);
+                vec4 B = load_lds(sm_idx - TILE_SIZE    );
+                vec4 C = load_lds(sm_idx - TILE_SIZE + 1);
+                vec4 F = load_lds(sm_idx - 1            );
+                vec4 G = load_lds(sm_idx                );
+                vec4 H = load_lds(sm_idx + 1            );
+                vec4 K = load_lds(sm_idx + TILE_SIZE - 1);
+                vec4 L = load_lds(sm_idx + TILE_SIZE    );
+                vec4 M = load_lds(sm_idx + TILE_SIZE + 1);
+
+                vec4 D = (A + B + G + F) * 0.25;
+                vec4 E = (B + C + H + G) * 0.25;
+                vec4 I = (F + G + L + K) * 0.25;
+                vec4 J = (G + H + M + L) * 0.25;
+
+                vec2 div = (1.0 / 4.0) * vec2(0.5, 0.125);
+
+                vec4 c =  karis_avg((D + E + I + J) * div.x);
+                     c += karis_avg((A + B + G + F) * div.y);
+                     c += karis_avg((B + C + H + G) * div.y);
+                     c += karis_avg((F + G + L + K) * div.y);
+                     c += karis_avg((G + H + M + L) * div.y);
+
+                if (u_use_threshold != 0)
+                {
+                    c = quadratic_threshold(c, u_threshold.x, u_threshold.yzw);
+                }
+
+                imageStore(u_output_image, pixel_coords, c);
+            }
+        )";
+
+            auto computeShader = renderer.getDevice().createShaderModule({.type = ShaderModuleType::Compute,
+                                                                          .code = cs});
+
+            auto computeShaderStage = renderer.getDevice().createPipelineShaderStages(PipelineShaderStagesDesc::fromComputeModule(computeShader));
+
+            bloomDownscalePipeline = renderer.getDevice().createComputePipeline({
+                    .shaderStages = computeShaderStage,
+                    .imagesMap = {
+                            {0, "u_output_image"}
+                    },
+                    .texturesMap = {{0, "u_input_texture"}},
+                    .buffersMap = {
+                            {0, "Settings"}
+                    }
+            });
+
+            BloomDownscaleSettings dummySettings{};
+            bloomDownscaleSettingsBuffer = renderer.getDevice().createBuffer(BufferDesc{
+                    .type = BufferDesc::BufferTypeBits::Storage,
+                    .data = &dummySettings,
+                    .size = sizeof(dummySettings),
+                    .storage = ResourceStorage::Shared
+            });
+        }
+
+        // upscale
+        {
+            auto cs = R"(
+                #version 460
+
+                layout(binding = 0)			 uniform sampler2D u_input_texture;
+                layout(rgba32f, binding = 0) uniform image2D   u_output_image;
+
+                layout(binding = 1)			 uniform sampler2D u_dirt_texture;
+
+                layout(binding = 0) buffer Settings {
+                    vec2  u_texel_size;
+                    int   u_mip_level;
+                    float u_bloom_intensity;
+                    float u_dirt_intensity;
+                };
+
+//                uniform vec2  u_texel_size;
+//                uniform int   u_mip_level;
+//                uniform float u_bloom_intensity;
+//                uniform float u_dirt_intensity;
+
+                #define GROUP_SIZE         8
+                #define GROUP_THREAD_COUNT (GROUP_SIZE * GROUP_SIZE)
+                #define FILTER_SIZE        3
+                #define FILTER_RADIUS      (FILTER_SIZE / 2)
+                #define TILE_SIZE          (GROUP_SIZE + 2 * FILTER_RADIUS)
+                #define TILE_PIXEL_COUNT   (TILE_SIZE * TILE_SIZE)
+
+                shared float sm_r[TILE_PIXEL_COUNT];
+                shared float sm_g[TILE_PIXEL_COUNT];
+                shared float sm_b[TILE_PIXEL_COUNT];
+
+                void store_lds(int idx, vec4 c)
+                {
+                    sm_r[idx] = c.r;
+                    sm_g[idx] = c.g;
+                    sm_b[idx] = c.b;
+                }
+
+                vec4 load_lds(uint idx)
+                {
+                    return vec4(sm_r[idx], sm_g[idx], sm_b[idx], 1.0);
+                }
+
+                layout(local_size_x = GROUP_SIZE, local_size_y = GROUP_SIZE) in;
+                void main()
+                {
+                    ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
+                    vec2  base_index   = ivec2(gl_WorkGroupID) * GROUP_SIZE - FILTER_RADIUS;
+
+                    // The first (TILE_PIXEL_COUNT - GROUP_THREAD_COUNT) threads load at most 2 texel values
+                    for (int i = int(gl_LocalInvocationIndex); i < TILE_PIXEL_COUNT; i += GROUP_THREAD_COUNT)
+                    {
+                        vec2 uv        = (base_index + 0.5) * u_texel_size;
+                        vec2 uv_offset = vec2(i % TILE_SIZE, i / TILE_SIZE) * u_texel_size;
+
+                        vec4 color = textureLod(u_input_texture, (uv + uv_offset), u_mip_level);
+                        store_lds(i, color);
+                    }
+
+                    memoryBarrierShared();
+                    barrier();
+
+                    // center texel
+                    uint sm_idx = (gl_LocalInvocationID.x + FILTER_RADIUS) + (gl_LocalInvocationID.y + FILTER_RADIUS) * TILE_SIZE;
+
+                    // Based on [Jimenez14] http://goo.gl/eomGso
+                    vec4 s;
+                    s =  load_lds(sm_idx - TILE_SIZE - 1);
+                    s += load_lds(sm_idx - TILE_SIZE    ) * 2.0;
+                    s += load_lds(sm_idx - TILE_SIZE + 1);
+
+                    s += load_lds(sm_idx - 1) * 2.0;
+                    s += load_lds(sm_idx    ) * 4.0;
+                    s += load_lds(sm_idx + 1) * 2.0;
+
+                    s += load_lds(sm_idx + TILE_SIZE - 1);
+                    s += load_lds(sm_idx + TILE_SIZE    ) * 2.0;
+                    s += load_lds(sm_idx + TILE_SIZE + 1);
+
+                    vec4 bloom = s * (1.0 / 16.0);
+
+                    vec4 out_pixel = imageLoad(u_output_image, pixel_coords);
+                         out_pixel += bloom * u_bloom_intensity;
+
+                    if (u_mip_level == 1)
+                    {
+                        vec2  uv  = (vec2(pixel_coords) + vec2(0.5, 0.5)) * u_texel_size;
+                        out_pixel += texture(u_dirt_texture, uv) * u_dirt_intensity * bloom * u_bloom_intensity;
+                    }
+
+                    imageStore(u_output_image, pixel_coords, out_pixel);
+                }
+            )";
+
+            auto computeShader = renderer.getDevice().createShaderModule({.type = ShaderModuleType::Compute,
+                                                                          .code = cs});
+
+            auto computeShaderStage = renderer.getDevice().createPipelineShaderStages(PipelineShaderStagesDesc::fromComputeModule(computeShader));
+
+            bloomUpscalePipeline = renderer.getDevice().createComputePipeline({
+                    .shaderStages = computeShaderStage,
+                    .imagesMap = {
+                            {0, "u_output_image"}
+                    },
+                    .texturesMap = {{0, "u_input_texture"}, {1, "u_dirt_texture"}},
+                    .buffersMap = {
+                            {0, "Settings"}
+                    }
+            });
+
+            BloomUpscaleSettings dummySettings{};
+            bloomUpscaleSettingsBuffer = renderer.getDevice().createBuffer(BufferDesc{
+                    .type = BufferDesc::BufferTypeBits::Storage,
+                    .data = &dummySettings,
+                    .size = sizeof(dummySettings),
+                    .storage = ResourceStorage::Shared
+            });
+        }
+    }
+
     {// Portal Mesh
         auto portalMesh = Mesh::createQuad();
         portalMesh->vertices[0].texCoords = {0.0f, 0.0f};
@@ -1254,19 +1855,19 @@ void EngineInstance::initialize()
         viewer.getSceneNode().getTransform().setRotation({glm::radians(-20.0f), 0, 0.0f});
 
         EntityView cow = defaultScene->createEntity("cow");
-        cow.addComponent<MeshComponent>(resourceManager.getMeshByName("spider"), resourceManager.getMaterialByName("pbrMaterial"));
+        cow.addComponent<MeshComponent>(resourceManager.getMeshByName("spider"), resourceManager.getMaterialByName("pbrDefaultMaterial"));
         cow.getSceneNode().getTransform().setPosition({-7.0f, 0.0f, -4.0f});
         cow.getSceneNode().getTransform().setScale(glm::vec3(1.0f));
         cow.getSceneNode().getTransform().setRotation({0.0f, glm::radians(20.0f), 0.0f});
 
         EntityView bunny = defaultScene->createEntity("bunny");
-        bunny.addComponent<MeshComponent>(resourceManager.getMeshByName("bunny"), resourceManager.getMaterialByName("pbrMaterial"));
+        bunny.addComponent<MeshComponent>(resourceManager.getMeshByName("bunny"), resourceManager.getMaterialByName("pbrDefaultMaterial"));
         bunny.getSceneNode().getTransform().setPosition({0.0f, 0.0f, 0.0f});
         bunny.getSceneNode().getTransform().setScale(glm::vec3(2.0f));
         bunny.getSceneNode().getTransform().setRotation({0.0f, 3.0f, 0.0f});
 
         EntityView root = defaultScene->createEntity("teapot");
-        root.addComponent<MeshComponent>(resourceManager.getMeshByName("teapot"), resourceManager.getMaterialByName("pbrMaterial"));
+        root.addComponent<MeshComponent>(resourceManager.getMeshByName("teapot"), resourceManager.getMaterialByName("pbrDefaultMaterial"));
 
         auto& rootNode = root.getSceneNode();
         rootNode.getTransform().setPosition({-3.0f, 0.0f, 10.0f});
@@ -1301,17 +1902,17 @@ void EngineInstance::initialize()
         childNode.addChild(&teapotPOVNode);
 
 
-        // Create a child node
-        EntityView spherePortal = defaultScene->createEntity("spherePortal");
-
-        Light dirLight;
-        dirLight.setDirectional();
-        spherePortal.addComponent<MeshComponent>(resourceManager.getMeshByName("sphere"), resourceManager.getMaterialByName("pbrMaterial3"));
-        spherePortal.addComponent<LightComponent>(dirLight);
-        auto& spherePortalNode = spherePortal.getSceneNode();
-        spherePortalNode.getTransform().setPosition({10.0f, 3.0f, 10.0f});
-        spherePortalNode.getTransform().setScale({1.f, 1.f, 1.f});
-        spherePortalNode.getTransform().setRotation({0.0f, 0.0f, 0.0f});
+//        // Create a child node
+//        EntityView spherePortal = defaultScene->createEntity("spherePortal");
+//
+//        Light dirLight;
+//        dirLight.setDirectional();
+//        spherePortal.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrGlowMaterial"));
+////        spherePortal.addComponent<LightComponent>(dirLight);
+//        auto& spherePortalNode = spherePortal.getSceneNode();
+//        spherePortalNode.getTransform().setPosition({10.0f, 3.0f, 10.0f});
+//        spherePortalNode.getTransform().setScale({1.f, 1.f, 1.f});
+//        spherePortalNode.getTransform().setRotation({0.0f, 0.0f, 0.0f});
 
         // Create a child node
         EntityView sphere = defaultScene->createEntity("sphere");
@@ -1333,71 +1934,266 @@ void EngineInstance::initialize()
         viewer.getSceneNode().getTransform().lookAt(rootNode.getTransform().getPosition(), {0.0f, 1.0f, 0.0f});
     }
 
-    // floor
+    // create a room with a floor and walls
     {
-        auto floor = defaultScene->createEntity("floor");
-        floor.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrMaterial2"));
+        auto room = defaultScene->createEntity("room");
+
+        float width = 20.0f;
+        float height = 10.0f;
+        float depth = 20.0f;
+        float thickness = 1.0f;
+        float margin = 0.1f;
+        // floor
         {
-            auto& floorNode = floor.getSceneNode();
-            floorNode.getTransform().setPosition({0.0f, -5.0f, 0.0f});
-            floorNode.getTransform().setScale({20.0f, 20.0f, 20.0f});
-            floorNode.getTransform().setRotation({glm::radians(90.0f), 0.0f, 0.0f});
+            auto floor = defaultScene->createEntity("floor");
+            floor.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrMaterial2"));
+            {
+                auto& floorNode = floor.getSceneNode();
+                floorNode.getTransform().setPosition({0.0f, -height - thickness, 0.0f});
+                floorNode.getTransform().setScale({width, thickness, depth});
+                floorNode.getTransform().setRotation({0.0f, 0.0f, 0.0f});
+
+                room.getSceneNode().addChild(&floorNode);
+            }
+        }
+
+        // ceiling
+        {
+            auto ceiling = defaultScene->createEntity("ceiling");
+            ceiling.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrMaterial2"));
+            {
+                auto& ceilingNode = ceiling.getSceneNode();
+                ceilingNode.getTransform().setPosition({0.0f, height + thickness, 0.0f});
+                ceilingNode.getTransform().setScale({width, thickness, depth});
+                ceilingNode.getTransform().setRotation({0.0f, 0.0f, 0.0f});
+
+                room.getSceneNode().addChild(&ceilingNode);
+            }
+        }
+
+        // left wall
+        {
+            auto leftWall = defaultScene->createEntity("leftWall");
+            leftWall.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrMaterial2"));
+            {
+                auto& leftWallNode = leftWall.getSceneNode();
+                leftWallNode.getTransform().setPosition({-width - thickness - margin, 0.0f, 0.0f});
+                leftWallNode.getTransform().setScale({thickness, height + 2*thickness, depth});
+                leftWallNode.getTransform().setRotation({0.0f, 0.0f, 0.0f});
+
+                room.getSceneNode().addChild(&leftWallNode);
+            }
+        }
+
+        // right wall
+        {
+            auto rightWall = defaultScene->createEntity("rightWall");
+            rightWall.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrMaterial2"));
+            {
+                auto& rightWallNode = rightWall.getSceneNode();
+                rightWallNode.getTransform().setPosition({width + thickness + margin, 0.0f, 0.0f});
+                rightWallNode.getTransform().setScale({thickness, height + 2*thickness, depth});
+                rightWallNode.getTransform().setRotation({0.0f, 0.0f, 0.0f});
+
+                room.getSceneNode().addChild(&rightWallNode);
+            }
+        }
+
+        // back wall
+        {
+            auto backWall = defaultScene->createEntity("backWall");
+            backWall.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrMaterial2"));
+            {
+                auto& backWallNode = backWall.getSceneNode();
+                backWallNode.getTransform().setPosition({0.0f, 0.0f, -depth - thickness - margin});
+                backWallNode.getTransform().setScale({width + 2*thickness, height + 2*thickness, thickness});
+                backWallNode.getTransform().setRotation({0.0f, 0.0f, 0.0f});
+
+                room.getSceneNode().addChild(&backWallNode);
+            }
+        }
+
+        //red light
+        {
+            // Create a child node
+            EntityView lightstick = defaultScene->createEntity("red_lightstick");
+
+            Light light;
+            light.setPoint();
+            light.setIntensity(10.0f);
+            light.setColor({1.0f, 0.0f, 0.0f});
+            lightstick.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrGlowMaterial"));
+            lightstick.addComponent<LightComponent>(light);
+            auto& lightstickNode = lightstick.getSceneNode();
+            lightstickNode.getTransform().setPosition({2.4f, -4.5f, -2.3f});
+            lightstickNode.getTransform().setScale({1.f, 1.f, 27});
+            lightstickNode.getTransform().setRotation({glm::radians(45.0f), glm::radians(21.0f), glm::radians(30.0f)});
+        }
+
+        // blue light
+        {
+            // Create a child node
+            EntityView lightstick = defaultScene->createEntity("blue_lightstick");
+
+            Light light;
+            light.setPoint();
+            light.setIntensity(10.0f);
+            light.setColor({0.0f, 0.0f, 1.0f});
+            lightstick.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrGlowMaterialBlue"));
+            lightstick.addComponent<LightComponent>(light);
+            auto& lightstickNode = lightstick.getSceneNode();
+            lightstickNode.getTransform().setPosition({-12.4f, -1.8f, 4.8f});
+            lightstickNode.getTransform().setScale({1.f, 1.f, 24.5f});
+            lightstickNode.getTransform().setRotation({glm::radians(96.0f), glm::radians(-89.0f), glm::radians(-30.0f)});
+        }
+
+//        //green light
+//        {
+//            // Create a child node
+//            EntityView lightstick = defaultScene->createEntity("green_lightstick");
+//
+//            Light light;
+//            light.setPoint();
+//            light.setIntensity(10.0f);
+//            light.setColor({0.0f, 1.0f, 0.0f});
+//            lightstick.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrGlowMaterialGreen"));
+//            lightstick.addComponent<LightComponent>(light);
+//            auto& lightstickNode = lightstick.getSceneNode();
+//            lightstickNode.getTransform().setPosition({0, 0, 0});
+//            lightstickNode.getTransform().setScale({1.f, 1.f, 1.f});
+//            lightstickNode.getTransform().setRotation({0.f, 0.f, 0.f});
+//        }
+
+        float openingWidth = 8.0f;
+        // create a front wall with an opening of width openingWidth
+        // composed of two walls
+
+        // left side
+        {
+            auto frontWallLeft = defaultScene->createEntity("frontWallLeft");
+            frontWallLeft.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrMaterial2"));
+            {
+                auto& frontWallLeftNode = frontWallLeft.getSceneNode();
+                frontWallLeftNode.getTransform().setPosition({-width/2 - openingWidth/2 - margin - thickness, 0.0f, depth + thickness + margin + 15});
+                frontWallLeftNode.getTransform().setScale({width/2 - openingWidth/2 + thickness, height + 2*thickness, thickness});
+                frontWallLeftNode.getTransform().setRotation({0.0f, 0.0f, 0.0f});
+
+                room.getSceneNode().addChild(&frontWallLeftNode);
+            }
+        }
+
+        // right side
+        {
+            auto frontWallRight = defaultScene->createEntity("frontWallRight");
+            frontWallRight.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrMaterial2"));
+            {
+                auto& frontWallRightNode = frontWallRight.getSceneNode();
+                frontWallRightNode.getTransform().setPosition({width/2 + openingWidth/2 + margin + thickness, 0.0f, depth + thickness + margin});
+                frontWallRightNode.getTransform().setScale({width/2 - openingWidth/2 + thickness, height + 2*thickness, thickness});
+                frontWallRightNode.getTransform().setRotation({0.0f, 0.0f, 0.0f});
+
+                room.getSceneNode().addChild(&frontWallRightNode);
+            }
+        }
+
+        // black object
+        {
+            auto blackObject = defaultScene->createEntity("blackObject");
+
+            blackObject.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrBlack"));
+            {
+                auto& node = blackObject.getSceneNode();
+                node.getTransform().setPosition({0.0f, -5.0f, 15.4f});
+                node.getTransform().setScale({3.0f, 5.0f, 0.5f});
+                node.getTransform().setRotation({0.0f, 0.0f, 0.0f});
+            }
+        }
+
+        float shadowTestWallDistance = 15.0f;
+        // shadow test wall
+        {
+            auto shadowTestWall = defaultScene->createEntity("shadowTestWall");
+
+            shadowTestWall.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrMaterial2"));
+            {
+                auto& node = shadowTestWall.getSceneNode();
+                node.getTransform().setPosition({0, 0.0f, depth + shadowTestWallDistance*2 + thickness*2 + margin*2});
+                node.getTransform().setScale({width + 2*thickness, height + 2*thickness, thickness});
+                node.getTransform().setRotation({0.0f, 0.0f, 0.0f});
+
+                room.getSceneNode().addChild(&node);
+            }
+        }
+
+        // floor connecting the room and the shadowTestWall
+        {
+            auto floor = defaultScene->createEntity("floor2");
+            floor.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrMaterial2"));
+            {
+                auto& floorNode = floor.getSceneNode();
+                floorNode.getTransform().setPosition({0.0f, -height - thickness, depth + shadowTestWallDistance + thickness*2});
+                floorNode.getTransform().setScale({width, thickness, shadowTestWallDistance});
+                floorNode.getTransform().setRotation({0.0f, 0.0f, 0.0f});
+
+                room.getSceneNode().addChild(&floorNode);
+            }
         }
     }
+
 
     // portal and its frame
     {
         auto portal = defaultScene->createEntity("portal");
-        portal.addComponent<MeshComponent>(resourceManager.getMeshByName("portal"), resourceManager.getMaterialByName("portalMaterial"));
-        {
-            auto& portalNode = portal.getSceneNode();
-            portalNode.getTransform().setPosition({0.0f, 0.0f, 0.0f});
-            portalNode.getTransform().setScale({5.0f, 5.0f, 1.0f});
-            portalNode.getTransform().setRotation({glm::radians(90.0f), 0.0f, 0.0f});
-
-            auto& portalMaterialComponent = portal.getComponent<MeshComponent>();
-            auto portalMaterial_ = portalMaterialComponent.getMaterial()->getMaterial();
-            auto samplerState = renderer.getDevice().createSamplerState(SamplerStateDesc::newLinear());
-            portalMaterial_->setTextureSampler("tex", testRenderTexture, samplerState, 0);
-        }
+//        portal.addComponent<MeshComponent>(resourceManager.getMeshByName("portal"), resourceManager.getMaterialByName("portalMaterial"));
+//        {
+//            auto& portalNode = portal.getSceneNode();
+//            portalNode.getTransform().setPosition({0.0f, 0.0f, 0.0f});
+//            portalNode.getTransform().setScale({5.0f, 5.0f, 1.0f});
+//            portalNode.getTransform().setRotation({glm::radians(90.0f), 0.0f, 0.0f});
+//
+//            auto& portalMaterialComponent = portal.getComponent<MeshComponent>();
+//            auto portalMaterial_ = portalMaterialComponent.getMaterial()->getMaterial();
+//            auto samplerState = renderer.getDevice().createSamplerState(SamplerStateDesc::newLinear());
+//            portalMaterial_->setTextureSampler("tex", testRenderTexture, samplerState, 0);
+//        }
 
         // create a rectangular frame around the portal made of 4 cubes stretched to be a frame
         auto portalFrame = defaultScene->createEntity("portalFrame");
 
-        // transform the frame pieces according to i
-        for (int i = 0; i < 4; i++)
-        {
-            auto framePart = defaultScene->createEntity("framePart" + std::to_string(i));
-            framePart.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("normalMaterial"));
-            auto& framePartNode = framePart.getSceneNode();
-
-            // transform the frame part according to i, add a scale parameter for the thickness, and the transformations are TRS
-            switch (i)
-            {
-                case 0:
-                    framePartNode.getTransform().setPosition({0.0f, 0.0f, -5.0f});
-                    framePartNode.getTransform().setScale({5.0f, 0.1f, 0.1f});
-                    break;
-                case 1:
-                    framePartNode.getTransform().setPosition({0.0f, 0.0f, 5.0f});
-                    framePartNode.getTransform().setScale({5.0f, 0.1f, 0.1f});
-                    break;
-                case 2:
-                    framePartNode.getTransform().setPosition({-5.0f, 0.0f, 0.0f});
-                    framePartNode.getTransform().setScale({0.1f, 0.1f, 5.0f});
-                    break;
-                case 3:
-                    framePartNode.getTransform().setPosition({5.0f, 0.0f, 0.0f});
-                    framePartNode.getTransform().setScale({0.1f, 0.1f, 5.0f});
-                    break;
-            }
-
-            portalFrame.getSceneNode().addChild(&framePartNode);
-            portalFrame.getSceneNode().getTransform().setRotation({glm::radians(90.0f), 0.0f, 0.0f});
-        }
-        portalFrame.getSceneNode().addChild(&portal.getSceneNode());
-        portalFrame.getSceneNode().getTransform().setPosition({20.0f, 0.0f, 0.0f});
-//        portal.getSceneNode().addChild(&portalFrame.getSceneNode());
+//        // transform the frame pieces according to i
+//        for (int i = 0; i < 4; i++)
+//        {
+//            auto framePart = defaultScene->createEntity("framePart" + std::to_string(i));
+//            framePart.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("normalMaterial"));
+//            auto& framePartNode = framePart.getSceneNode();
+//
+//            // transform the frame part according to i, add a scale parameter for the thickness, and the transformations are TRS
+//            switch (i)
+//            {
+//                case 0:
+//                    framePartNode.getTransform().setPosition({0.0f, 0.0f, -5.0f});
+//                    framePartNode.getTransform().setScale({5.0f, 0.1f, 0.1f});
+//                    break;
+//                case 1:
+//                    framePartNode.getTransform().setPosition({0.0f, 0.0f, 5.0f});
+//                    framePartNode.getTransform().setScale({5.0f, 0.1f, 0.1f});
+//                    break;
+//                case 2:
+//                    framePartNode.getTransform().setPosition({-5.0f, 0.0f, 0.0f});
+//                    framePartNode.getTransform().setScale({0.1f, 0.1f, 5.0f});
+//                    break;
+//                case 3:
+//                    framePartNode.getTransform().setPosition({5.0f, 0.0f, 0.0f});
+//                    framePartNode.getTransform().setScale({0.1f, 0.1f, 5.0f});
+//                    break;
+//            }
+//
+//            portalFrame.getSceneNode().addChild(&framePartNode);
+//            portalFrame.getSceneNode().getTransform().setRotation({glm::radians(90.0f), 0.0f, 0.0f});
+//        }
+//        portalFrame.getSceneNode().addChild(&portal.getSceneNode());
+//        portalFrame.getSceneNode().getTransform().setPosition({20.0f, 0.0f, 0.0f});
+////        portal.getSceneNode().addChild(&portalFrame.getSceneNode());
     }
 
     stage.setScene(defaultScene);
@@ -1413,8 +2209,10 @@ void EngineInstance::updateSimulation(float dt)
         if (root_)
         {
             auto& root = root_->getSceneNode();
+            root.visit([](SceneNode& node) {
+                node.setVisible(false);
+            });
             root.getTransform().rotate(glm::angleAxis(glm::radians(1.0f), glm::vec3(0.0f, 0.0f, 1.0f)));
-
             auto* childNode_ = root.findNode("childTeapot");
             if (childNode_)
             {
@@ -1544,7 +2342,7 @@ void EngineInstance::renderFrame()
 
             // update pbr lights
             {
-                auto pbrMaterial = resourceManager.getMaterialByName("pbrMaterial")->getMaterial();
+                auto pbrMaterial = resourceManager.getMaterialByName("pbrDefaultMaterial")->getMaterial();
 
                 constexpr int MAX_LIGHTS = 10;
 
@@ -1677,7 +2475,7 @@ void EngineInstance::renderFrame()
             cmdBuffer->begin();
 
             cmdBuffer->bindComputePipeline(computePipeline);
-            cmdBuffer->bindTexture(0, testRenderTexture);
+            cmdBuffer->bindImage(0, testRenderTexture, ReadWrite);
             cmdBuffer->bindBuffer(0, computeSettingsBuffer, 0);
             cmdBuffer->dispatch({static_cast<uint32_t>(testRenderTexture->getWidth() / 16), static_cast<uint32_t>(testRenderTexture->getHeight() / 16), 1});
 
@@ -1690,12 +2488,107 @@ void EngineInstance::renderFrame()
             auto& camera = mainCamera->getEntityView().getComponent<CameraComponent>();
             SceneRenderData sceneRenderData;
             activeScene->getSceneRenderData(sceneRenderData);
-            renderer.begin();
+            renderer.begin(RenderPassBeginDesc{
+                    .renderPass = {
+                            .colorAttachments = {
+                                    RenderPassDesc::ColorAttachmentDesc{
+                                            LoadAction::Clear,
+                                            StoreAction::Store,
+                                            {0.0f, 0.0f, 0.0f, 1.0f}
+                                    }
+                            },
+                            .depthAttachment = RenderPassDesc::DepthAttachmentDesc{
+                                    LoadAction::Clear,
+                                    StoreAction::Store,
+                                    0, 0,
+                                    1.0f
+                            }
+                    },
+                    .framebuffer = hdrFramebuffer
+            });
             renderer.bindViewport({0,0, static_cast<float>(desc.width), static_cast<float>(desc.height)});
             sceneRenderer.render(renderer, sceneRenderData, {mainCamera->getWorldTransform().getPosition(),
                                                              mainCamera->getWorldTransform().getForward(),
                                                              glm::inverse(mainCamera->getWorldTransform().getModel()), camera.getCamera()->getProjection(), camera.getCamera()->getViewportWidth(), camera.getCamera()->getViewportHeight()});
             renderer.end();
+
+
+            auto cmdPool = renderer.getDevice().createCommandPool({});
+
+            auto cmdBuffer = cmdPool->acquireComputeCommandBuffer({});
+            // bloom filter downscale
+            {
+                hdrColorBuffers[0]->generateMipmap();
+                cmdBuffer->begin();
+                cmdBuffer->bindComputePipeline(bloomDownscalePipeline);
+
+                cmdBuffer->bindTexture(0, hdrColorBuffers[0]);
+                cmdBuffer->bindSamplerState(0, hdrSampler);
+
+                BloomDownscaleSettings settings;
+                settings.threshold = glm::vec4(bloomThreshold, bloomThreshold - bloomKnee, 2.0f * bloomKnee, 0.25f * bloomKnee);
+
+                glm::uvec2 mipSize = {hdrColorBuffers[0]->getWidth()/2, hdrColorBuffers[0]->getHeight()/2};
+                for (uint8_t i = 0; i < hdrColorBuffers[0]->getNumMipLevels() - 1; ++i)
+                {
+                    settings.texelSize = 1.0f / glm::vec2(mipSize);
+                    settings.mipLevel = i;
+                    settings.useThreshold = i == 0;
+                    bloomDownscaleSettingsBuffer->data(&settings, sizeof(settings), 0);
+
+                    cmdBuffer->bindImage(0, hdrColorBuffers[0], WriteOnly, i + 1);
+                    cmdBuffer->bindBuffer(0, bloomDownscaleSettingsBuffer, 0);
+                    cmdBuffer->dispatch({static_cast<uint32_t>(glm::ceil(float(mipSize.x) / 8)), static_cast<uint32_t>(glm::ceil(float(mipSize.y) / 8)), 1});
+
+                    mipSize = mipSize/2u;
+                }
+            }
+
+            // bloom filter upscale
+            {
+                cmdBuffer->bindComputePipeline(bloomUpscalePipeline);
+
+                BloomUpscaleSettings settings;
+                settings.bloomIntensity = bloomIntensity;
+                cmdBuffer->bindTexture(0, hdrColorBuffers[0]);
+                cmdBuffer->bindSamplerState(0, hdrSampler);
+
+                glm::uvec2 mipSize;
+                for (uint8_t i = hdrColorBuffers[0]->getNumMipLevels() - 1; i >= 1; --i)
+                {
+                    mipSize.x = glm::max(1.0, glm::floor(float(hdrColorBuffers[0]->getWidth())  / glm::pow(2.0, i - 1)));
+                    mipSize.y = glm::max(1.0, glm::floor(float(hdrColorBuffers[0]->getHeight()) / glm::pow(2.0, i - 1)));
+                    settings.texelSize = 1.0f / glm::vec2(mipSize);
+                    settings.mipLevel = i;
+//                    settings.dirtIntensity = 0.0f;
+
+                    bloomUpscaleSettingsBuffer->data(&settings, sizeof(settings), 0);
+
+                    cmdBuffer->bindImage(0, hdrColorBuffers[0], ReadWrite, i - 1);
+                    cmdBuffer->bindBuffer(0, bloomUpscaleSettingsBuffer, 0);
+                    cmdBuffer->dispatch({static_cast<uint32_t>(glm::ceil(float(mipSize.x) / 8)), static_cast<uint32_t>(glm::ceil(float(mipSize.y) / 8)), 1});
+                }
+
+                cmdBuffer->end();
+            }
+
+            cmdPool->submitCommandBuffer(std::move(cmdBuffer));
+
+            // render hdrColorBuffers[0] to screen quad
+            {
+                auto mat = resourceManager.getMaterialByName("screenQuadMaterial");
+
+                mat->setUniformBuffer("Settings", &postProcessSettings, sizeof(postProcessSettings), 0);
+
+                mat->use(renderer);
+                mat->setTextureSampler("screenTexture", resourceManager.getTextureByName("hdrColorBuffer0"), 0);
+
+                graphics::Renderable screenQuad(mat->getMaterial(), screenQuadBuffer);
+
+                renderer.begin();
+                renderer.draw(screenQuad);
+                renderer.end();
+            }
         }
     }
     else

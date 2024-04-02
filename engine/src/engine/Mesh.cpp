@@ -55,7 +55,7 @@ void Mesh::normalize()
 
         const glm::vec3 e1 = vertices[ia].position - vertices[ib].position;
         const glm::vec3 e2 = vertices[ic].position - vertices[ib].position;
-        const glm::vec3 no = glm::cross(e1, e2);
+        const glm::vec3 no = glm::cross(e2, e1);
 
         vertices[ia].normal += no;
         vertices[ib].normal += no;

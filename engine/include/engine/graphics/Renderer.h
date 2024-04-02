@@ -29,6 +29,7 @@ public:
     void initialize(RendererDesc desc);
 
     void begin(const RenderTarget& renderTarget);
+    void begin(const RenderPassBeginDesc& framebuffer);
     void begin();
     void bindViewport(const Viewport& viewport);
     void draw(Renderable& renderable);
