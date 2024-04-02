@@ -1340,7 +1340,7 @@ void EngineInstance::initialize()
         {
             auto& floorNode = floor.getSceneNode();
             floorNode.getTransform().setPosition({0.0f, -5.0f, 0.0f});
-            floorNode.getTransform().setScale({20.0f, 20.0f, 20.0f});
+            floorNode.getTransform().setScale({20.0f, 20.0f, 1.0f});
             floorNode.getTransform().setRotation({glm::radians(90.0f), 0.0f, 0.0f});
         }
     }
