@@ -151,7 +151,6 @@ set(
         "assets/test/teapot.obj"
         "assets/test/cow.obj"
         "assets/test/suzanne.obj"
-        "assets/test/blocking_spider.obj"
 
         "assets/test/textures/default/metallic.png"
 
