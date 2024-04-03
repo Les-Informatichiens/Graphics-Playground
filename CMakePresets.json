@@ -16,9 +16,7 @@
     {
       "name": "core-win",
       "hidden": true,
-      "generator": "Visual Studio 17 2022",
-      "binaryDir": "${sourceDir}/out/build/${presetName}",
-      "installDir": "${sourceDir}/out/install/${presetName}"
+      "generator": "Visual Studio 17 2022"
     },
     {
       "name": "debug",
@@ -42,6 +40,15 @@
       }
     },
     {
+      "name": "clang",
+      "description": "Use Clang for build",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
       "name": "gcc",
       "hidden": true,
       "cacheVariables": {
@@ -53,11 +60,29 @@
     {
       "name": "emscripten",
       "hidden": true,
-      "toolchainFile": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
+      "toolchainFile": "$ENV{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "$env{EMSDK}/upstream/emscripten/em++.bat",
-        "CMAKE_C_COMPILER": "$env{EMSDK}/upstream/emscripten/emcc.bat"
+        "CMAKE_CXX_COMPILER": "$ENV{EMSDK}/upstream/emscripten/em++.bat",
+        "CMAKE_C_COMPILER": "$ENV{EMSDK}/upstream/emscripten/emcc.bat"
       }
+    },
+    {
+      "name": "debug-clang",
+      "displayName": "Debug (Clang)",
+      "inherits": [
+        "core-win",
+        "debug",
+        "clang"
+      ]
+    },
+    {
+      "name": "release-clang",
+      "displayName": "Release (Clang)",
+      "inherits": [
+        "core-win",
+        "release",
+        "clang"
+      ]
     },
     {
       "name": "debug-msvc",
@@ -79,7 +104,7 @@
     },
     {
       "name": "release-msvc",
-      "displayName": "Debug (MSVC)",
+      "displayName": "Release (MSVC)",
       "inherits": [
         "core-win",
         "release",
@@ -88,7 +113,7 @@
     },
     {
       "name": "release-gcc",
-      "displayName": "Debug (GCC)",
+      "displayName": "Release (GCC)",
       "inherits": [
         "core-unix",
         "release",

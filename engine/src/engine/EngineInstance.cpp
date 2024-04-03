@@ -2244,7 +2244,7 @@ void EngineInstance::updateSimulation(float dt)
 //        viewerNode.getTransform().lookAt({0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f});
 
 
-        if (input.isMouseDragging(0))
+        if (input.isMouseDragging(1))
         {
 //            std::cout << "Mouse dragging" << std::endl;
 //            std::cout << "Mouse drag delta: " << input.getMouseDragDeltaX() << ", " << input.getMouseDragDeltaY() << std::endl;
@@ -2511,6 +2511,8 @@ void EngineInstance::renderFrame()
                                                              mainCamera->getWorldTransform().getForward(),
                                                              glm::inverse(mainCamera->getWorldTransform().getModel()), camera.getCamera()->getProjection(), camera.getCamera()->getViewportWidth(), camera.getCamera()->getViewportHeight()});
             renderer.end();
+
+            //raytracing
 
 
             auto cmdPool = renderer.getDevice().createCommandPool({});
