@@ -57,7 +57,7 @@ public:
         const uint32_t end_compute_unit = current_compute_unit + work_unit_pixels;
 		for (; current_compute_unit < end_compute_unit; ++current_compute_unit)
 		{
-			std::jthread thread(get_compute_unit, top_left_x, top_left_y);
+			threads.emplace_back(get_compute_unit, top_left_x, top_left_y);
 
 			if (current_compute_unit % compute_units_per_horizontal_line == 0)
 			{
@@ -72,6 +72,6 @@ public:
 	}
 
 private:
-    std::vector<std::jthread> threads{}; //one less thread than the number of cores to leave some room for the main thread.
+    std::vector<std::jthread> threads{};
 	const i_scene& scene;
 };

@@ -98,7 +98,7 @@ void RayTracer::load()
     scene_objects.add_light(light);
 }
 RayTracer::RayTracer() : rgb_image(
-                                 3, 480 * 1, 240 * 1, 9)
+                                 3, 1920 * 1, 1080 * 1, 9)
 
 {
     load();

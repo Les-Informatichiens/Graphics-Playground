@@ -163,15 +163,13 @@ void application::run()
 
                 renderedImage = rayTracerz.run();
                 RTimageData.pixels = rayTracerz.rgb_image.get_pixel_data();
-
-
-                RTtexture->upload(RTimageData.pixels, TextureRangeDesc::new2D(0, 0, RTimageData.w, RTimageData.h));
-                //renderedImage = true;
             }
+
             if (RTtexture)
             {
+                RTtexture->upload(RTimageData.pixels, TextureRangeDesc::new2D(0, 0, RTimageData.w, RTimageData.h));
                 ImGui::Text("RTImage:");
-                ImGui::Image((ImTextureID) RTtexture.get(), ImVec2(RTtexture->getWidth(), RTtexture->getHeight()));
+                ImGui::Image(RTtexture.get(), ImVec2(RTtexture->getWidth(), RTtexture->getHeight()));
             }
             ImGui::End();
         }
