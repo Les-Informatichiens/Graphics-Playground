@@ -2,19 +2,17 @@
 // Created by Jonathan Richard on 2024-01-29.
 //
 
-#include "graphicsAPI/opengl/Device.h"
 #include "application.h"
 
 int main(int argc, char* argv[])
 {
     // Window init
-    int width = 1920;
-    int height = 1080;
+    constexpr int width = 1920;
+    constexpr int height = 1080;
 
-    GLFWwindow* window;
     if (!glfwInit())
         return -1;
-    window = glfwCreateWindow(width, height, "ENGINFORMATICHIENS", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(width, height, "ENGINFORMATICHIENS", nullptr, nullptr);
     if (!window)
     {
         glfwTerminate();
@@ -30,7 +28,7 @@ int main(int argc, char* argv[])
 //    opengl::Device device(std::move(oglContext));
 
     // Engine init
-    InstanceDesc desc = {
+    const InstanceDesc desc = {
             .assetPath = "./assets",
             .width = width,
             .height = height
@@ -42,4 +40,5 @@ int main(int argc, char* argv[])
     app.init();
 
     app.run();
+    return 0;
 }

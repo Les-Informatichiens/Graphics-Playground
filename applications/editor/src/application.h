@@ -5,18 +5,16 @@
 
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
-#include <GL/glew.h>
 
 #include "engine/EngineInstance.h"
 #include "imgui/ImGuiInstance.h"
 #include "imgui/drawingPanel/picasso.h"
-#include "imgui/drawingPanel/shape.h"
 #include "imgui/scenePanel/SceneEditor.h"
 
 #include "graphicsAPI/common/Texture.h"
+#include "imgui/raytracerPanel/rt.h"
 
 #include <memory>
-
 
 struct PixelColor
 {
@@ -25,6 +23,7 @@ struct PixelColor
     uint8_t b;
     uint8_t a;
 };
+
 struct ImageData
 {
     int w;
@@ -55,8 +54,8 @@ class application
 {
 public:
 
-    application(EngineInstance& engine, GLFWwindow *window)
-        : gameEngine(engine), window(window), imguiInstance({}), sceneEditor(engine), imageData({}), imageTexture(nullptr) {};
+    application(EngineInstance& engine, GLFWwindow* window)
+        : gameEngine(engine), imguiInstance({}), window(window), RTimageData({}), imageData({}), imageTexture(nullptr), sceneEditor(engine){};
 
     void init();
 
@@ -84,8 +83,8 @@ private:
     GLFWwindow* window;
     bool windowShouldClose = false;
 
-    int width{};
-    int height{};
+    int width {};
+    int height {};
 
     // imgui state
     bool show_demo_window = false;
@@ -95,8 +94,12 @@ private:
     bool lockCamOnSelected = true;
     bool cameraMotion = true;
     bool showImageWindow = false;
-
+    bool showRayTracer = false;
+    bool renderedImage = false;
     picasso vectorDrawer;
+
+    std::shared_ptr<ITexture> RTtexture;
+    ImageData RTimageData;
 
     std::string selectedImagePath;
     ImageData imageData;

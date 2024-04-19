@@ -2,11 +2,9 @@
 // Created by jeang on 2024-01-25.
 //
 
-#include "application.h"
 #include "backends/imgui_impl_glfw.h"
 #include "engine/components/CameraComponent.h"
 #include <cstring>
-#include <iostream>
 
 #include "ImGuiFileDialog.h"
 
@@ -17,10 +15,11 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "engine/stb_image_write.h"
 
-
-        //implement the application class here
+#include "application.h"
+//implement the application class here
         void application::init()
 {
+
     // Set the user pointer of the window to the application object
     // This is needed so that we can access "this" pointer in glfw callbacks
     glfwSetWindowUserPointer(window, this);
@@ -143,6 +142,42 @@ void application::run()
         gameEngine.renderFrame();
 
         beginImGuiFrame();
+
+        if(showRayTracer)
+        {
+            ImGui::SetNextWindowSizeConstraints(ImVec2(1250, 650), ImVec2(FLT_MAX, FLT_MAX));
+            ImGui::Begin("Ray Tracer", &showRayTracer, ImGuiWindowFlags_AlwaysAutoResize);
+            if(!renderedImage)
+            {
+                RayTracer rayTracerz;
+
+                RTimageData.comp = STBI_rgb;
+                RTimageData.w = rayTracerz.rgb_image.get_width();
+                RTimageData.h = rayTracerz.rgb_image.get_height();
+                auto texDesc = TextureDesc::new2D(TextureFormat::RGBX_UNorm8, RTimageData.w, RTimageData.h, TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled);
+                RTtexture = gameEngine.getRenderer().getDevice().createTexture(texDesc);
+
+                rayTracerz.run();
+                RTimageData.pixels = rayTracerz.rgb_image.get_pixel_data();
+
+
+                RTtexture->upload(RTimageData.pixels, TextureRangeDesc::new2D(0, 0, RTimageData.w, RTimageData.h));
+                renderedImage = true;
+            }
+            if (RTtexture)
+            {
+                ImGui::Text("RTImage:");
+                ImGui::Image((ImTextureID) RTtexture.get(), ImVec2(RTtexture->getWidth(), RTtexture->getHeight()));
+            }
+            ImGui::End();
+        }
+        else
+        {
+            renderedImage = false;
+        }
+
+
+
 
         if (showImageWindow)
         {
@@ -429,6 +464,8 @@ void application::run()
 
             ImGui::Checkbox("Demo Window", &show_demo_window); // Edit bools storing our window open/close state
             ImGui::Checkbox("Image Manipulation", &showImageWindow);
+            ImGui::Checkbox("Ray Tracing", &showRayTracer);
+
             ImGui::Checkbox("Vector drawing window", &show_another_window);
             ImGui::Checkbox("Scene Editor", &show_editor);
             ImGui::Checkbox("Camera Render Texture", &show_pov_cam);
