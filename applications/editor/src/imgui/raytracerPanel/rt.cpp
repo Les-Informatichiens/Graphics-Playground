@@ -1,15 +1,18 @@
 #include "rt.h"
 //
-// Created by Jean on 4/18/2024.
+// Created by Jean
 //
 #define TINYOBJLOADER_IMPLEMENTATION // define this in only *one* .cc
 // Optional. define TINYOBJLOADER_USE_MAPBOX_EARCUT gives robust trinagulation. Requires C++11
 #define TINYOBJLOADER_USE_MAPBOX_EARCUT
 #include "object_loader/tiny_obj_loader.h"
 
-void RayTracer::load(const char* p_file_name, std::vector<std::vector<point3>>& triangles)
+void RayTracer::load()
 {
-    {
+    std::vector<std::vector<point3>> mesh_data;
+
+
+        const std::string p_file_name = "assets/test/teapot.obj";
 
         tinyobj::ObjReaderConfig reader_config;
         reader_config.mtl_search_path = "./"; // Path to material files
@@ -55,15 +58,50 @@ void RayTracer::load(const char* p_file_name, std::vector<std::vector<point3>>& 
 
                     verteses.emplace_back(vertex);
                 }
-                triangles.emplace_back(verteses);
+                mesh_data.emplace_back(verteses);
 
                 index_offset += fv;
             }
         }
-    }
+
+
+    std::vector<std::vector<point3>> floor_triangles;
+    std::vector<point3> tri;
+    std::vector<point3> tri2;
+
+    tri.emplace_back(-5.5, -2, -5.5);
+    tri.emplace_back(5.5, -2, -5.5);
+    tri.emplace_back(-5.5, -2, 5);
+    tri2.emplace_back(5.5, -2, -5.5);
+    tri2.emplace_back(-5.5, -2, 5);
+    tri2.emplace_back(5.5, -2, 5);
+    floor_triangles.emplace_back(tri);
+    floor_triangles.emplace_back(tri2);
+
+    //scene init
+    const i_texture* mesh_texture = new base_color{new color3{0.5f, 0.0f, 0.0f}};
+    const i_texture* floor_texture = new checker{new color3{0.0f, 0.0f, 0.0f}, new color3{1, 1, 1}};
+    const i_texture* sphere_texture = new base_color{new const color3{1.0f, 1.0f, 1.0f}};
+
+    const i_material* mesh_material = new metal{mesh_texture, 0.0f};
+    const i_material* floor_material = new metal{floor_texture, 1.0f};
+    const i_material* sphere_material = new glass{sphere_texture, 1.52f};
+
+    const i_light* light = new point_light({-1.0f, 2.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, 25.0f);
+
+    scene_objects.add_object(new sphere{{1.1f, 0.5f, -1.0f}, 0.3f, sphere_material});
+    scene_objects.add_object(new triangle_mesh{mesh_material, static_cast<int>(mesh_data.size()), mesh_data});
+
+    scene_objects.add_object(new triangle_mesh{
+            floor_material, static_cast<int>(floor_triangles.size()), floor_triangles});
+
+    scene_objects.add_light(light);
 }
 RayTracer::RayTracer() : rgb_image(
-        3, 480 * 1, 240 * 1, 9
-)
+                                 3, 480 * 1, 240 * 1, 9)
+
 {
+    load();
+    positionable_camera camera = positionable_camera({0.0f, 2.5f, 0.0f}, {0, 1.5f, -1}, {0, 1, 0}, 90, 16.0f / 9.0f);
+    scene = basic_scene{rgb_image, camera, scene_objects};
 }

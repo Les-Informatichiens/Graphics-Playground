@@ -9,16 +9,20 @@
 #include "ImGuiFileDialog.h"
 
 #define STB_IMAGE_IMPLEMENTATION
-#define STBI_FAILURE_USERMSG //generate user friendly error messages
+#define STBI_FAILURE_USERMSG//generate user friendly error messages
 #include "engine/stb_image.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "engine/stb_image_write.h"
 
 #include "application.h"
+
+RayTracer rayTracerz;
+
 //implement the application class here
-        void application::init()
+void application::init()
 {
+
 
     // Set the user pointer of the window to the application object
     // This is needed so that we can access "this" pointer in glfw callbacks
@@ -30,26 +34,26 @@
         {
             glfwSetWindowShouldClose(window, GLFW_TRUE);
         }
-        auto* app = (application*)glfwGetWindowUserPointer(window);
+        auto* app = (application*) glfwGetWindowUserPointer(window);
         app->onKey(key, scancode, action, mods);
     });
     glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods) {
-        auto* app = (application*)glfwGetWindowUserPointer(window);
+        auto* app = (application*) glfwGetWindowUserPointer(window);
         app->onMouseButton(button, action, mods);
     });
     glfwSetCursorPosCallback(window, [](GLFWwindow* window, double xpos, double ypos) {
-        auto* app = (application*)glfwGetWindowUserPointer(window);
+        auto* app = (application*) glfwGetWindowUserPointer(window);
         app->onMouseMove(xpos, ypos);
     });
 
     glfwSetScrollCallback(window, [](GLFWwindow* window, double xoffset, double yoffset) {
-        auto* app = (application*)glfwGetWindowUserPointer(window);
+        auto* app = (application*) glfwGetWindowUserPointer(window);
         app->onMouseScroll(xoffset, yoffset);
     });
 
     // add window resize callback and bind this object's pointer to it
     glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width_, int height_) {
-        auto* app = (application*)glfwGetWindowUserPointer(window);
+        auto* app = (application*) glfwGetWindowUserPointer(window);
         app->onWindowResize(width_, height_);
     });
 
@@ -63,14 +67,20 @@
     // Initialize the ImGui context
     initImGui();
     vectorDrawer = picasso();
+    RTimageData.comp = STBI_rgb;
+    RTimageData.w = rayTracerz.rgb_image.get_width();
+    RTimageData.h = rayTracerz.rgb_image.get_height();
+    auto texDesc = TextureDesc::new2D(TextureFormat::RGBX_UNorm8, RTimageData.w, RTimageData.h, TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled);
+    RTtexture = gameEngine.getRenderer().getDevice().createTexture(texDesc);
 }
 
 std::unique_ptr<unsigned char[]> originalImageData;
 
 
-void calculateRGBHistogram(unsigned char* pixels, int width, int height, float* histogram) {
-    int numBins = 256; // 256 bins for each RGB channel
-    int histogramSize = 3 * numBins; // 3 channels (RGB)
+void calculateRGBHistogram(unsigned char* pixels, int width, int height, float* histogram)
+{
+    int numBins = 256;              // 256 bins for each RGB channel
+    int histogramSize = 3 * numBins;// 3 channels (RGB)
     std::fill(histogram, histogram + histogramSize, 0.0f);
 
     for (int y = 0; y < height; ++y)
@@ -89,7 +99,8 @@ void calculateRGBHistogram(unsigned char* pixels, int width, int height, float* 
     }
 
     float totalPixels = width * height;
-    for (int i = 0; i < histogramSize; ++i) {
+    for (int i = 0; i < histogramSize; ++i)
+    {
         histogram[i] /= totalPixels;
     }
 }
@@ -107,62 +118,55 @@ void application::run()
         // Jonathan Richard 2024-02-10
         gameEngine.updateSimulation(0.0f);
 
-//        if (auto scene = gameEngine.getStage().getScene())
-//        {
-//
-//            auto viewer = scene->getEntityByName("viewer");
-//            if (viewer)
-//            {
-//                auto& viewerNode = viewer->getSceneNode();
-//                // make it turn in circles with system clock
-//                if (cameraMotion)
-//                    viewerNode.getTransform().setPosition({20.0f * glm::cos((float)clock()/1000.0f), 15.0f, 20.0f * glm::sin((float)clock()/1000.0f)});
-//
-//                if (lockCamOnSelected)
-//                {
-//                    auto selected = sceneEditor.getLastSelectedEntity();
-//                    if (selected.first && scene->getEntity(selected.second)->getName() != "viewer")
-//                    {
-//                        auto& selectedNode = scene->getEntity(selected.second)->getSceneNode();
-//                        viewerNode.getTransform().lookAt(selectedNode.getWorldTransform().getPosition(), glm::vec3(0.0f, 1.0f, 0.0f));
-//                    }
-//                    else
-//                    {
-//                        viewerNode.getTransform().lookAt({0.0f, 0.0f, 0.0f}, glm::vec3(0.0f, 1.0f, 0.0f));
-//                    }
-//                }
-//                else
-//                {
-//                    viewerNode.getTransform().lookAt({0.0f, 0.0f, 0.0f}, glm::vec3(0.0f, 1.0f, 0.0f));
-//                }
-//            }
-//        }
+        //        if (auto scene = gameEngine.getStage().getScene())
+        //        {
+        //
+        //            auto viewer = scene->getEntityByName("viewer");
+        //            if (viewer)
+        //            {
+        //                auto& viewerNode = viewer->getSceneNode();
+        //                // make it turn in circles with system clock
+        //                if (cameraMotion)
+        //                    viewerNode.getTransform().setPosition({20.0f * glm::cos((float)clock()/1000.0f), 15.0f, 20.0f * glm::sin((float)clock()/1000.0f)});
+        //
+        //                if (lockCamOnSelected)
+        //                {
+        //                    auto selected = sceneEditor.getLastSelectedEntity();
+        //                    if (selected.first && scene->getEntity(selected.second)->getName() != "viewer")
+        //                    {
+        //                        auto& selectedNode = scene->getEntity(selected.second)->getSceneNode();
+        //                        viewerNode.getTransform().lookAt(selectedNode.getWorldTransform().getPosition(), glm::vec3(0.0f, 1.0f, 0.0f));
+        //                    }
+        //                    else
+        //                    {
+        //                        viewerNode.getTransform().lookAt({0.0f, 0.0f, 0.0f}, glm::vec3(0.0f, 1.0f, 0.0f));
+        //                    }
+        //                }
+        //                else
+        //                {
+        //                    viewerNode.getTransform().lookAt({0.0f, 0.0f, 0.0f}, glm::vec3(0.0f, 1.0f, 0.0f));
+        //                }
+        //            }
+        //        }
 
 
         gameEngine.renderFrame();
 
         beginImGuiFrame();
 
-        if(showRayTracer)
+        if (showRayTracer)
         {
             ImGui::SetNextWindowSizeConstraints(ImVec2(1250, 650), ImVec2(FLT_MAX, FLT_MAX));
             ImGui::Begin("Ray Tracer", &showRayTracer, ImGuiWindowFlags_AlwaysAutoResize);
-            if(!renderedImage)
+            if (!renderedImage)
             {
-                RayTracer rayTracerz;
 
-                RTimageData.comp = STBI_rgb;
-                RTimageData.w = rayTracerz.rgb_image.get_width();
-                RTimageData.h = rayTracerz.rgb_image.get_height();
-                auto texDesc = TextureDesc::new2D(TextureFormat::RGBX_UNorm8, RTimageData.w, RTimageData.h, TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled);
-                RTtexture = gameEngine.getRenderer().getDevice().createTexture(texDesc);
-
-                rayTracerz.run();
+                renderedImage = rayTracerz.run();
                 RTimageData.pixels = rayTracerz.rgb_image.get_pixel_data();
 
 
                 RTtexture->upload(RTimageData.pixels, TextureRangeDesc::new2D(0, 0, RTimageData.w, RTimageData.h));
-                renderedImage = true;
+                //renderedImage = true;
             }
             if (RTtexture)
             {
@@ -177,292 +181,282 @@ void application::run()
         }
 
 
-
-
         if (showImageWindow)
         {
 
-        ImGui::SetNextWindowSizeConstraints(ImVec2(1250, 650), ImVec2(FLT_MAX, FLT_MAX));
-        ImGui::Begin("Image", &showImageWindow, ImGuiWindowFlags_AlwaysAutoResize);
+            ImGui::SetNextWindowSizeConstraints(ImVec2(1250, 650), ImVec2(FLT_MAX, FLT_MAX));
+            ImGui::Begin("Image", &showImageWindow, ImGuiWindowFlags_AlwaysAutoResize);
 
-        // Beginning of column layout
-        ImGui::Columns(2, "MyColumns", false);
-        ImGui::SetColumnWidth(0, 550);
+            // Beginning of column layout
+            ImGui::Columns(2, "MyColumns", false);
+            ImGui::SetColumnWidth(0, 550);
 
 
-        if (ImGui::BeginTabBar("Tabs", ImGuiTabBarFlags_None))
-        {
-            // First tab: Import and Export
-            if (ImGui::BeginTabItem("Import"))
+            if (ImGui::BeginTabBar("Tabs", ImGuiTabBarFlags_None))
             {
-
-                ImGui::Text("Image Import:");
-                if (ImGui::Button("Import Image"))
+                // First tab: Import and Export
+                if (ImGui::BeginTabItem("Import"))
                 {
-                    // Show file dialog to select an image
-                    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose an image", ".png,.jpg");
-                }
 
-                // Check if a file has been selected in the file dialog
-                if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
-                {
-                    if (ImGuiFileDialog::Instance()->IsOk())
+                    ImGui::Text("Image Import:");
+                    if (ImGui::Button("Import Image"))
                     {
-                        // Get the path of the selected image
-                        selectedImagePath = ImGuiFileDialog::Instance()->GetFilePathName();
-
-                        // Close the file dialog
-                        ImGuiFileDialog::Instance()->Close();
+                        // Show file dialog to select an image
+                        ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose an image", ".png,.jpg");
                     }
-                }
 
-                // Display the selected image in the "Image Window"
-
-                if (!selectedImagePath.empty())
-                {
-                    ImGui::InputText("File path", const_cast<char*>(selectedImagePath.c_str()) + 2, selectedImagePath.size(), ImGuiInputTextFlags_None);
-
-                    imageData.comp = STBI_rgb_alpha;
-                    imageData.pixels = stbi_load(selectedImagePath.c_str(), &imageData.w, &imageData.h, &imageData.originalComp, STBI_rgb_alpha);
-                    auto texDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, imageData.w, imageData.h, TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled);
-                    imageTexture = gameEngine.getRenderer().getDevice().createTexture(texDesc);
-                    imageTexture->upload(imageData.pixels, TextureRangeDesc::new2D(0, 0, imageData.w, imageData.h));
-                    originalImageData.reset(new unsigned char[imageData.w * imageData.h * imageData.comp]);
-                    std::memcpy(originalImageData.get(), imageData.pixels, imageData.w * imageData.h * imageData.comp);
-
-                }
-
-                for (int i = 0; i < 5; ++i) {
-                    ImGui::Spacing();
-                }
-
-                ImGui::EndTabItem();
-            }
-
-            // Second tab: Color Spaces
-            if (ImGui::BeginTabItem("Image Editor"))
-            {
-                static ImVec4 color = ImVec4(0.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f, 128.0f / 255.0f);
-
-                // COLOR FILTER
-                ImGuiColorEditFlags flags = ImGuiColorEditFlags_AlphaBar
-                                            | ImGuiColorEditFlags_PickerHueBar
-                                            | ImGuiColorEditFlags_AlphaPreview
-                                            | ImGuiColorEditFlags_DisplayRGB
-                                            | ImGuiColorEditFlags_DisplayHSV
-                                            | ImGuiColorEditFlags_DisplayHex;
-
-                ImGui::SetNextWindowSizeConstraints(ImVec2(100, 100), ImVec2(300, 300));
-                ImGui::Text("Color filter :");
-                ImGui::ColorPicker4("MyColor##4", (float*) &color, flags, NULL);
-
-                if (ImGui::Button("Apply filter"))
-                {
-
-                    if (imageData.pixels != nullptr && originalImageData != nullptr)
+                    // Check if a file has been selected in the file dialog
+                    if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
                     {
-                        std::memcpy(imageData.pixels, originalImageData.get(), imageData.w * imageData.h * imageData.comp);
-                        // Create a new texture to hold the color layer
-                        std::unique_ptr<unsigned char[]> colorLayer(new unsigned char[imageData.w * imageData.h * imageData.comp]);
-
-                        // Fill the color layer with the selected color
-                        for (int i = 0; i < imageData.w * imageData.h * imageData.comp; i += imageData.comp)
+                        if (ImGuiFileDialog::Instance()->IsOk())
                         {
-                            colorLayer[i] = static_cast<unsigned char>(color.x * 255.0f);
-                            colorLayer[i + 1] = static_cast<unsigned char>(color.y * 255.0f);
-                            colorLayer[i + 2] = static_cast<unsigned char>(color.z * 255.0f);
-                            colorLayer[i + 3] = static_cast<unsigned char>(color.w * 255.0f);// 50% alpha
+                            // Get the path of the selected image
+                            selectedImagePath = ImGuiFileDialog::Instance()->GetFilePathName();
+
+                            // Close the file dialog
+                            ImGuiFileDialog::Instance()->Close();
                         }
+                    }
 
-                        // Mix the color layer with the original image
-                        for (int y = 0; y < imageData.h; ++y)
+                    // Display the selected image in the "Image Window"
+
+                    if (!selectedImagePath.empty())
+                    {
+                        ImGui::InputText("File path", const_cast<char*>(selectedImagePath.c_str()) + 2, selectedImagePath.size(), ImGuiInputTextFlags_None);
+
+                        imageData.comp = STBI_rgb_alpha;
+                        imageData.pixels = stbi_load(selectedImagePath.c_str(), &imageData.w, &imageData.h, &imageData.originalComp, STBI_rgb_alpha);
+                        auto texDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, imageData.w, imageData.h, TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled);
+                        imageTexture = gameEngine.getRenderer().getDevice().createTexture(texDesc);
+                        imageTexture->upload(imageData.pixels, TextureRangeDesc::new2D(0, 0, imageData.w, imageData.h));
+                        originalImageData.reset(new unsigned char[imageData.w * imageData.h * imageData.comp]);
+                        std::memcpy(originalImageData.get(), imageData.pixels, imageData.w * imageData.h * imageData.comp);
+                    }
+
+                    for (int i = 0; i < 5; ++i)
+                    {
+                        ImGui::Spacing();
+                    }
+
+                    ImGui::EndTabItem();
+                }
+
+                // Second tab: Color Spaces
+                if (ImGui::BeginTabItem("Image Editor"))
+                {
+                    static ImVec4 color = ImVec4(0.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f, 128.0f / 255.0f);
+
+                    // COLOR FILTER
+                    ImGuiColorEditFlags flags = ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_PickerHueBar | ImGuiColorEditFlags_AlphaPreview | ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_DisplayHex;
+
+                    ImGui::SetNextWindowSizeConstraints(ImVec2(100, 100), ImVec2(300, 300));
+                    ImGui::Text("Color filter :");
+                    ImGui::ColorPicker4("MyColor##4", (float*) &color, flags, NULL);
+
+                    if (ImGui::Button("Apply filter"))
+                    {
+
+                        if (imageData.pixels != nullptr && originalImageData != nullptr)
                         {
-                            for (int x = 0; x < imageData.w; ++x)
+                            std::memcpy(imageData.pixels, originalImageData.get(), imageData.w * imageData.h * imageData.comp);
+                            // Create a new texture to hold the color layer
+                            std::unique_ptr<unsigned char[]> colorLayer(new unsigned char[imageData.w * imageData.h * imageData.comp]);
+
+                            // Fill the color layer with the selected color
+                            for (int i = 0; i < imageData.w * imageData.h * imageData.comp; i += imageData.comp)
                             {
-                                int pixelIndex = (y * imageData.w + x) * imageData.comp;
+                                colorLayer[i] = static_cast<unsigned char>(color.x * 255.0f);
+                                colorLayer[i + 1] = static_cast<unsigned char>(color.y * 255.0f);
+                                colorLayer[i + 2] = static_cast<unsigned char>(color.z * 255.0f);
+                                colorLayer[i + 3] = static_cast<unsigned char>(color.w * 255.0f);// 50% alpha
+                            }
 
-                                imageData.pixels[pixelIndex] = static_cast<unsigned char>((imageData.pixels[pixelIndex] * (255 - colorLayer[pixelIndex + 3]) + colorLayer[pixelIndex] * colorLayer[pixelIndex + 3]) / 255);
-                                imageData.pixels[pixelIndex + 1] = static_cast<unsigned char>((imageData.pixels[pixelIndex + 1] * (255 - colorLayer[pixelIndex + 3]) + colorLayer[pixelIndex + 1] * colorLayer[pixelIndex + 3]) / 255);
-                                imageData.pixels[pixelIndex + 2] = static_cast<unsigned char>((imageData.pixels[pixelIndex + 2] * (255 - colorLayer[pixelIndex + 3]) + colorLayer[pixelIndex + 2] * colorLayer[pixelIndex + 3]) / 255);
+                            // Mix the color layer with the original image
+                            for (int y = 0; y < imageData.h; ++y)
+                            {
+                                for (int x = 0; x < imageData.w; ++x)
+                                {
+                                    int pixelIndex = (y * imageData.w + x) * imageData.comp;
 
+                                    imageData.pixels[pixelIndex] = static_cast<unsigned char>((imageData.pixels[pixelIndex] * (255 - colorLayer[pixelIndex + 3]) + colorLayer[pixelIndex] * colorLayer[pixelIndex + 3]) / 255);
+                                    imageData.pixels[pixelIndex + 1] = static_cast<unsigned char>((imageData.pixels[pixelIndex + 1] * (255 - colorLayer[pixelIndex + 3]) + colorLayer[pixelIndex + 1] * colorLayer[pixelIndex + 3]) / 255);
+                                    imageData.pixels[pixelIndex + 2] = static_cast<unsigned char>((imageData.pixels[pixelIndex + 2] * (255 - colorLayer[pixelIndex + 3]) + colorLayer[pixelIndex + 2] * colorLayer[pixelIndex + 3]) / 255);
+                                }
+                            }
+
+                            // Upload the modified image data to the texture
+                            imageTexture->upload(imageData.pixels, TextureRangeDesc::new2D(0, 0, imageData.w, imageData.h));
+                        }
+                    }
+
+                    for (int i = 0; i < 5; ++i)
+                    {
+                        ImGui::Spacing();
+                    }
+
+                    // INVERT COLORS
+                    ImGui::Text("Invert colors :");
+
+                    if (ImGui::Button("Invert Colors"))
+                    {
+                        if (imageData.pixels != nullptr)
+                        {
+                            for (int y = 0; y < imageData.h; ++y)
+                            {
+                                for (int x = 0; x < imageData.w; ++x)
+                                {
+                                    int pixelIndex = (y * imageData.w + x) * imageData.comp;
+
+                                    imageData.pixels[pixelIndex] = 255 - imageData.pixels[pixelIndex];        // Rouge
+                                    imageData.pixels[pixelIndex + 1] = 255 - imageData.pixels[pixelIndex + 1];// Vert
+                                    imageData.pixels[pixelIndex + 2] = 255 - imageData.pixels[pixelIndex + 2];// Bleu
+
+                                    imageData.pixels[pixelIndex] = std::clamp(imageData.pixels[pixelIndex], uint8_t(0), uint8_t(255));
+                                    imageData.pixels[pixelIndex + 1] = std::clamp(imageData.pixels[pixelIndex + 1], uint8_t(0), uint8_t(255));
+                                    imageData.pixels[pixelIndex + 2] = std::clamp(imageData.pixels[pixelIndex + 2], uint8_t(0), uint8_t(255));
+                                }
+                            }
+
+                            imageTexture->upload(imageData.pixels, TextureRangeDesc::new2D(0, 0, imageData.w, imageData.h));
+                        }
+                    }
+
+                    for (int i = 0; i < 5; ++i)
+                    {
+                        ImGui::Spacing();
+                    }
+
+                    //EXPORT
+                    ImGui::Text("Image Export:");
+                    if (ImGui::Button("Export Current Image"))
+                    {
+                        if (imageData.pixels != nullptr)
+                        {
+                            ImGuiFileDialog::Instance()->OpenDialog("ExportFileDialogKey", "Save Image As", ".png,.jpg");// Permet d'exporter en PNG ou en JPG
+                        }
+                    }
+
+                    if (ImGuiFileDialog::Instance()->Display("ExportFileDialogKey"))
+                    {
+                        if (ImGuiFileDialog::Instance()->IsOk())
+                        {
+                            std::string savePath = ImGuiFileDialog::Instance()->GetFilePathName();
+                            ImGuiFileDialog::Instance()->Close();
+
+                            int width = imageData.w;
+                            int height = imageData.h;
+                            int channels = 4;// RGBA
+
+                            // Check the selected extension
+                            std::string extension = savePath.substr(savePath.find_last_of(".") + 1);
+                            if (extension == "png")
+                            {
+                                stbi_write_png(savePath.c_str(), width, height, channels, imageData.pixels, width * channels);
+                            }
+                            else if (extension == "jpg" || extension == "jpeg")
+                            {
+                                stbi_write_jpg(savePath.c_str(), width, height, channels, imageData.pixels, 100);
                             }
                         }
-
-                        // Upload the modified image data to the texture
-                        imageTexture->upload(imageData.pixels, TextureRangeDesc::new2D(0, 0, imageData.w, imageData.h));
                     }
+
+                    ImGui::EndTabItem();
                 }
 
-                for (int i = 0; i < 5; ++i) {
-                    ImGui::Spacing();
-                }
+                // Third tab: Histogram
+                if (ImGui::BeginTabItem("Histogram"))
+                {
 
-                // INVERT COLORS
-                ImGui::Text("Invert colors :");
-
-                if (ImGui::Button("Invert Colors")) {
                     if (imageData.pixels != nullptr)
                     {
-                        for (int y = 0; y < imageData.h; ++y)
+                        int numBins = 256;
+                        int histogramSize = 3 * numBins;// 3 channels (RGB)
+                        float* histogram = new float[histogramSize];
+
+                        calculateRGBHistogram(imageData.pixels, imageData.w, imageData.h, histogram);
+
+                        // draw colored bands from imgui primitives
+                        ImGui::Text("Histogram:");
+                        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+                        ImVec2 canvas_pos = ImGui::GetCursorScreenPos();
+                        ImVec2 canvas_size = ImVec2(256, 100);
+                        float histogramMax = 0.0f;
+                        for (int i = 0; i < histogramSize; ++i)
                         {
-                            for (int x = 0; x < imageData.w; ++x)
+                            if (histogram[i] > histogramMax)
                             {
-                                int pixelIndex = (y * imageData.w + x) * imageData.comp;
-
-                                imageData.pixels[pixelIndex] = 255 - imageData.pixels[pixelIndex];         // Rouge
-                                imageData.pixels[pixelIndex + 1] = 255 - imageData.pixels[pixelIndex + 1]; // Vert
-                                imageData.pixels[pixelIndex + 2] = 255 - imageData.pixels[pixelIndex + 2]; // Bleu
-
-                                imageData.pixels[pixelIndex] = std::clamp(imageData.pixels[pixelIndex], uint8_t(0), uint8_t(255));
-                                imageData.pixels[pixelIndex+1] = std::clamp(imageData.pixels[pixelIndex+1], uint8_t(0), uint8_t(255));
-                                imageData.pixels[pixelIndex+2] = std::clamp(imageData.pixels[pixelIndex+2], uint8_t(0), uint8_t(255));
-
+                                histogramMax = histogram[i];
                             }
                         }
-
-                        imageTexture->upload(imageData.pixels, TextureRangeDesc::new2D(0, 0, imageData.w, imageData.h));
-                    }
-                }
-
-                for (int i = 0; i < 5; ++i) {
-                    ImGui::Spacing();
-                }
-
-                //EXPORT
-                ImGui::Text("Image Export:");
-                if (ImGui::Button("Export Current Image"))
-                {
-                    if (imageData.pixels != nullptr)
-                    {
-                        ImGuiFileDialog::Instance()->OpenDialog("ExportFileDialogKey", "Save Image As", ".png,.jpg"); // Permet d'exporter en PNG ou en JPG
-                    }
-                }
-
-                if (ImGuiFileDialog::Instance()->Display("ExportFileDialogKey"))
-                {
-                    if (ImGuiFileDialog::Instance()->IsOk())
-                    {
-                        std::string savePath = ImGuiFileDialog::Instance()->GetFilePathName();
-                        ImGuiFileDialog::Instance()->Close();
-
-                        int width = imageData.w;
-                        int height = imageData.h;
-                        int channels = 4; // RGBA
-
-                        // Check the selected extension
-                        std::string extension = savePath.substr(savePath.find_last_of(".") + 1);
-                        if (extension == "png")
+                        for (int i = 0; i < histogramSize; ++i)
                         {
-                            stbi_write_png(savePath.c_str(), width, height, channels, imageData.pixels, width * channels);
-                        }
-                        else if (extension == "jpg" || extension == "jpeg")
-                        {
-                            stbi_write_jpg(savePath.c_str(), width, height, channels, imageData.pixels, 100);
-                        }
+                            ImVec4 bandColor;
+                            // put each colored section on a new line
+                            float value = histogram[i] / histogramMax;
 
+                            int yOffset = 0;
+                            if (i < numBins)
+                            {
+                                bandColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);// Red
+                                yOffset = 0;
+                                draw_list->AddRectFilled(ImVec2(canvas_pos.x + i, canvas_pos.y + canvas_size.y * (1 - value) - yOffset), ImVec2(canvas_pos.x + i + 1, canvas_pos.y + canvas_size.y - yOffset), IM_COL32(255, 0, 0, 255));
+                            }
+                            else if (i < 2 * numBins)
+                            {
+                                bandColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);// Green
+                                yOffset = -1 * 100;
+                                draw_list->AddRectFilled(ImVec2(canvas_pos.x + i - numBins, canvas_pos.y + canvas_size.y * (1 - value) - yOffset), ImVec2(canvas_pos.x + i - numBins + 1, canvas_pos.y + canvas_size.y - yOffset), IM_COL32(0, 255, 0, 255));
+                            }
+                            else
+                            {
+                                bandColor = ImVec4(0.0f, 0.0f, 1.0f, 1.0f);// Blue
+                                yOffset = -2 * 100;
+                                draw_list->AddRectFilled(ImVec2(canvas_pos.x + i - 2 * numBins, canvas_pos.y + canvas_size.y * (1 - value) - yOffset), ImVec2(canvas_pos.x + i - 2 * numBins + 1, canvas_pos.y + canvas_size.y - yOffset), IM_COL32(0, 0, 255, 255));
+                            }
+                        }
                     }
+
+                    ImGui::EndTabItem();
                 }
 
-                ImGui::EndTabItem();
+                ImGui::EndTabBar();
             }
 
-            // Third tab: Histogram
-            if (ImGui::BeginTabItem("Histogram"))
+            ImGui::NextColumn();
+            ImGui::Separator();
+
+            if (imageTexture)
             {
-
-                if (imageData.pixels != nullptr)
-                {
-                    int numBins = 256;
-                    int histogramSize = 3 * numBins; // 3 channels (RGB)
-                    float* histogram = new float[histogramSize];
-
-                    calculateRGBHistogram(imageData.pixels, imageData.w, imageData.h, histogram);
-
-                    // draw colored bands from imgui primitives
-                    ImGui::Text("Histogram:");
-                    ImDrawList* draw_list = ImGui::GetWindowDrawList();
-                    ImVec2 canvas_pos = ImGui::GetCursorScreenPos();
-                    ImVec2 canvas_size = ImVec2(256, 100);
-                    float histogramMax = 0.0f;
-                    for (int i = 0; i < histogramSize; ++i)
-                    {
-                        if (histogram[i] > histogramMax)
-                        {
-                            histogramMax = histogram[i];
-                        }
-                    }
-                    for (int i = 0; i < histogramSize; ++i)
-                    {
-                        ImVec4 bandColor;
-                        // put each colored section on a new line
-                        float value = histogram[i] / histogramMax;
-
-                        int yOffset = 0;
-                        if (i < numBins)
-                        {
-                            bandColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); // Red
-                            yOffset = 0;
-                            draw_list->AddRectFilled(ImVec2(canvas_pos.x + i, canvas_pos.y + canvas_size.y * (1 - value) - yOffset), ImVec2(canvas_pos.x + i + 1, canvas_pos.y + canvas_size.y - yOffset), IM_COL32(255, 0, 0, 255));
-                        }
-                        else if (i < 2 * numBins)
-                        {
-                            bandColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); // Green
-                            yOffset = -1 * 100;
-                            draw_list->AddRectFilled(ImVec2(canvas_pos.x + i - numBins, canvas_pos.y + canvas_size.y * (1 - value) - yOffset), ImVec2(canvas_pos.x + i - numBins + 1, canvas_pos.y + canvas_size.y - yOffset), IM_COL32(0, 255, 0, 255));
-                        }
-                        else
-                        {
-                            bandColor = ImVec4(0.0f, 0.0f, 1.0f, 1.0f); // Blue
-                            yOffset = -2 * 100;
-                            draw_list->AddRectFilled(ImVec2(canvas_pos.x + i - 2 * numBins, canvas_pos.y + canvas_size.y * (1 - value) - yOffset), ImVec2(canvas_pos.x + i - 2 * numBins + 1, canvas_pos.y + canvas_size.y - yOffset), IM_COL32(0, 0, 255, 255));
-                        }
-
-                    }
-
-
-                }
-
-                ImGui::EndTabItem();
+                ImGui::Text("Image:");
+                ImGui::Image((ImTextureID) imageTexture.get(), ImVec2(imageTexture->getWidth(), imageTexture->getHeight()));
+            }
+            else
+            {
+                ImGui::Text("No image is loaded.");
             }
 
-            ImGui::EndTabBar();
-        }
+            // End of column layout
+            ImGui::Columns(1);
 
-        ImGui::NextColumn();
-        ImGui::Separator();
-
-        if (imageTexture)
-        {
-            ImGui::Text("Image:");
-            ImGui::Image((ImTextureID) imageTexture.get(), ImVec2(imageTexture->getWidth(), imageTexture->getHeight()));
-        }
-        else
-        {
-            ImGui::Text("No image is loaded.");
-        }
-
-        // End of column layout
-        ImGui::Columns(1);
-
-        ImGui::End();// End of ImGui window
+            ImGui::End();// End of ImGui window
         }
 
 
-    // Here we can have some ImGui code that would let the user
-    // control some state in the application.
-    // We can later put this in a better place, like separate classes
-    // that would handle the ImGui code for different parts of the application
-    // Jonathan Richard 2024-02-10
+        // Here we can have some ImGui code that would let the user
+        // control some state in the application.
+        // We can later put this in a better place, like separate classes
+        // that would handle the ImGui code for different parts of the application
+        // Jonathan Richard 2024-02-10
 
         {
             static float f = 0.0f;
             static int counter = 0;
 
-            ImGui::Begin("Menu"); // Create a window called "Hello, world!" and append into it.
+            ImGui::Begin("Menu");// Create a window called "Hello, world!" and append into it.
 
-            ImGui::Text("This is some useful text."); // Display some text (you can use a format strings too)
+            ImGui::Text("This is some useful text.");// Display some text (you can use a format strings too)
 
-            ImGui::Checkbox("Demo Window", &show_demo_window); // Edit bools storing our window open/close state
+            ImGui::Checkbox("Demo Window", &show_demo_window);// Edit bools storing our window open/close state
             ImGui::Checkbox("Image Manipulation", &showImageWindow);
             ImGui::Checkbox("Ray Tracing", &showRayTracer);
 
@@ -475,9 +469,9 @@ void application::run()
             ImGui::SliderFloat("Exposure", &gameEngine.postProcessSettings.exposure, 0.0, 10.0, "%.1f");
             ImGui::SliderFloat("Gamma", &gameEngine.postProcessSettings.gamma, 0.0, 10.0, "%.1f");
 
-            ImGui::SliderFloat("Bloom threshold",      &gameEngine.bloomThreshold,            0.0f, 15.0f, "%.1f");
-            ImGui::SliderFloat("Bloom knee",           &gameEngine.bloomKnee,                 0.0f, 1.0f,  "%.1f");
-            ImGui::SliderFloat("Bloom intensity",      &gameEngine.bloomIntensity,      0.0f, 5.0f,  "%.1f");
+            ImGui::SliderFloat("Bloom threshold", &gameEngine.bloomThreshold, 0.0f, 15.0f, "%.1f");
+            ImGui::SliderFloat("Bloom knee", &gameEngine.bloomKnee, 0.0f, 1.0f, "%.1f");
+            ImGui::SliderFloat("Bloom intensity", &gameEngine.bloomIntensity, 0.0f, 5.0f, "%.1f");
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
@@ -593,16 +587,12 @@ void application::renderImGuiFrame()
             .renderPass = {
                     .colorAttachments = {
                             RenderPassDesc::ColorAttachmentDesc{
-                                    LoadAction::Load, // As describe above, don't clear because we are rendering imgui as overlay onto the previous frame
-                                    StoreAction::DontCare
-                            }
-                    }
-            },
+                                    LoadAction::Load,// As describe above, don't clear because we are rendering imgui as overlay onto the previous frame
+                                    StoreAction::DontCare}}},
             // Currently opengl's default framebuffer is implemented as just using nullptr in the render pass
             // However, we could have a framebuffer object that would represent the default framebuffer and we could use it here
             // Jonathan Richard 2024-02-10
-            .framebuffer = nullptr
-    };
+            .framebuffer = nullptr};
 
     // Execute the imgui rendering commands
     commandBuffer->beginRenderPass(renderPassDesc);

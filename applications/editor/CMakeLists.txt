@@ -17,6 +17,7 @@ add_executable(
         src/imgui/ImGuiContextAdapter.cpp
         src/imgui/scenePanel/SceneEditor.cpp
         src/imgui/raytracerPanel/rt.cpp
+        src/imgui/raytracerPanel/renderer/threaded_cpu_renderer.h
 
 )
 
