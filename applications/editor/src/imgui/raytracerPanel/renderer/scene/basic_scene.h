@@ -38,7 +38,7 @@ public:
     {
         if (this == &other)
             return *this;
-        i_scene::operator=(std::move(other));
+        i_scene::operator=(other);
         image = other.image;
         scene_objects = other.scene_objects;
         camera = other.camera;

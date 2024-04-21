@@ -101,7 +101,7 @@ public:
 		}
 	}
 
-	color3 compute_color(const ray& incident_ray, const uint32_t max_rays) const
+	[[nodiscard]] color3 compute_color(const ray& incident_ray, const uint32_t max_rays) const
 	{
 		//break at max specified recursion depth to prevent stack overflow.
 		if (max_rays == 0) { return {0.0f, 0.0f, 0.0f}; }
@@ -126,9 +126,10 @@ public:
 
 			return compute_global_illumination(incident_ray, max_rays, closest_hit_object, closest_hit_t,
 			                                   closest_hit_normal,
-			                                   closest_hit_uv, local_color);
+			                                   closest_hit_uv, local_color) * closest_hit_object->color_at(closest_hit_t,
+                                                                                                              closest_hit_uv);
 		}
-		return {0.2f, 0.4f, 0.7f};
+		return {0.005f, 0.01f, 0.0175f};
 	}
 
 

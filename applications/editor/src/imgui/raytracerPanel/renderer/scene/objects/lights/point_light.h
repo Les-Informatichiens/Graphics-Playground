@@ -10,7 +10,7 @@ public:
 	{
 	}
 
-	color3 emit(const point3& to, const vec3& surface_normal) const override
+	[[nodiscard]] color3 emit(const point3& to, const vec3& surface_normal) const override
 	{
 		const float distance = glm::distance(position, to);
 		glm::vec3 add = color * intensity;

@@ -84,18 +84,20 @@ void RayTracer::load()
     const i_texture* sphere_texture = new base_color{new const color3{1.0f, 1.0f, 1.0f}};
 
     const i_material* mesh_material = new metal{mesh_texture, 0.0f};
-    const i_material* floor_material = new metal{floor_texture, 1.0f};
+    const i_material* floor_material = new metal{floor_texture, 0.01f};
     const i_material* sphere_material = new glass{sphere_texture, 1.52f};
 
-    const i_light* light = new point_light({-1.0f, 2.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, 25.0f);
+    const i_light* light = new point_light({-1.0f, 2.0f, -5.0f}, {1, 1, 1}, 105.0f);
+    const i_light* light2 = new point_light({-1.0f, 2.0f, 0.0f}, {1, 1, 1}, 1.5f);
 
-    scene_objects.add_object(new sphere{{1.1f, 0.5f, -1.0f}, 0.3f, sphere_material});
+    scene_objects.add_object(new sphere{{1.5f, 0.3f, -1.2f}, 0.3f, sphere_material});
     scene_objects.add_object(new triangle_mesh{mesh_material, static_cast<int>(mesh_data.size()), mesh_data});
 
     scene_objects.add_object(new triangle_mesh{
             floor_material, static_cast<int>(floor_triangles.size()), floor_triangles});
 
-    scene_objects.add_light(light);
+scene_objects.add_light(light);
+scene_objects.add_light(light2);
 }
 RayTracer::RayTracer() : rgb_image(
                                  3, 1920 * 1, 1080 * 1, 9)
