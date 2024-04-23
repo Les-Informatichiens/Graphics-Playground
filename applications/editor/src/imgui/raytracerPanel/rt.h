@@ -30,12 +30,11 @@ public:
     RayTracer();
     int run()
     {
-
         const uint32_t compute_units = scene.horizontal_pixel_count() * scene.vertical_pixel_count() / (8*8) ;
 
-        if (current_compute_unit < compute_units && renderer.render(current_compute_unit))
+        if (current_compute_unit < compute_units)
         {
-
+            renderer.render(current_compute_unit);
             return 0;
         }
 
@@ -47,6 +46,7 @@ public:
     object_manager scene_objects;
     positionable_camera camera = positionable_camera({0.0f, 2.5f, 0.0f}, {0, 1.5f, -1}, {0, 1, 0}, 90, 16.0f / 9.0f);
     basic_scene scene = basic_scene{rgb_image, camera, scene_objects};
+
     threaded_cpu_renderer renderer = threaded_cpu_renderer{scene};
     void load();
 };

@@ -1,77 +1,142 @@
 #pragma once
 
-#include <future>
-#include <thread>
 #include "i_renderer.h"
 #include "scene/i_scene.h"
 #include "utils.h"
+#include <execution>
+#include <future>
+#include <queue>
+#include <thread>
 
-class threaded_cpu_renderer final :
-	public i_renderer
+
+class ThreadPool
 {
 public:
-    explicit threaded_cpu_renderer(const i_scene&
-                                  scene
-
-                          ) : scene(scene)
-
+    explicit ThreadPool(size_t threads) : stop(false)
     {
+        for (size_t i = 0; i < threads; ++i)
+            workers.emplace_back([this] {
+                for (;;)
+                {
+                    std::function<void()> task;
+                    {
+                        std::unique_lock<std::mutex> lock(this->queue_mutex);
+                        this->condition.wait(lock, [this] { return this->stop || !this->tasks.empty(); });
+                        if (this->stop && this->tasks.empty())
+                            return;
+                        task = std::move(this->tasks.front());
+                        this->tasks.pop();
+                    }
+                    task();
+                }
+            });
     }
 
-    bool render(uint32_t& current_compute_unit) override //return true if an image was rendered successfully or false otherwise.
-	{
-		constexpr uint32_t work_unit_pixels{ 8 };
+    template<class F>
+    void enqueue(F&& f)
+    {
+        {
+            std::unique_lock<std::mutex> lock(queue_mutex);
+            tasks.emplace(std::forward<F>(f));
+        }
+        condition.notify_one();
+    }
 
-
-		auto get_compute_unit = [&](const uint32_t& compute_unit_top_left_corner_x_coordinates,
-			const uint32_t& compute_unit_top_left_corner_y_coordinates)
-			{
-				{
-					vec3 direction{};
-					color3 pixel_color{};
-					uint32_t pixel_index{};
-					for (uint32_t y = compute_unit_top_left_corner_y_coordinates; y >
-						compute_unit_top_left_corner_y_coordinates - work_unit_pixels;
-						y--)
-					{
-						for (uint32_t x = compute_unit_top_left_corner_x_coordinates; x <
-							compute_unit_top_left_corner_x_coordinates + work_unit_pixels; x++)
-						{
-							direction.x = (x + 0.5f) / scene.horizontal_pixel_count(); //camera to world
-							direction.y = (y + 0.5f) / scene.vertical_pixel_count(); //
-
-							ray ray{ scene.trace_camera_ray(direction) }; //ray from camera to world
-
-							pixel_color = scene.color_at(ray); //ray color at intersection plus secondary rays
-							pixel_index = (scene.vertical_pixel_count() - y) * scene.horizontal_pixel_count() + x;
-
-							scene.add_color_to_image(pixel_color, pixel_index);
-						}
-					}
-				}
-			};
-
-		const uint32_t compute_units_per_horizontal_line = scene.horizontal_pixel_count() / work_unit_pixels;
-		uint32_t top_left_y{ (scene.vertical_pixel_count() - (current_compute_unit / compute_units_per_horizontal_line) * work_unit_pixels)};
-		uint32_t top_left_x{(current_compute_unit - 1) % compute_units_per_horizontal_line * work_unit_pixels};
-        const uint32_t end_compute_unit = current_compute_unit + work_unit_pixels;
-		for (; current_compute_unit < end_compute_unit; ++current_compute_unit)
-		{
-			threads.emplace_back(get_compute_unit, top_left_x, top_left_y);
-
-			if (current_compute_unit % compute_units_per_horizontal_line == 0)
-			{
-				top_left_x = 0;
-				top_left_y -= work_unit_pixels;
-				continue;
-			}
-			top_left_x += work_unit_pixels;
-		}
-
-		return 1;
-	}
+    ~ThreadPool()
+    {
+        {
+            std::unique_lock<std::mutex> lock(queue_mutex);
+            stop = true;
+        }
+        condition.notify_all();
+        for (std::thread& worker: workers)
+            worker.join();
+    }
 
 private:
-    std::vector<std::jthread> threads{};
-	const i_scene& scene;
+    std::vector<std::thread> workers;
+    std::queue<std::function<void()>> tasks;
+    std::mutex queue_mutex;
+    std::condition_variable condition;
+
+    bool stop;
+};
+
+class threaded_cpu_renderer final : public i_renderer
+{
+public:
+    void get_compute_unit(uint32_t start, uint32_t end)
+    {
+        // Compute unit work
+        for (uint32_t i = start; i < end; i++)
+        {
+            ray ray{scene.trace_camera_ray(precomputed_directions[i])};
+            color3 pixel_color = scene.color_at(ray);
+            uint32_t pixel_index = i;
+            scene.add_color_to_image(pixel_color, pixel_index);
+        }
+    }
+    explicit threaded_cpu_renderer(const i_scene&
+                                           scene
+
+                                   ) : scene(scene), pool(std::thread::hardware_concurrency())
+
+    {
+        precompute_directions();
+
+
+        const uint32_t nb_compute_units = scene.horizontal_pixel_count() * scene.vertical_pixel_count() / (8 * 8);
+
+
+        for (size_t i = 0; i < nb_compute_units; ++i)
+        {
+            uint32_t start = i * work_unit_pixels * work_unit_pixels;
+            uint32_t end = start + work_unit_pixels * work_unit_pixels;
+            compute_units.emplace([=, this] { get_compute_unit(start, end); });
+        }
+    }
+
+    bool render(uint32_t& current_compute_unit) override//return true if an image was rendered successfully or false otherwise.
+    {
+
+
+        for (size_t i = 0; i < max_threads; ++i)
+        {
+            if (compute_units.empty())
+            {
+                break;
+            }
+            pool.enqueue(compute_units.front());
+            compute_units.pop();
+        }
+
+
+        current_compute_unit += max_threads;
+
+
+        return 1;
+    }
+    void precompute_directions()
+    {
+        for (uint32_t y = scene.vertical_pixel_count(); y > 0; --y)
+        {
+            for (uint32_t x = 0; x < scene.horizontal_pixel_count(); ++x)
+            {
+                vec3 direction;
+                direction.x = (x + 0.5f) / scene.horizontal_pixel_count();
+                direction.y = (y + 0.5f) / scene.vertical_pixel_count();
+                precomputed_directions.push_back(direction);
+            }
+        }
+    }
+
+private:
+    size_t max_threads = std::thread::hardware_concurrency();
+
+    std::queue<std::function<void()>> compute_units;
+    static const uint32_t work_unit_pixels{8};
+    const i_scene& scene;
+    std::vector<vec3> precomputed_directions;
+
+    ThreadPool pool;
 };
