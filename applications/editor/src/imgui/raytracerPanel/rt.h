@@ -30,13 +30,7 @@ public:
     RayTracer();
     int run()
     {
-        const uint32_t compute_units = scene.horizontal_pixel_count() * scene.vertical_pixel_count() / (8*8) ;
-
-        if (current_compute_unit < compute_units)
-        {
             renderer.render(current_compute_unit);
-            return 0;
-        }
 
 
         return 1;

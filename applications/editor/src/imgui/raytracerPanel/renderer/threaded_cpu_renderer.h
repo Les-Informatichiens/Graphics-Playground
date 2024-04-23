@@ -100,18 +100,11 @@ public:
     {
 
 
-        for (size_t i = 0; i < max_threads; ++i)
+        while (!compute_units.empty())
         {
-            if (compute_units.empty())
-            {
-                break;
-            }
             pool.enqueue(compute_units.front());
             compute_units.pop();
         }
-
-
-        current_compute_unit += max_threads;
 
 
         return 1;
@@ -131,7 +124,7 @@ public:
     }
 
 private:
-    size_t max_threads = std::thread::hardware_concurrency();
+    size_t max_threads = std::thread::hardware_concurrency() -2;
 
     std::queue<std::function<void()>> compute_units;
     static const uint32_t work_unit_pixels{8};
