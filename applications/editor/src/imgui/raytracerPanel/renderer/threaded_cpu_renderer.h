@@ -96,7 +96,7 @@ public:
         }
     }
 
-    bool render(uint32_t& current_compute_unit) override//return true if an image was rendered successfully or false otherwise.
+    bool render(uint32_t& current_compute_unit) override
     {
 
 
