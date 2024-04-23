@@ -7,9 +7,14 @@ class glass final :
 	public i_material
 {
 public:
-	glass(const i_texture* p_texture, const float p_refractive_index) : albedo(p_texture),
-	                                                                    refractive_index(p_refractive_index)
-	{
+    glass(const i_texture*
+                  p_texture,
+          const float
+                  p_refractive_index,
+          const float
+                  shininess) : albedo(p_texture),
+	                                                                    refractive_index(p_refractive_index), shininess(shininess)
+    {
 	}
 
 	bool alter_ray_direction(const ray& incident_ray, const vec3& normal, vec3& next_direction) const override
@@ -45,12 +50,17 @@ public:
 		return true;
 	}
 
-	color3 color_at(const point3& t, const glm::vec2& uv) const override
+	[[nodiscard]] color3 color_at(const point3& t, const glm::vec2& uv) const override
 	{
 		return albedo->color_at(t, uv);
 	}
-
+    [[nodiscard]] float get_shininess() const override
+    {
+        return shininess;
+    }
 private:
 	const i_texture* albedo;
 	const float refractive_index;
+    const float shininess;
+
 };

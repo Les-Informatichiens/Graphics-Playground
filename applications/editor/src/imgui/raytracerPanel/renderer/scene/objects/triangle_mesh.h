@@ -59,6 +59,11 @@ public:
 		return material->color_at(t, uv);
 	}
 
+    float get_shininess() const override
+    {
+        return material->get_shininess();
+    }
+
 private:
 	const i_material* material;
 	const uint32_t nb_triangles{};

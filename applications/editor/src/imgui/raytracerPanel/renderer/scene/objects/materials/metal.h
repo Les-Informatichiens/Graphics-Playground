@@ -5,8 +5,13 @@
 class metal final : public i_material
 {
 public:
-	metal(const i_texture* p_texture, const float p_diffusion) : albedo(p_texture), diffusion(p_diffusion)
-	{
+    metal(const i_texture*
+                  p_texture,
+          const float
+                  p_diffusion,
+          const float
+                  shininess) : albedo(p_texture), diffusion(p_diffusion), shininess(shininess)
+    {
 	}
 
 	bool alter_ray_direction(const ray& incident_ray, const vec3& normal, vec3& next_direction) const override
@@ -29,7 +34,12 @@ public:
 		return albedo->color_at(t, uv);
 	}
 
+        [[nodiscard]] float get_shininess() const override
+        {
+            return shininess;
+        }
 private:
+    const float shininess;
 	const i_texture* albedo;
 	const float diffusion;
 };

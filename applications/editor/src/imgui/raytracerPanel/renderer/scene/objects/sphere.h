@@ -30,6 +30,10 @@ public:
 		return material->color_at(t, uv);
 	}
 
+        [[nodiscard]] float get_shininess() const override
+        {
+            return material->get_shininess();
+        }
 private:
 	const point3 center{};
 	float radius{};
