@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 #include "i_object.h"
@@ -10,13 +11,14 @@
 #include "glm/gtx/normal.hpp"
 #include "materials/i_material.h"
 
+
 class triangle_mesh final : public i_object
 {
 public:
-	triangle_mesh(const i_material* material, const int nb_triangles, std::vector<std::vector<point3>> p_triangles)
+	triangle_mesh(const i_material* material, const int nb_triangles, std::vector<std::vector<Vertex>> p_triangles)
 		: material(material),
 		  nb_triangles(nb_triangles),
-		  triangles(std::move(p_triangles))
+            triangles(std::move(p_triangles))
 	{
 	}
 
@@ -30,17 +32,17 @@ public:
 
         for (uint32_t i = 0; i < nb_triangles; ++i)
         {
-            const point3 v0 = triangles[i][0];
-            const point3 v1 = triangles[i][1];
-            const point3 v2 = triangles[i][2];
-
+            const Vertex& v0 = triangles[i][0];
+            const Vertex& v1 = triangles[i][1];
+            const Vertex& v2 = triangles[i][2];
             glm::vec2 hit_uv{0, 0};
-            if (intersectRayTriangle(acne_corrected_origin, direction, v0, v1, v2, hit_uv, distance) &&
+            if (intersectRayTriangle(acne_corrected_origin, direction, v0.position, v1.position, v2.position, hit_uv, distance) &&
                 distance > 0.001f && min_distance > distance)
             {
                 min_distance = distance;
                 t = p_ray.move(min_distance);
-                normal = triangleNormal(v0, v1, v2);
+                // Interpolate the normals based on the uv coordinates
+                normal = glm::normalize((1 - hit_uv.x - hit_uv.y) * v0.normal + hit_uv.x * v1.normal + hit_uv.y * v2.normal);
                 intersected = true;
                 uv = hit_uv;
             }
@@ -54,10 +56,10 @@ public:
 		return material->alter_ray_direction(incident_ray, normal, next_direction);
 	}
 
-	color3 color_at(const point3& t, const glm::vec2& uv) const override
-	{
-		return material->color_at(t, uv);
-	}
+    [[nodiscard]] color3 color_at(const point3& t, const glm::vec2& uv) const override
+    {
+        return material->color_at(t, uv);
+    }
 
     float get_shininess() const override
     {
@@ -67,5 +69,5 @@ public:
 private:
 	const i_material* material;
 	const uint32_t nb_triangles{};
-	const std::vector<std::vector<point3>> triangles;
+    std::vector<std::vector<Vertex>> triangles;
 };

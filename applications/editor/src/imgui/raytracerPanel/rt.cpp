@@ -9,8 +9,9 @@
 
 void RayTracer::load()
 {
-    std::vector<std::vector<point3>> mesh_data;
 
+
+    std::vector<std::vector<Vertex>> mesh_data;
 
     const std::string p_file_name = "assets/test/teapot.obj";
 
@@ -45,7 +46,7 @@ void RayTracer::load()
             const size_t fv = shape.mesh.num_face_vertices[f];
 
             point3 vertex{};
-            std::vector<point3> verteses;
+            std::vector<Vertex> vertices;
             // Loop over vertices in the face.
             for (size_t v = 0; v < fv; v++)
             {
@@ -55,28 +56,81 @@ void RayTracer::load()
                 vertex.y = attrib.vertices[3 * static_cast<size_t>(idx.vertex_index) + 1] - 1.5f;
                 vertex.z = attrib.vertices[3 * static_cast<size_t>(idx.vertex_index) + 2] - 3.0f;
 
+                // access to normal
+                vec3 normal;
+                if (idx.normal_index >= 0) // Check if this vertex has a normal
+                {
+                    normal.x = attrib.normals[3 * static_cast<size_t>(idx.normal_index) + 0];
+                    normal.y = attrib.normals[3 * static_cast<size_t>(idx.normal_index) + 1];
+                    normal.z = attrib.normals[3 * static_cast<size_t>(idx.normal_index) + 2];
+                }
 
-                verteses.emplace_back(vertex);
+                // Store the vertex and normal in your data structure
+                vertices.emplace_back(Vertex{vertex, normal});
             }
-            mesh_data.emplace_back(verteses);
+            mesh_data.emplace_back(vertices);
 
             index_offset += fv;
         }
     }
 
 
-    std::vector<std::vector<point3>> floor_triangles;
+    std::vector<std::vector<Vertex>> floor_triangles;
     std::vector<point3> tri;
     std::vector<point3> tri2;
+    std::vector<point3> tri3;
 
-    tri.emplace_back(-5.5, -2, -5.5);
     tri.emplace_back(5.5, -2, -5.5);
+    tri.emplace_back(-5.5, -2, -5.5);
     tri.emplace_back(-5.5, -2, 5);
     tri2.emplace_back(5.5, -2, -5.5);
     tri2.emplace_back(-5.5, -2, 5);
     tri2.emplace_back(5.5, -2, 5);
-    floor_triangles.emplace_back(tri);
-    floor_triangles.emplace_back(tri2);
+    tri3.emplace_back(5.5, -2, -5.5);
+    tri3.emplace_back(5.5, -2, 5);
+    tri3.emplace_back(5.5, 11, -5.5);
+
+    std::vector<Vertex> triangle1;
+    std::vector<Vertex> triangle2;
+    std::vector<Vertex> triangle3;
+    for (const auto& point : tri3) {
+        triangle3.emplace_back(Vertex{point, vec3(0, 1, 0)});
+    }
+    for (const auto& point : tri) {
+        triangle1.emplace_back(Vertex{point, vec3(0, 1, 0)});
+    }
+
+    for (const auto& point : tri2) {
+        triangle2.emplace_back(Vertex{point, vec3(0, 1, 0)});
+    }
+
+    floor_triangles.emplace_back(triangle1);
+    floor_triangles.emplace_back(triangle2);
+    floor_triangles.emplace_back(triangle3);
+
+    std::vector<vec3> floor_normals;
+
+    for (const auto& triangle : floor_triangles) {
+        // Calculate the vectors representing two sides of the triangle
+        vec3 edge1 = triangle[1].position - triangle[0].position;
+        vec3 edge2 = triangle[2].position - triangle[0].position;
+
+        // Calculate the normal by taking the cross product of the two edges
+        vec3 normal = glm::normalize(glm::cross(edge1, edge2));
+
+        // Store the normal in the normals vector
+        floor_normals.push_back(normal);
+    }
+    for (auto& vertex : triangle1) {
+        vertex.normal = floor_normals[0];
+    }
+
+    for (auto& vertex : triangle2) {
+        vertex.normal = floor_normals[1];
+    }
+    for (auto& vertex : triangle3) {
+        vertex.normal = floor_normals[2];
+    }
 
     //scene init
     const i_texture* mesh_texture = new base_color{new color3{0.5f, 0.0f, 0.0f}};
@@ -85,18 +139,18 @@ void RayTracer::load()
     const i_texture* sphere_texture2 = new base_color{new const color3{0.0f, 0.0f, 0.6f}};
     const i_texture* sphere_texture3 = new checker{new color3{1.0f, 1.0f, 0.0f}, new color3{0, 1, 1}};
 
-    const i_material* mesh_material = new metal{mesh_texture, 0.0f, 0};
-    const i_material* floor_material = new metal{floor_texture, 0.01f, 0.1f};
+    const i_material* mesh_material = new metal{mesh_texture, 0.0f, 10};
+    const i_material* floor_material = new metal{floor_texture, 0.01f, 1.0f};
     const i_material* sphere_material = new metal{sphere_texture, 0.0f, 0.5f};
     const i_material* sphere_material2 = new metal{sphere_texture3, 0.0f, 0};
-    const i_material* sphere_material3 = new glass{sphere_texture, 1.52f, 0.2};
+    const i_material* sphere_material3 = new glass{sphere_texture, 1.52f, 250.0f};
 
-    const i_light* light = new point_light({-1.0f, 2.0f, -5.0f}, {1, 1, 1}, 105.0f);
+    const i_light* light = new point_light({-5.0f, 2.0f, 0.0f}, {1, 1, 1}, 25.0f);
     const i_light* light2 = new point_light({-1.0f, 2.0f, 0.0f}, {1, 1, 1}, 1.0f);
 
     scene_objects.add_object(new sphere{{1.5f, 0.3f, -1.2f}, 0.3f, sphere_material3});
     //scene_objects.add_object(new sphere{{1.5f, 1.3f, -3.2f}, 0.3f, sphere_material2});
-    //scene_objects.add_object(new sphere{{-1.5f, 0.7f, -2.2f}, 0.3f, sphere_material3});
+    scene_objects.add_object(new sphere{{-1.5f, 0.7f, -2.2f}, 0.3f, sphere_material3});
 
     scene_objects.add_object(new triangle_mesh{mesh_material, static_cast<int>(mesh_data.size()), mesh_data});
 
@@ -104,7 +158,7 @@ void RayTracer::load()
             floor_material, static_cast<int>(floor_triangles.size()), floor_triangles});
 
     scene_objects.add_light(light);
-    scene_objects.add_light(light2);
+  //  scene_objects.add_light(light2);
 }
 RayTracer::RayTracer() : rgb_image(
                                  3, 1920 * 1, 1080 * 1, 9)

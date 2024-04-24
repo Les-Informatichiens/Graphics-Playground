@@ -15,10 +15,16 @@ public:
     ~object_manager()
 	{
 		for (auto& object : objects)
-		{
-			delete object;
-			object = nullptr;
-		}
+        {
+            delete object;
+            object = nullptr;
+        }
+        for (auto& light : lights)
+        {
+            delete light;
+            light = nullptr;
+        }
+
 	}
 
 	void add_object(i_object* object)
@@ -49,31 +55,38 @@ public:
 		return local_color;
 	}
 
-    color3 compute_local_illumination(const point3& intersection_point, const vec3& normal, const i_object* obj, const ray& incident_ray, const glm::vec2& uv)
-    {
-        color3 local_illumination = {0, 0, 0};
 
+    void compute_local_illumination(const i_object* closest_hit_object, const point3& closest_hit_t,
+                                    const vec3& closest_hit_normal, const glm::vec2& closest_hit_uv,
+                                    color3& local_color) const
+    {
         for (const auto& light : lights)
         {
-            vec3 light_direction;
-            light->direction_to(intersection_point, light_direction);
-
-            color3 light_emission = light->emit(intersection_point, normal);
-
-            // Use the Lambertian model for the diffuse component
-            float diffuse = std::max(0.0f, dot(normal, light_direction));
-
-            // Calculate the half-way vector
-            vec3 half_way = normalize(light_direction + incident_ray.get_direction()); // Adjusted for left-handed coordinate system
-
-            // Calculate the specular component
-            float shininess = 10.0f; // Constant shininess factor
-            float specular = pow(std::max(0.0f, dot(normal, half_way)), shininess);
-
-            local_illumination += light_emission * (diffuse + specular);
+            vec3 direction_to_light{};
+            light->direction_to(closest_hit_t, direction_to_light);
+            ray shadow_ray{closest_hit_t, direction_to_light};
+            bool hit_something{false};
+            point3 t{0.0f, 0.0f, 0.0f};
+            vec3 normal{0.0f, 0.0f, 0.0f};
+            glm::vec2 uv;
+            for (const auto& object : objects)
+            {
+                if (object->intersect(shadow_ray, t, normal, uv))
+                {
+                    hit_something = true;
+                    break;
+                }
+            }
+            if (!hit_something)
+            {
+                // Lambertian reflectance for the diffuse component
+                float diffuse = std::max(0.0f, glm::dot(closest_hit_normal, direction_to_light));
+                // Blinn-Phong model for the specular component
+                vec3 halfway_dir = glm::normalize(direction_to_light - shadow_ray.get_direction()+ 0.001f) ;
+                float specular = std::pow(std::max(0.0f, glm::dot(closest_hit_normal, halfway_dir)), closest_hit_object->get_shininess());
+                local_color += closest_hit_object->color_at(closest_hit_t, closest_hit_uv) * light->emit(closest_hit_t, closest_hit_normal) * (diffuse + specular);
+            }
         }
-
-        return local_illumination * obj->color_at(intersection_point, uv);
     }
 	void compute_closest_intersection(const ray& incident_ray,
 	                                  i_object*& closest_hit_object, point3& closest_hit_t, vec3& closest_hit_normal,
@@ -115,7 +128,8 @@ public:
         //find total illumination and generate reflect/refract ray at intersection
         if (closest_hit_object != nullptr)
         {
-            color3 local_color = compute_local_illumination(closest_hit_t, closest_hit_normal, closest_hit_object, incident_ray, closest_hit_uv);
+            color3 local_color{0.0f, 0.0f, 0.0f};
+            compute_local_illumination(closest_hit_object, closest_hit_t,closest_hit_normal , closest_hit_uv, local_color);
 
             return compute_global_illumination(incident_ray, max_rays, closest_hit_object, closest_hit_t,
                                                closest_hit_normal,
