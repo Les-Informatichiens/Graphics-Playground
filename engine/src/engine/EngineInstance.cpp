@@ -67,7 +67,7 @@ void EngineInstance::initialize()
         auto fs = R"(
             #version 450
 
-            in vec2 fragTexCoord;
+            layout(location = 0) in vec2 fragTexCoord;
             out vec4 frag_color;
 
             layout(binding = 0) uniform sampler2D screenTexture;
