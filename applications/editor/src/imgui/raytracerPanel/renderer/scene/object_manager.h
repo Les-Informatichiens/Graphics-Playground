@@ -88,7 +88,6 @@ public:
                 float diffuse = dot(closest_hit_normal, direction_to_light);
                 // Phong model for the specular component
                 vec3 view_dir = normalize( vec3{0.0f, 2.5f, 0.0f} - closest_hit_t);
-                //(v + l / ∥v + l∥)
                 vec3 half_vec = (view_dir+ direction_to_light) / length(view_dir + direction_to_light);
 
                 float specular = std::pow( dot(closest_hit_normal, half_vec), closest_hit_object->get_shininess());

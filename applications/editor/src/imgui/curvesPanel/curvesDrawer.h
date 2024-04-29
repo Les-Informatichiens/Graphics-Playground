@@ -17,7 +17,6 @@ public:
     {
         ImVec2 windowPos = ImGui::GetWindowPos();
         ImVec2 windowSize = ImGui::GetWindowSize();
-        points[4] = glm::vec3(windowPos.x + 0.55f * windowSize.x, windowPos.y + 0.85f * windowSize.y, 0.0f);
         glm::vec3 lastPoint = EvaluateBezier(points[0], points[1], points[2], points[3], points[4], 0.0f);
         for (float t = 0.01f; t <= 1.0f; t += 0.01f)
         {

@@ -216,10 +216,18 @@ void application::run()
                     glm::vec3(windowPos.x + 0.85f * windowSize.x, windowPos.y + 0.75f * windowSize.y, 0.0f),// Bottom-right corner
                     glm::vec3(windowPos.x + 0.25f * windowSize.x, windowPos.y + 0.55f * windowSize.y, 0.0f) // Bottom-left corner
             };
+            glm::vec3 controlPoints[5] = {
+                glm::vec3(windowPos.x + 0.15f * windowSize.x, windowPos.y + 0.15f * windowSize.y, 0.0f),// Top-left corner
+                glm::vec3(windowPos.x + 0.65f * windowSize.x, windowPos.y + 0.25f * windowSize.y, 0.0f),// Top-right corner
+                glm::vec3(windowPos.x + 0.85f * windowSize.x, windowPos.y + 0.75f * windowSize.y, 0.0f),// Bottom-right corner
+                glm::vec3(windowPos.x + 0.25f * windowSize.x, windowPos.y + 0.55f * windowSize.y, 0.0f), // Bottom-left corner
+                glm::vec3(windowPos.x + 0.55f * windowSize.x, windowPos.y + 0.85f * windowSize.y, 0.0f)
+
+        };
             constexpr ImU32 color = IM_COL32(255, 215, 0, 120);
             constexpr ImU32 color2 = IM_COL32(255, 0, 0, 255);
             curvesDrawer.DrawCoonsSurface(draw_list, corners, color);
-            curvesDrawer.DrawBezierSpline(draw_list, corners, color2, 2.0f);
+            curvesDrawer.DrawBezierSpline(draw_list, controlPoints, color2, 2.0f);
             ImGui::End();
         }
 
