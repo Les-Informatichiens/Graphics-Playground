@@ -12,6 +12,7 @@
 #include "imgui/scenePanel/SceneEditor.h"
 
 #include "graphicsAPI/common/Texture.h"
+#include "imgui/curvesPanel/curvesDrawer.h"
 #include "imgui/raytracerPanel/rt.h"
 
 #include <memory>
@@ -35,7 +36,7 @@ struct ImageData
     PixelColor getPixel(int x, int y)
     {
         int i = y * this->w + x;
-        return PixelColor { .r = this->pixels[i], .g = this->pixels[i + 1], .b = this->pixels[i + 2], .a = this->pixels[i + 3] };
+        return PixelColor{.r = this->pixels[i], .g = this->pixels[i + 1], .b = this->pixels[i + 2], .a = this->pixels[i + 3]};
     }
 
 
@@ -53,7 +54,6 @@ struct ImageData
 class application
 {
 public:
-
     application(EngineInstance& engine, GLFWwindow* window)
         : gameEngine(engine), imguiInstance({}), window(window), RTimageData({}), imageData({}), imageTexture(nullptr), sceneEditor(engine){};
 
@@ -77,14 +77,13 @@ public:
     ~application();
 
 private:
-
     EngineInstance& gameEngine;
     imgui::ImGuiInstance imguiInstance;
     GLFWwindow* window;
     bool windowShouldClose = false;
 
-    int width {};
-    int height {};
+    int width{};
+    int height{};
 
     // imgui state
     bool show_demo_window = false;
@@ -95,9 +94,10 @@ private:
     bool cameraMotion = true;
     bool showImageWindow = false;
     bool showRayTracer = false;
+    bool showCurvesUwu = false;
     bool renderedImage = false;
     picasso vectorDrawer;
-
+    CurvesDrawer curvesDrawer;
     std::shared_ptr<ITexture> RTtexture;
     ImageData RTimageData;
 

@@ -18,7 +18,54 @@
 #include "application.h"
 
 RayTracer rayTracerz;
+// Helper to interact with a control point
+// mouse left click/move for move the control point
+static ImVec2 HelpManipulateControlPoint(const int point_index, ImVec2& point_coords, const float point_radius, const ImVec4 canvas)
+{
+    static int selected_control_point = -1;
 
+    // current point control
+    ImVec2 point = ImVec2(canvas.x + point_coords.x * canvas.z, canvas.y + point_coords.y * canvas.w);
+
+    bool hovered = false;
+    if (ImGui::IsItemHovered())
+    {
+        if (ImGui::IsMouseHoveringRect(
+                    ImVec2(point.x - point_radius * 0.5f, point.y - point_radius * 0.5f),
+                    ImVec2(point.x + point_radius * 0.5f, point.y + point_radius * 0.5f)))
+        {
+            hovered = true;
+
+            // select if active and no point was selected before
+            // for have only one point movable at same time
+            if (selected_control_point < 0 && ImGui::IsItemActive())
+                selected_control_point = point_index;
+        }
+    }
+
+    ImDrawList* draw_list = ImGui::GetWindowDrawList();
+    // draw point background color
+    draw_list->AddCircleFilled(point, point_radius,
+                               (selected_control_point == point_index) ? IM_COL32(0, 0, 255, 255) : (hovered) ? IM_COL32(0, 127, 127, 255)
+                                                                                                              : IM_COL32(255, 0, 0, 255));
+    // draw point edge
+    draw_list->AddCircle(point, point_radius, IM_COL32(255, 255, 255, 255), 0, 2.0f);
+
+    // unselect point
+    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+        selected_control_point = -1;
+
+    // move point, will be updated on next frame
+    if (selected_control_point == point_index &&
+        ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.0f))
+    {
+        ImGuiIO& io = ImGui::GetIO();
+        point_coords.x += io.MouseDelta.x / (canvas.z + 1e-5f);
+        point_coords.y += io.MouseDelta.y / (canvas.w + 1e-5f);
+    }
+
+    return point;
+}
 //implement the application class here
 void application::init()
 {
@@ -98,7 +145,7 @@ void calculateRGBHistogram(unsigned char* pixels, int width, int height, float* 
         }
     }
 
-    float totalPixels = width * height;
+    const float totalPixels = height * width;
     for (int i = 0; i < histogramSize; ++i)
     {
         histogram[i] /= totalPixels;
@@ -154,13 +201,34 @@ void application::run()
 
         beginImGuiFrame();
 
+        if (showCurvesUwu)
+        {
+            ImGui::SetNextWindowSizeConstraints(ImVec2(1250, 650), ImVec2(FLT_MAX, FLT_MAX));
+            ImGui::Begin("Curves", &showCurvesUwu, ImGuiWindowFlags_AlwaysAutoResize);
+
+
+            ImDrawList* draw_list = ImGui::GetWindowDrawList();
+            ImVec2 windowPos = ImGui::GetWindowPos();
+            ImVec2 windowSize = ImGui::GetWindowSize();
+            glm::vec3 corners[4] = {
+                    glm::vec3(windowPos.x + 0.15f * windowSize.x, windowPos.y + 0.15f * windowSize.y, 0.0f),// Top-left corner
+                    glm::vec3(windowPos.x + 0.65f * windowSize.x, windowPos.y + 0.25f * windowSize.y, 0.0f),// Top-right corner
+                    glm::vec3(windowPos.x + 0.85f * windowSize.x, windowPos.y + 0.75f * windowSize.y, 0.0f),// Bottom-right corner
+                    glm::vec3(windowPos.x + 0.25f * windowSize.x, windowPos.y + 0.55f * windowSize.y, 0.0f) // Bottom-left corner
+            };
+            constexpr ImU32 color = IM_COL32(255, 215, 0, 120);
+            constexpr ImU32 color2 = IM_COL32(255, 0, 0, 255);
+            curvesDrawer.DrawCoonsSurface(draw_list, corners, color);
+            curvesDrawer.DrawBezierSpline(draw_list, corners, color2, 2.0f);
+            ImGui::End();
+        }
+
         if (showRayTracer)
         {
             ImGui::SetNextWindowSizeConstraints(ImVec2(1250, 650), ImVec2(FLT_MAX, FLT_MAX));
             ImGui::Begin("Ray Tracer", &showRayTracer, ImGuiWindowFlags_AlwaysAutoResize);
             if (!renderedImage)
             {
-
                 renderedImage = rayTracerz.run();
                 RTimageData.pixels = rayTracerz.rgb_image.get_pixel_data();
             }
@@ -457,7 +525,7 @@ void application::run()
             ImGui::Checkbox("Demo Window", &show_demo_window);// Edit bools storing our window open/close state
             ImGui::Checkbox("Image Manipulation", &showImageWindow);
             ImGui::Checkbox("Ray Tracing", &showRayTracer);
-
+            ImGui::Checkbox("Curves", &showCurvesUwu);
             ImGui::Checkbox("Vector drawing window", &show_another_window);
             ImGui::Checkbox("Scene Editor", &show_editor);
             ImGui::Checkbox("Camera Render Texture", &show_pov_cam);

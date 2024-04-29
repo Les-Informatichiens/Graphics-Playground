@@ -58,7 +58,7 @@ void RayTracer::load()
 
                 // access to normal
                 vec3 normal;
-                if (idx.normal_index >= 0) // Check if this vertex has a normal
+                if (idx.normal_index >= 0)// Check if this vertex has a normal
                 {
                     normal.x = attrib.normals[3 * static_cast<size_t>(idx.normal_index) + 0];
                     normal.y = attrib.normals[3 * static_cast<size_t>(idx.normal_index) + 1];
@@ -93,14 +93,17 @@ void RayTracer::load()
     std::vector<Vertex> triangle1;
     std::vector<Vertex> triangle2;
     std::vector<Vertex> triangle3;
-    for (const auto& point : tri3) {
+    for (const auto& point: tri3)
+    {
         triangle3.emplace_back(Vertex{point, vec3(0, 1, 0)});
     }
-    for (const auto& point : tri) {
+    for (const auto& point: tri)
+    {
         triangle1.emplace_back(Vertex{point, vec3(0, 1, 0)});
     }
 
-    for (const auto& point : tri2) {
+    for (const auto& point: tri2)
+    {
         triangle2.emplace_back(Vertex{point, vec3(0, 1, 0)});
     }
 
@@ -110,7 +113,8 @@ void RayTracer::load()
 
     std::vector<vec3> floor_normals;
 
-    for (const auto& triangle : floor_triangles) {
+    for (const auto& triangle: floor_triangles)
+    {
         // Calculate the vectors representing two sides of the triangle
         vec3 edge1 = triangle[1].position - triangle[0].position;
         vec3 edge2 = triangle[2].position - triangle[0].position;
@@ -121,15 +125,18 @@ void RayTracer::load()
         // Store the normal in the normals vector
         floor_normals.push_back(normal);
     }
-    for (auto& vertex : triangle1) {
-        vertex.normal = floor_normals[0];
+    for (auto& [position, normal]: triangle1)
+    {
+        normal = floor_normals[0];
     }
 
-    for (auto& vertex : triangle2) {
-        vertex.normal = floor_normals[1];
+    for (auto& [position, normal]: triangle2)
+    {
+        normal = floor_normals[1];
     }
-    for (auto& vertex : triangle3) {
-        vertex.normal = floor_normals[2];
+    for (auto& [position, normal]: triangle3)
+    {
+        normal = floor_normals[2];
     }
 
     //scene init
@@ -158,13 +165,13 @@ void RayTracer::load()
             floor_material, static_cast<int>(floor_triangles.size()), floor_triangles});
 
     scene_objects.add_light(light);
-  //  scene_objects.add_light(light2);
+    //  scene_objects.add_light(light2);
 }
 RayTracer::RayTracer() : rgb_image(
                                  3, 1920 * 1, 1080 * 1, 9)
 
 {
     load();
-    positionable_camera camera = positionable_camera({0.0f, 2.5f, 0.0f}, {0, 1.5f, -1}, {0, 1, 0}, 90, 16.0f / 9.0f);
+    auto camera = positionable_camera({0.0f, 2.5f, 0.0f}, {0, 1.5f, -1}, {0, 1, 0}, 90, 16.0f / 9.0f);
     scene = basic_scene{rgb_image, camera, scene_objects};
 }

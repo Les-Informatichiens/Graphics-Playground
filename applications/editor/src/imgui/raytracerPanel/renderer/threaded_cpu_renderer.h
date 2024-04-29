@@ -12,7 +12,7 @@
 class ThreadPool
 {
 public:
-    explicit ThreadPool(size_t threads) : stop(false)
+    explicit ThreadPool(const size_t threads) : stop(false)
     {
         for (size_t i = 0; i < threads; ++i)
             workers.emplace_back([this] {
@@ -65,9 +65,8 @@ private:
 class threaded_cpu_renderer final : public i_renderer
 {
 public:
-    void get_compute_unit(uint32_t start, uint32_t end)
+    void get_compute_unit(const uint32_t start, const uint32_t end) const
     {
-        // Compute unit work
         for (uint32_t i = start; i < end; i++)
         {
             ray ray{scene.trace_camera_ray(precomputed_directions[i])};
@@ -90,8 +89,8 @@ public:
 
         for (size_t i = 0; i < nb_compute_units; ++i)
         {
-            uint32_t start = i * work_unit_pixels * work_unit_pixels;
-            uint32_t end = start + work_unit_pixels * work_unit_pixels;
+            const uint32_t start = i * work_unit_pixels * work_unit_pixels;
+            const uint32_t end = start + work_unit_pixels * work_unit_pixels;
             compute_units.emplace([=, this] { get_compute_unit(start, end); });
         }
     }
@@ -107,7 +106,7 @@ public:
         }
 
 
-        return 1;
+        return true;
     }
     void precompute_directions()
     {
@@ -116,18 +115,18 @@ public:
             for (uint32_t x = 0; x < scene.horizontal_pixel_count(); ++x)
             {
                 vec3 direction;
-                direction.x = (x + 0.5f) / scene.horizontal_pixel_count();
-                direction.y = (y + 0.5f) / scene.vertical_pixel_count();
+                direction.x = (0.5f + x) / scene.horizontal_pixel_count();
+                direction.y = (0.5f + y) / scene.vertical_pixel_count();
                 precomputed_directions.push_back(direction);
             }
         }
     }
 
 private:
-    size_t max_threads = std::thread::hardware_concurrency() -2;
+    size_t max_threads = std::thread::hardware_concurrency() - 2;
 
     std::queue<std::function<void()>> compute_units;
-    static const uint32_t work_unit_pixels{8};
+    static constexpr uint32_t work_unit_pixels{8};
     const i_scene& scene;
     std::vector<vec3> precomputed_directions;
 
