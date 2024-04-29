@@ -120,7 +120,7 @@ void RayTracer::load()
         vec3 edge2 = triangle[2].position - triangle[0].position;
 
         // Calculate the normal by taking the cross product of the two edges
-        vec3 normal = glm::normalize(glm::cross(edge1, edge2));
+        vec3 normal = normalize(glm::cross(edge1, edge2));
 
         // Store the normal in the normals vector
         floor_normals.push_back(normal);
@@ -157,7 +157,7 @@ void RayTracer::load()
 
     scene_objects.add_object(new sphere{{1.5f, 0.3f, -1.2f}, 0.3f, sphere_material3});
     //scene_objects.add_object(new sphere{{1.5f, 1.3f, -3.2f}, 0.3f, sphere_material2});
-    scene_objects.add_object(new sphere{{-1.5f, 0.7f, -2.2f}, 0.3f, sphere_material3});
+    //scene_objects.add_object(new sphere{{-1.5f, 0.7f, -2.2f}, 0.3f, sphere_material3});
 
     scene_objects.add_object(new triangle_mesh{mesh_material, static_cast<int>(mesh_data.size()), mesh_data});
 

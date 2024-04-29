@@ -15,8 +15,6 @@ public:
     }
     static void DrawBezierSpline(ImDrawList* draw_list, glm::vec3 points[5], ImU32 col, float thickness)
     {
-        ImVec2 windowPos = ImGui::GetWindowPos();
-        ImVec2 windowSize = ImGui::GetWindowSize();
         glm::vec3 lastPoint = EvaluateBezier(points[0], points[1], points[2], points[3], points[4], 0.0f);
         for (float t = 0.01f; t <= 1.0f; t += 0.01f)
         {

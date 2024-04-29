@@ -3,7 +3,6 @@
 
 #include "../utils.h"
 #include "glm/gtc/constants.hpp"
-#include "imgui/raytracerPanel/renderer/scene/objects/materials/i_material.h"
 #include "objects/i_object.h"
 #include "objects/lights/i_light.h"
 
