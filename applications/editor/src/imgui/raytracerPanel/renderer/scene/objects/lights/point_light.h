@@ -13,9 +13,8 @@ public:
 	[[nodiscard]] color3 emit(const point3& to, const vec3& surface_normal) const override
 	{
 		const float distance = glm::distance(position, to);
-		glm::vec3 add = color * intensity;
-		add /= (4 * glm::pi<float>() * pow(distance, 2.0f));
-		return add;
+
+		return color * (1.0f / (1.0f + 0.5f * distance + 0.01f * distance * distance)) * intensity;
 	}
 
 	void direction_to(const point3& start_position, vec3& direction) const override

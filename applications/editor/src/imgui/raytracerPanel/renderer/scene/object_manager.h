@@ -36,26 +36,32 @@ public:
         lights.push_back(light);
     }
 
-    color3 compute_global_illumination(const ray& incident_ray, const uint32_t& max_rays,
-                                       const i_object* closest_hit_object,
-                                       point3& closest_hit_t, const vec3& closest_hit_normal,
-                                       const glm::vec2& closest_hit_uv,
-                                       const color3& local_color)
+    color3 global_illumination(const ray& incident_ray, const uint32_t& max_rays,
+                           const i_object* closest_hit_object,
+                           const point3& closest_hit_t, const vec3& closest_hit_normal,
+                           const glm::vec2& closest_hit_uv,
+                           const color3& local_color)
     {
-        color3 global_color{0, 0, 0};
-        vec3 next_ray_direction{};
+
+        vec3 next_ray_direction;
+        // Check if the material wants to alter the ray direction
         if (closest_hit_object->alter_ray_direction(incident_ray, closest_hit_normal, next_ray_direction))
         {
-            global_color = closest_hit_object->color_at(closest_hit_t, closest_hit_uv) * compute_color(
-                                                                                                 {closest_hit_t, next_ray_direction}, max_rays - 1);
+            // Calculate the next color in the path
+            ray next_ray(closest_hit_t, next_ray_direction);
+            color3 next_color = compute_color(next_ray, max_rays - 1);
 
-            return local_color + global_color;
+            // Simulate a simple reflection model using shininess as a glossy factor
+            float shininess = closest_hit_object->get_shininess();
+            float specular_coefficient = std::pow(glm::dot(next_ray_direction, -incident_ray.get_direction()), shininess);
+
+            // Combine local color with reflected color
+            return local_color + specular_coefficient * next_color;
         }
         return local_color;
     }
 
-
-    void compute_local_illumination(const i_object* closest_hit_object, const point3& closest_hit_t,
+    void local_illumination(const i_object* closest_hit_object, const point3& closest_hit_t,
                                     const vec3& closest_hit_normal, const glm::vec2& closest_hit_uv,
                                     color3& local_color) const
     {
@@ -79,15 +85,18 @@ public:
             if (!hit_something)
             {
                 // Lambertian reflectance for the diffuse component
-                float diffuse = std::max(0.0f, glm::dot(closest_hit_normal, direction_to_light));
-                // Blinn-Phong model for the specular component
-                vec3 halfway_dir = glm::normalize(direction_to_light - shadow_ray.get_direction() + 0.001f);
-                float specular = std::pow(std::max(0.0f, glm::dot(closest_hit_normal, halfway_dir)), closest_hit_object->get_shininess());
-                local_color += closest_hit_object->color_at(closest_hit_t, closest_hit_uv) * light->emit(closest_hit_t, closest_hit_normal) * (diffuse + specular);
+                float diffuse = dot(closest_hit_normal, direction_to_light);
+                // Phong model for the specular component
+                vec3 view_dir = normalize( vec3{0.0f, 2.5f, 0.0f} - closest_hit_t);
+                //(v + l / ∥v + l∥)
+                vec3 half_vec = (view_dir+ direction_to_light) / length(view_dir + direction_to_light);
+
+                float specular = std::pow( dot(closest_hit_normal, half_vec), closest_hit_object->get_shininess());
+                local_color +=  light->emit(closest_hit_t, closest_hit_normal) * (specular + diffuse);
             }
         }
     }
-    void compute_closest_intersection(const ray& incident_ray,
+    void closest_intersection(const ray& incident_ray,
                                       i_object*& closest_hit_object, point3& closest_hit_t, vec3& closest_hit_normal,
                                       glm::vec2& closest_hit_uv) const
     {
@@ -121,22 +130,21 @@ public:
         glm::vec2 closest_hit_uv{};
 
         //find closest intersection
-        compute_closest_intersection(incident_ray, closest_hit_object, closest_hit_t, closest_hit_normal,
+        closest_intersection(incident_ray, closest_hit_object, closest_hit_t, closest_hit_normal,
                                      closest_hit_uv);
 
         //find total illumination and generate reflect/refract ray at intersection
         if (closest_hit_object != nullptr)
         {
             color3 local_color{0.0f, 0.0f, 0.0f};
-            compute_local_illumination(closest_hit_object, closest_hit_t, closest_hit_normal, closest_hit_uv, local_color);
-
-            return compute_global_illumination(incident_ray, max_rays, closest_hit_object, closest_hit_t,
-                                               closest_hit_normal,
-                                               closest_hit_uv, local_color) *
+            local_illumination(closest_hit_object, closest_hit_t, closest_hit_normal, closest_hit_uv, local_color);
+            return global_illumination(incident_ray, max_rays, closest_hit_object, closest_hit_t,
+                                              closest_hit_normal,
+                                              closest_hit_uv, local_color) *
                    closest_hit_object->color_at(closest_hit_t,
                                                 closest_hit_uv);
         }
-        return {0.005f, 0.01f, 0.0175f};
+        return {0.015f, 0.03f, 0.0525f};
     }
 
 
