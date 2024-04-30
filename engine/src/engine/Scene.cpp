@@ -111,6 +111,8 @@ void Scene::getSceneRenderData(SceneRenderData& sceneRenderData) const
             sceneRenderData.lineRenderData.push_back({{p1, p2}, color});
         }
     }
+
+    sceneRenderData.skybox = { skyboxTexture };
 }
 
 void Scene::linkSceneNodeWithEntity(entt::registry& reg, entt::entity e)

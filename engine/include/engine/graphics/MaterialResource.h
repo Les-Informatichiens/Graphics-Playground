@@ -78,7 +78,6 @@ public:
         {
             internalMaterial_->setTextureSampler(name, desc.textureResource->getTexture(), desc.textureResource->getSamplerState(), desc.index);
         }
-
     }
 
     void setUniformBuffer(const std::string& name, void* data, size_t size, size_t bindingPoint)

@@ -11,6 +11,7 @@
 
 class MeshResource;
 class MaterialResource;
+class TextureResource;
 class Light;
 
 struct Mesh;
@@ -36,11 +37,17 @@ struct LightData
     const Light* light;
 };
 
+struct SkyboxData
+{
+    std::shared_ptr<TextureResource> texture;
+};
+
 struct SceneRenderData
 {
     std::vector<LineRenderData> lineRenderData;
     std::vector<MeshRenderData> meshRenderData;
     std::vector<LightData> lights;
+    SkyboxData skybox;
 
 public:
     void reset()
@@ -48,5 +55,6 @@ public:
         lineRenderData.clear();
         meshRenderData.clear();
         lights.clear();
+        skybox.texture = nullptr;
     }
 };

@@ -83,6 +83,7 @@ add_library(
         include/engine/Light.h
         src/engine/graphics/ShaderResource.cpp
         include/engine/graphics/ShaderResource.h
+        src/engine/TempResourceInitializer.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
