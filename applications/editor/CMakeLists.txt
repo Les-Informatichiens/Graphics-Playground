@@ -120,8 +120,6 @@ set(TestAssets
         "assets/test/textures/skybox/front.jpg"
         "assets/test/textures/skybox/back.jpg"
 )
-
-)
 copy_assets(RootFiles "." "." CopiedRootFiles)
 copy_assets(TestAssets "assets/test" "assets/test" CopiedTestAssets)
 set_source_files_properties(${CopiedTestAssets} PROPERTIES GENERATED TRUE)
