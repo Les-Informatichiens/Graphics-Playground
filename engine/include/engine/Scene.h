@@ -6,13 +6,13 @@
 
 #include "util/UUID.h"
 
+#include "engine/graphics/TextureResource.h"
 #include "entt/entt.hpp"
 
-#include <vector>
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <vector>
-#include <optional>
 
 struct SceneRenderData;
 class EntityView;
@@ -42,6 +42,9 @@ public:
 
     void getSceneRenderData(SceneRenderData& sceneRenderData) const;
 
+    void setSkyboxTexture(std::shared_ptr<TextureResource> texture) { skyboxTexture = texture; }
+    std::shared_ptr<TextureResource> getSkyboxTexture() const { return skyboxTexture; }
+
 private:
     static void linkSceneNodeWithEntity(entt::registry &reg, entt::entity e);
 
@@ -58,4 +61,6 @@ private:
 
     entt::registry registry;
     std::unordered_map<util::UUID, EntityData> entityMap;
+
+    std::shared_ptr<TextureResource> skyboxTexture;
 };

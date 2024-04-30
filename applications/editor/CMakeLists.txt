@@ -113,6 +113,14 @@ set(TestAssets
         "assets/test/textures/polishedconcrete/roughness.png"
         "assets/test/textures/polishedconcrete/height.png"
 
+        "assets/test/textures/skybox/right.jpg"
+        "assets/test/textures/skybox/left.jpg"
+        "assets/test/textures/skybox/top.jpg"
+        "assets/test/textures/skybox/bottom.jpg"
+        "assets/test/textures/skybox/front.jpg"
+        "assets/test/textures/skybox/back.jpg"
+)
+
 )
 copy_assets(RootFiles "." "." CopiedRootFiles)
 copy_assets(TestAssets "assets/test" "assets/test" CopiedTestAssets)
