@@ -29,7 +29,7 @@ public:
 		return true;
 	}
 
-	color3 color_at(const point3& t, const glm::vec2& uv) const override
+	[[nodiscard]] color3 color_at(const point3& t, const glm::vec2& uv) const override
 	{
 		return albedo->color_at(t, uv);
 	}

@@ -19,6 +19,7 @@ add_executable(
         src/imgui/raytracerPanel/rt.cpp
         src/imgui/raytracerPanel/renderer/threaded_cpu_renderer.h
         src/imgui/curvesPanel/curvesDrawer.h
+        src/imgui/raytracerPanel/renderer/scene/objects/box.h
 
 )
 

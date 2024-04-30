@@ -6,6 +6,7 @@
 // Optional. define TINYOBJLOADER_USE_MAPBOX_EARCUT gives robust trinagulation. Requires C++11
 #define TINYOBJLOADER_USE_MAPBOX_EARCUT
 #include "object_loader/tiny_obj_loader.h"
+#include "renderer/scene/objects/box.h"
 
 void RayTracer::load()
 {
@@ -16,7 +17,7 @@ void RayTracer::load()
     const std::string p_file_name = "assets/test/teapot.obj";
 
     tinyobj::ObjReaderConfig reader_config;
-    reader_config.mtl_search_path = "./";// Path to material files
+    reader_config.mtl_search_path = "./";
 
     tinyobj::ObjReader reader;
 
@@ -36,10 +37,8 @@ void RayTracer::load()
 
     auto& attrib = reader.GetAttrib();
     auto& shapes = reader.GetShapes();
-    //Loop over shapes
     for (const auto& shape: shapes)
     {
-        // Loop over faces(polygon)
         size_t index_offset = 0;
         for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++)
         {
@@ -47,25 +46,21 @@ void RayTracer::load()
 
             point3 vertex{};
             std::vector<Vertex> vertices;
-            // Loop over vertices in the face.
             for (size_t v = 0; v < fv; v++)
             {
-                // access to vertex
                 const tinyobj::index_t idx = shape.mesh.indices[index_offset + v];
                 vertex.x = attrib.vertices[3 * static_cast<size_t>(idx.vertex_index) + 0];
                 vertex.y = attrib.vertices[3 * static_cast<size_t>(idx.vertex_index) + 1] - 1.5f;
                 vertex.z = attrib.vertices[3 * static_cast<size_t>(idx.vertex_index) + 2] - 3.0f;
 
-                // access to normal
                 vec3 normal;
-                if (idx.normal_index >= 0)// Check if this vertex has a normal
+                if (idx.normal_index >= 0)
                 {
                     normal.x = attrib.normals[3 * static_cast<size_t>(idx.normal_index) + 0];
                     normal.y = attrib.normals[3 * static_cast<size_t>(idx.normal_index) + 1];
                     normal.z = attrib.normals[3 * static_cast<size_t>(idx.normal_index) + 2];
                 }
 
-                // Store the vertex and normal in your data structure
                 vertices.emplace_back(Vertex{vertex, normal});
             }
             mesh_data.emplace_back(vertices);
@@ -115,14 +110,11 @@ void RayTracer::load()
 
     for (const auto& triangle: floor_triangles)
     {
-        // Calculate the vectors representing two sides of the triangle
         vec3 edge1 = triangle[1].position - triangle[0].position;
         vec3 edge2 = triangle[2].position - triangle[0].position;
 
-        // Calculate the normal by taking the cross product of the two edges
         vec3 normal = normalize(glm::cross(edge1, edge2));
 
-        // Store the normal in the normals vector
         floor_normals.push_back(normal);
     }
     for (auto& [position, normal]: triangle1)
@@ -146,19 +138,19 @@ void RayTracer::load()
     const i_texture* sphere_texture2 = new base_color{new const color3{0.0f, 0.0f, 0.6f}};
     const i_texture* sphere_texture3 = new checker{new color3{1.0f, 1.0f, 0.0f}, new color3{0, 1, 1}};
 
-    const i_material* mesh_material = new metal{mesh_texture, 0.0f, 1.0f};
-    const i_material* floor_material = new metal{floor_texture, 0.01f, 1.0f};
-    const i_material* sphere_material = new metal{sphere_texture, 0.0f, 0.5f};
+    const i_material* mesh_material = new metal{mesh_texture, 0.0f, 0.0f};
+    const i_material* floor_material = new metal{floor_texture, 0.0f, 1.0f};
+    const i_material* sphere_material = new metal{sphere_texture2, 0.0f, 0.2f};
     const i_material* sphere_material2 = new metal{sphere_texture3, 0.0f, 0};
-    const i_material* sphere_material3 = new glass{sphere_texture, 1.52f, 5.0f};
+    const i_material* sphere_material3 = new glass{sphere_texture, 1.52f, 1.0f};
 
-    const i_light* light = new point_light({-5.0f, 2.0f, 0.0f}, {1, 1, 1}, 0.5f);
+    const i_light* light = new point_light({-5.0f, 2.0f, -1.0f}, {1, 1, 1}, 0.7f);
     const i_light* light2 = new point_light({-1.0f, 2.0f, 0.0f}, {1, 1, 1}, 1.0f);
 
-    scene_objects.add_object(new sphere{{1.5f, 0.3f, -1.2f}, 0.3f, sphere_material3});
+    scene_objects.add_object(new sphere{{0.5f, 0.3f, -1.0f}, 0.3f, sphere_material3});
     //scene_objects.add_object(new sphere{{1.5f, 1.3f, -3.2f}, 0.3f, sphere_material2});
     //scene_objects.add_object(new sphere{{-1.5f, 0.7f, -2.2f}, 0.3f, sphere_material3});
-
+    scene_objects.add_object(new box{{4.5f, -1.9f, -1.0f}, {5.3f, 8.0f, -2.8f}, sphere_material});
     scene_objects.add_object(new triangle_mesh{mesh_material, static_cast<int>(mesh_data.size()), mesh_data});
 
     scene_objects.add_object(new triangle_mesh{
@@ -168,7 +160,7 @@ void RayTracer::load()
     //  scene_objects.add_light(light2);
 }
 RayTracer::RayTracer() : rgb_image(
-                                 3, 1920 * 1, 1080 * 1, 9)
+                                 3, 1920 * 1, 1080 * 1, 6)
 
 {
     load();
