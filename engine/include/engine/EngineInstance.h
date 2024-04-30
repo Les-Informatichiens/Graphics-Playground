@@ -139,6 +139,7 @@ private:
     struct PostProcessSettings {
         float exposure = 1.0f;
         float gamma = 2.2f;
+        int useFXAA = true;
     } postProcessSettings;
 
     float pitch = 0.0f;
