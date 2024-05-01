@@ -11,7 +11,7 @@ public:
     {
     }
 
-    bool box::intersect(const ray& p_ray, point3& t, vec3& normal, glm::vec2& uv) const {
+    bool intersect(const ray& p_ray, point3& t, vec3& normal, glm::vec2& uv) const {
         vec3 inv_dir = 1.0f / p_ray.get_direction();
 
         vec3 t_min = (min - p_ray.get_origin()) * inv_dir;

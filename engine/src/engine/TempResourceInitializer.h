@@ -1278,7 +1278,10 @@ namespace TempResourceInitializer
             layout(binding = 1) uniform samplerCube skybox;
 
             void main() {
-                fragColor = texture(skybox, fragTexCoord);
+                // convert to linear
+                vec3 color = texture(skybox, fragTexCoord).rgb;
+                color = pow(color, vec3(2.2));
+                fragColor = vec4(color, 1.0);
             }
         )";
 
