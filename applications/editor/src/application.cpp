@@ -206,24 +206,93 @@ void application::run()
             ImGui::SetNextWindowSizeConstraints(ImVec2(1250, 650), ImVec2(FLT_MAX, FLT_MAX));
             ImGui::Begin("Curves", &showCurvesUwu, ImGuiWindowFlags_AlwaysAutoResize);
 
+            // Slider values
+            static float corner1X = 0.15f;
+            static float corner1Y = 0.15f;
+
+            static float corner2X = 0.65f;
+            static float corner2Y = 0.25f;
+
+            static float corner3X = 0.85f;
+            static float corner3Y = 0.75f;
+
+            static float corner4X = 0.25f;
+            static float corner4Y = 0.55f;
+
+            static float controlPoint1X = 0.15f;
+            static float controlPoint1Y = 0.15f;
+
+            static float controlPoint2X = 0.65f;
+            static float controlPoint2Y = 0.25f;
+
+            static float controlPoint3X = 0.85f;
+            static float controlPoint3Y = 0.75f;
+
+            static float controlPoint4X = 0.25f;
+            static float controlPoint4Y = 0.55f;
+
+            static float controlPoint5X = 0.55f;
+            static float controlPoint5Y = 0.85f;
+
+            if (ImGui::Button("Open Sliders Popup"))
+                ImGui::OpenPopup("Sliders Popup");
+
+            // Fenêtre popup pour les sliders
+            if (ImGui::BeginPopup("Sliders Popup"))
+            {
+
+                // Sliders
+                ImGui::SliderFloat("Corner 1 X", &corner1X, 0.0f, 1.0f);
+                ImGui::SliderFloat("Corner 1 Y", &corner1Y, 0.0f, 1.0f);
+
+                ImGui::SliderFloat("Corner 2 X", &corner2X, 0.0f, 1.0f);
+                ImGui::SliderFloat("Corner 2 Y", &corner2Y, 0.0f, 1.0f);
+
+                ImGui::SliderFloat("Corner 3 X", &corner3X, 0.0f, 1.0f);
+                ImGui::SliderFloat("Corner 3 Y", &corner3Y, 0.0f, 1.0f);
+
+                ImGui::SliderFloat("Corner 4 X", &corner4X, 0.0f, 1.0f);
+                ImGui::SliderFloat("Corner 4 Y", &corner4Y, 0.0f, 1.0f);
+
+                ImGui::SliderFloat("Control Point 1 X", &controlPoint1X, 0.0f, 1.0f);
+                ImGui::SliderFloat("Control Point 1 Y", &controlPoint1Y, 0.0f, 1.0f);
+
+                ImGui::SliderFloat("Control Point 2 X", &controlPoint2X, 0.0f, 1.0f);
+                ImGui::SliderFloat("Control Point 2 Y", &controlPoint2Y, 0.0f, 1.0f);
+
+                ImGui::SliderFloat("Control Point 3 X", &controlPoint3X, 0.0f, 1.0f);
+                ImGui::SliderFloat("Control Point 3 Y", &controlPoint3Y, 0.0f, 1.0f);
+
+                ImGui::SliderFloat("Control Point 4 X", &controlPoint4X, 0.0f, 1.0f);
+                ImGui::SliderFloat("Control Point 4 Y", &controlPoint4Y, 0.0f, 1.0f);
+
+                ImGui::SliderFloat("Control Point 5 X", &controlPoint5X, 0.0f, 1.0f);
+                ImGui::SliderFloat("Control Point 5 Y", &controlPoint5Y, 0.0f, 1.0f);
+
+                ImGui::EndPopup();
+            }
 
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
             ImVec2 windowPos = ImGui::GetWindowPos();
             ImVec2 windowSize = ImGui::GetWindowSize();
-            vec3 corners[4] = {
-                    vec3(windowPos.x + 0.15f * windowSize.x, windowPos.y + 0.15f * windowSize.y, 0.0f),// Top-left corner
-                    vec3(windowPos.x + 0.65f * windowSize.x, windowPos.y + 0.25f * windowSize.y, 0.0f),// Top-right corner
-                    vec3(windowPos.x + 0.85f * windowSize.x, windowPos.y + 0.75f * windowSize.y, 0.0f),// Bottom-right corner
-                    vec3(windowPos.x + 0.25f * windowSize.x, windowPos.y + 0.55f * windowSize.y, 0.0f) // Bottom-left corner
-            };
-            vec3 controlPoints[5] = {
-                vec3(windowPos.x + 0.15f * windowSize.x, windowPos.y + 0.15f * windowSize.y, 0.0f),// Top-left corner
-                vec3(windowPos.x + 0.65f * windowSize.x, windowPos.y + 0.25f * windowSize.y, 0.0f),// Top-right corner
-                vec3(windowPos.x + 0.85f * windowSize.x, windowPos.y + 0.75f * windowSize.y, 0.0f),// Bottom-right corner
-                vec3(windowPos.x + 0.25f * windowSize.x, windowPos.y + 0.55f * windowSize.y, 0.0f), // Bottom-left corner
-                vec3(windowPos.x + 0.55f * windowSize.x, windowPos.y + 0.85f * windowSize.y, 0.0f)
 
-        };
+            //Corners for Coon surface
+            vec3 corners[4] = {
+                    vec3(windowPos.x + corner1X * windowSize.x, windowPos.y + corner1Y * windowSize.y, 0.0f),// Top-left corner
+                    vec3(windowPos.x + corner2X * windowSize.x, windowPos.y + corner2Y * windowSize.y, 0.0f),// Top-right corner
+                    vec3(windowPos.x + corner3X * windowSize.x, windowPos.y + corner3Y * windowSize.y, 0.0f),// Bottom-right corner
+                    vec3(windowPos.x + corner4X * windowSize.x, windowPos.y + corner4Y * windowSize.y, 0.0f) // Bottom-left corner
+            };
+
+            //Control points for Bezier spline
+            vec3 controlPoints[5] = {
+                vec3(windowPos.x + controlPoint1X * windowSize.x, windowPos.y + controlPoint1Y * windowSize.y, 0.0f),// Top-left corner
+                vec3(windowPos.x + controlPoint2X * windowSize.x, windowPos.y + controlPoint2Y * windowSize.y, 0.0f),// Top-right corner
+                vec3(windowPos.x + controlPoint3X * windowSize.x, windowPos.y + controlPoint3Y * windowSize.y, 0.0f),// Bottom-right corner
+                vec3(windowPos.x + controlPoint4X * windowSize.x, windowPos.y + controlPoint4Y * windowSize.y, 0.0f), // Bottom-left corner
+                vec3(windowPos.x + controlPoint5X * windowSize.x, windowPos.y + controlPoint5Y * windowSize.y, 0.0f)
+
+            };
             constexpr ImU32 color = IM_COL32(255, 215, 0, 120);
             constexpr ImU32 color2 = IM_COL32(255, 0, 0, 255);
             curvesDrawer.DrawCoonsSurface(draw_list, corners, color);
