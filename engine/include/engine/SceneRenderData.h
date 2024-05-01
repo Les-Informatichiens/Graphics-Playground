@@ -48,6 +48,7 @@ struct SceneRenderData
     std::vector<MeshRenderData> meshRenderData;
     std::vector<LightData> lights;
     SkyboxData skybox;
+    int lightModel = 0; // test variable
 
 public:
     void reset()

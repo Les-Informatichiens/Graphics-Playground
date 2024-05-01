@@ -13,6 +13,22 @@ void SceneRenderer::render(graphics::Renderer& renderer, const SceneRenderData& 
     MeshRenderer meshRenderer;
     for (const auto& meshRenderData: sceneData.meshRenderData)
     {
+        struct MVPUBO {
+            glm::mat4 model;
+            glm::mat4 view;
+            glm::mat4 proj;
+        } ubo(meshRenderData.modelMatrix, cameraDesc.view, cameraDesc.projection);
+
+        struct Constants {
+            alignas(16) glm::vec3 cameraPos;
+            alignas(16) glm::vec3 cameraDirection;
+            alignas(16) glm::vec3 lightDir;
+            int lightModel = 0;
+        } constants(cameraDesc.position, cameraDesc.direction, glm::vec3(-0.7f, -0.5f, -0.5f), sceneData.lightModel);
+
+        meshRenderData.material->setUniformBuffer("ubo", &ubo, sizeof(ubo), 0);
+        meshRenderData.material->setUniformBuffer("constants", &constants, sizeof(constants), 1);
+
         // update pbr lights
         {
             auto& pbrMaterial = meshRenderData.material;

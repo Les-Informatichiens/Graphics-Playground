@@ -142,6 +142,8 @@ private:
         int useFXAA = true;
     } postProcessSettings;
 
+    int lightModel = 0; // test variable
+
     float pitch = 0.0f;
     float yaw = 0.0f;
     float roll = 0.0f;

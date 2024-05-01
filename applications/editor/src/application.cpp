@@ -441,6 +441,8 @@ void application::run()
             ImGui::Checkbox("FXAA", &useFXAA);
             gameEngine.postProcessSettings.useFXAA = useFXAA;
 
+            ImGui::Combo("Light Model", &gameEngine.lightModel, "Cook-Torrance\0Blinn-Phong\0Phong\0Gouraud\0\0");
+
             ImGui::SliderFloat("Bloom threshold",      &gameEngine.bloomThreshold,            0.0f, 15.0f, "%.1f");
             ImGui::SliderFloat("Bloom knee",           &gameEngine.bloomKnee,                 0.0f, 1.0f,  "%.1f");
             ImGui::SliderFloat("Bloom intensity",      &gameEngine.bloomIntensity,      0.0f, 5.0f,  "%.1f");
