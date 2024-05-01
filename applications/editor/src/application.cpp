@@ -542,6 +542,9 @@ void application::run()
 
             ImGui::SliderFloat("Exposure", &gameEngine.postProcessSettings.exposure, 0.0, 10.0, "%.1f");
             ImGui::SliderFloat("Gamma", &gameEngine.postProcessSettings.gamma, 0.0, 10.0, "%.1f");
+            bool useFXAA = gameEngine.postProcessSettings.useFXAA;
+            ImGui::Checkbox("FXAA", &useFXAA);
+            gameEngine.postProcessSettings.useFXAA = useFXAA;
 
             ImGui::SliderFloat("Bloom threshold", &gameEngine.bloomThreshold, 0.0f, 15.0f, "%.1f");
             ImGui::SliderFloat("Bloom knee", &gameEngine.bloomKnee, 0.0f, 1.0f, "%.1f");
