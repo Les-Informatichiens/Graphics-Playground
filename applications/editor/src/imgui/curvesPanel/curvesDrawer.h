@@ -7,10 +7,7 @@ public:
     CurvesDrawer() = default;
     ~CurvesDrawer() = default;
 
-    //TODO : J'suis arrivée à ce DrawControlPoint, on dirait que ça veut marcher, les points ont l'air de vouloir bouger mais ils se reset immédiatement
-    // j'suis trop fatiguée pour continuer dessus lol
-    // Reponse: les points se reset car on les redefinie a chaque frame a la valeur init, jai mis dans application.h
-    static void DrawControlPoints(ImDrawList* draw_list, std::vector<glm::vec3>& screenSpaceControlPoints , std::vector<glm::vec3>& points, float radius, ImU32 col)
+    static void DrawControlPoints(ImDrawList* draw_list, std::vector<glm::vec3>& screenSpaceControlPoints, std::vector<glm::vec3>& points, float radius, ImU32 col)
     {
         ImVec2 mousePos = ImGui::GetMousePos();
         static bool isDragging = false;
@@ -46,7 +43,6 @@ public:
                 draggedPointIndex = -1;
             }
             ImGui::ResetMouseDragDelta();
-
         }
 
         for (int i = 0; i < 5; ++i)
@@ -70,7 +66,8 @@ public:
         ImVec2 windowSize = ImGui::GetWindowSize();
 
         std::vector<glm::vec3> screenSpaceControlPoints(5);
-        for (int i = 0; i < 5; ++i) {
+        for (int i = 0; i < 5; ++i)
+        {
             screenSpaceControlPoints[i] = glm::vec3(windowPos.x + points[i][0] * windowSize.x, windowPos.y + points[i][1] * windowSize.y, 0.0f);
         }
         DrawControlPoints(draw_list, screenSpaceControlPoints, points, 5.0f, IM_COL32(0, 255, 0, 255));
@@ -90,7 +87,8 @@ public:
         ImVec2 windowSize = ImGui::GetWindowSize();
 
         std::vector<glm::vec3> screenSpaceCorners(4);
-        for (int i = 0; i < 4; ++i) {
+        for (int i = 0; i < 4; ++i)
+        {
             screenSpaceCorners[i] = glm::vec3(windowPos.x + corners[i][0] * windowSize.x, windowPos.y + corners[i][1] * windowSize.y, 0.0f);
         }
 
@@ -179,10 +177,10 @@ private:
         glm::vec3 pv1 = (1.0f - v) * p10 + v * p11;
 
         // Define wave parameters
-        float Ax = 80.1f;// Amplitude for x-axis waves
-        float Ay = 80.1f;// Amplitude for y-axis waves
-        float fx = 1.0f; // Frequency for x-axis waves
-        float fy = 1.0f; // Frequency for y-axis waves
+        float Ax = 50.1f;// Amplitude for x-axis waves
+        float Ay = 50.1f;// Amplitude for y-axis waves
+        float fx = 2.0f; // Frequency for x-axis waves
+        float fy = 2.0f; // Frequency for y-axis waves
 
         // Compute the Coons patch
         glm::vec3 puv = (1.0f - v) * p0u + v * p1u + (1.0f - u) * pv0 + u * pv1 - ((1.0f - u) * (1.0f - v) * p00 + u * (1.0f - v) * p10 + (1.0f - u) * v * p01 + u * v * p11);

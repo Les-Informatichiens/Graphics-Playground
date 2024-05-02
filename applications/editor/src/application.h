@@ -113,6 +113,7 @@ private:
             {0.85f, 0.75f, 0.0f},
             {0.25f, 0.55f, 0.0f},
             {0.55f, 0.85f, 0.0f}};
+
     std::string selectedImagePath;
     ImageData imageData;
     std::shared_ptr<ITexture> imageTexture;
