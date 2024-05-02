@@ -18,7 +18,7 @@ public:
 
         if (!isDragging)
         {
-            if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+            if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
             {
                 for (int i = 0; i < 5; ++i)
                 {
@@ -34,10 +34,10 @@ public:
         }
         else
         {
-            ImVec2 delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
+            ImVec2 delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
             screenSpaceControlPoints[draggedPointIndex].x += delta.x;
             screenSpaceControlPoints[draggedPointIndex].y += delta.y;
-            if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
+            if (!ImGui::IsMouseDown(ImGuiMouseButton_Right))
             {
                 const auto windowSize = ImGui::GetWindowSize();
                 points[draggedPointIndex].x += delta.x / windowSize.x;
