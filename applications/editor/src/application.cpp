@@ -119,6 +119,8 @@ void application::init()
     RTimageData.h = rayTracerz.rgb_image.get_height();
     auto texDesc = TextureDesc::new2D(TextureFormat::RGBX_UNorm8, RTimageData.w, RTimageData.h, TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled);
     RTtexture = gameEngine.getRenderer().getDevice().createTexture(texDesc);
+
+
 }
 
 std::unique_ptr<unsigned char[]> originalImageData;
@@ -204,99 +206,85 @@ void application::run()
         if (showCurvesUwu)
         {
             ImGui::SetNextWindowSizeConstraints(ImVec2(1250, 650), ImVec2(FLT_MAX, FLT_MAX));
-            ImGui::Begin("Curves", &showCurvesUwu, ImGuiWindowFlags_AlwaysAutoResize);
+            ImGui::Begin("Curves", &showCurvesUwu, ImGuiWindowFlags_NoMove |ImGuiWindowFlags_AlwaysAutoResize);
 
-            // Slider values
-            static float corner1X = 0.15f;
-            static float corner1Y = 0.15f;
+            // Values
+            ImVec2 corners[4] = {
+                    ImVec2(0.15f, 0.15f), // Corner 1
+                    ImVec2(0.65f, 0.25f), // Corner 2
+                    ImVec2(0.85f, 0.75f), // Corner 3
+                    ImVec2(0.25f, 0.55f) // Corner 4
+            };
 
-            static float corner2X = 0.65f;
-            static float corner2Y = 0.25f;
+            ImVec2 controlPoints[5] = {
+                    ImVec2(0.15f, 0.15f), // CP 1
+                    ImVec2(0.65f, 0.25f), // CP 2
+                    ImVec2(0.85f, 0.75f), // CP 3
+                    ImVec2(0.25f, 0.55f), // CP 4
+                    ImVec2(0.55f, 0.85f) // CP 5
+            };
 
-            static float corner3X = 0.85f;
-            static float corner3Y = 0.75f;
-
-            static float corner4X = 0.25f;
-            static float corner4Y = 0.55f;
-
-            static float controlPoint1X = 0.15f;
-            static float controlPoint1Y = 0.15f;
-
-            static float controlPoint2X = 0.65f;
-            static float controlPoint2Y = 0.25f;
-
-            static float controlPoint3X = 0.85f;
-            static float controlPoint3Y = 0.75f;
-
-            static float controlPoint4X = 0.25f;
-            static float controlPoint4Y = 0.55f;
-
-            static float controlPoint5X = 0.55f;
-            static float controlPoint5Y = 0.85f;
-
-            if (ImGui::Button("Open Sliders Popup"))
-                ImGui::OpenPopup("Sliders Popup");
-
-            // Fenêtre popup pour les sliders
-            if (ImGui::BeginPopup("Sliders Popup"))
-            {
-
-                // Sliders
-                ImGui::SliderFloat("Corner 1 X", &corner1X, 0.0f, 1.0f);
-                ImGui::SliderFloat("Corner 1 Y", &corner1Y, 0.0f, 1.0f);
-
-                ImGui::SliderFloat("Corner 2 X", &corner2X, 0.0f, 1.0f);
-                ImGui::SliderFloat("Corner 2 Y", &corner2Y, 0.0f, 1.0f);
-
-                ImGui::SliderFloat("Corner 3 X", &corner3X, 0.0f, 1.0f);
-                ImGui::SliderFloat("Corner 3 Y", &corner3Y, 0.0f, 1.0f);
-
-                ImGui::SliderFloat("Corner 4 X", &corner4X, 0.0f, 1.0f);
-                ImGui::SliderFloat("Corner 4 Y", &corner4Y, 0.0f, 1.0f);
-
-                ImGui::SliderFloat("Control Point 1 X", &controlPoint1X, 0.0f, 1.0f);
-                ImGui::SliderFloat("Control Point 1 Y", &controlPoint1Y, 0.0f, 1.0f);
-
-                ImGui::SliderFloat("Control Point 2 X", &controlPoint2X, 0.0f, 1.0f);
-                ImGui::SliderFloat("Control Point 2 Y", &controlPoint2Y, 0.0f, 1.0f);
-
-                ImGui::SliderFloat("Control Point 3 X", &controlPoint3X, 0.0f, 1.0f);
-                ImGui::SliderFloat("Control Point 3 Y", &controlPoint3Y, 0.0f, 1.0f);
-
-                ImGui::SliderFloat("Control Point 4 X", &controlPoint4X, 0.0f, 1.0f);
-                ImGui::SliderFloat("Control Point 4 Y", &controlPoint4Y, 0.0f, 1.0f);
-
-                ImGui::SliderFloat("Control Point 5 X", &controlPoint5X, 0.0f, 1.0f);
-                ImGui::SliderFloat("Control Point 5 Y", &controlPoint5Y, 0.0f, 1.0f);
-
-                ImGui::EndPopup();
-            }
+            static bool showSurface = false;
+            static bool showSpline = false;
 
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
             ImVec2 windowPos = ImGui::GetWindowPos();
             ImVec2 windowSize = ImGui::GetWindowSize();
 
             //Corners for Coon surface
-            vec3 corners[4] = {
-                    vec3(windowPos.x + corner1X * windowSize.x, windowPos.y + corner1Y * windowSize.y, 0.0f),// Top-left corner
-                    vec3(windowPos.x + corner2X * windowSize.x, windowPos.y + corner2Y * windowSize.y, 0.0f),// Top-right corner
-                    vec3(windowPos.x + corner3X * windowSize.x, windowPos.y + corner3Y * windowSize.y, 0.0f),// Bottom-right corner
-                    vec3(windowPos.x + corner4X * windowSize.x, windowPos.y + corner4Y * windowSize.y, 0.0f) // Bottom-left corner
-            };
+            vec3 cornersVec[4];
+            for (int i = 0; i < 4; ++i) {
+                cornersVec[i] = vec3(windowPos.x + corners[i][0] * windowSize.x, windowPos.y + corners[i][1] * windowSize.y, 0.0f);
+            }
 
             //Control points for Bezier spline
-            vec3 controlPoints[5] = {
-                vec3(windowPos.x + controlPoint1X * windowSize.x, windowPos.y + controlPoint1Y * windowSize.y, 0.0f),// Top-left corner
-                vec3(windowPos.x + controlPoint2X * windowSize.x, windowPos.y + controlPoint2Y * windowSize.y, 0.0f),// Top-right corner
-                vec3(windowPos.x + controlPoint3X * windowSize.x, windowPos.y + controlPoint3Y * windowSize.y, 0.0f),// Bottom-right corner
-                vec3(windowPos.x + controlPoint4X * windowSize.x, windowPos.y + controlPoint4Y * windowSize.y, 0.0f), // Bottom-left corner
-                vec3(windowPos.x + controlPoint5X * windowSize.x, windowPos.y + controlPoint5Y * windowSize.y, 0.0f)
+            vec3 controlPointsVec[5];
+            for (int i = 0; i < 5; ++i) {
+                controlPointsVec[i] = vec3(windowPos.x + controlPoints[i][0] * windowSize.x, windowPos.y + controlPoints[i][1] * windowSize.y, 0.0f);
+            }
 
-            };
             constexpr ImU32 color = IM_COL32(255, 215, 0, 120);
             constexpr ImU32 color2 = IM_COL32(255, 0, 0, 255);
-            curvesDrawer.DrawCoonsSurface(draw_list, corners, color);
-            CurvesDrawer::DrawBezierSpline(draw_list, controlPoints, color2, 2.0f);
+
+
+            //TODO: Lorsqu'on coche la checkbox, c'est chill, mais aussitôt que tu clique out du popup, tout disparait et c'est fucked up
+
+
+            // Surface popup
+            if (ImGui::Checkbox("Open Surface Popup", &showSurface))
+                ImGui::OpenPopup("Surface Popup");
+
+            if (ImGui::BeginPopup("Surface Popup"))
+            {
+                for (int i = 0; i < 4; ++i) {
+                    ImGui::SliderFloat(("Corner " + std::to_string(i + 1) + " X").c_str(), &corners[i][0], 0.0f, 1.0f);
+                    ImGui::SliderFloat(("Corner " + std::to_string(i + 1) + " Y").c_str(), &corners[i][1], 0.0f, 1.0f);
+                }
+
+                curvesDrawer.DrawCoonsSurface(draw_list, cornersVec, color);
+
+                ImGui::EndPopup();
+            }
+
+            // Spline popup
+            if (ImGui::Checkbox("Open Spline Popup", &showSpline))
+                ImGui::OpenPopup("Spline Popup");
+
+            if (ImGui::BeginPopup("Spline Popup"))
+            {
+                for (int i = 0; i < 5; ++i) {
+                    ImGui::SliderFloat(("Control Point " + std::to_string(i + 1) + " X").c_str(), &controlPoints[i][0], 0.0f, 1.0f);
+                    ImGui::SliderFloat(("Control Point " + std::to_string(i + 1) + " Y").c_str(), &controlPoints[i][1], 0.0f, 1.0f);
+                }
+
+                CurvesDrawer::DrawBezierSpline(draw_list, controlPointsVec, color2, 2.0f);
+
+                ImGui::EndPopup();
+            }
+
+            // Il est là juste pour que je sois capable de travailler avec les points
+            CurvesDrawer::DrawBezierSpline(draw_list, controlPointsVec, color2, 2.0f);
+
             ImGui::End();
         }
 

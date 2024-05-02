@@ -6,13 +6,59 @@ class CurvesDrawer
 public:
     CurvesDrawer() = default;
     ~CurvesDrawer() = default;
-    static void DrawControlPoints(ImDrawList* draw_list, const glm::vec3 points[5], float radius, ImU32 col)
+
+    //TODO : J'suis arrivée à ce DrawControlPoint, on dirait que ça veut marcher, les points ont l'air de vouloir bouger mais ils se reset immédiatement
+    // j'suis trop fatiguée pour continuer dessus lol
+
+    static void DrawControlPoints(ImDrawList* draw_list, glm::vec3 points[5], float radius, ImU32 col)
     {
+        ImVec2 mousePos = ImGui::GetMousePos();
+        static bool isDragging = false;
+        static int draggedPointIndex = -1;
+
+        if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+        {
+            for (int i = 0; i < 5; ++i)
+            {
+                ImVec2 pointPos = ImVec2(points[i].x, points[i].y);
+                if (IsPointHovered(pointPos, mousePos))
+                {
+                    isDragging = true;
+                    draggedPointIndex = i;
+                    break;
+                }
+            }
+        }
+
+        if (isDragging)
+        {
+            ImVec2 delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
+            points[draggedPointIndex].x += delta.x;
+            points[draggedPointIndex].y += delta.y;
+            ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
+
+            if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
+            {
+                isDragging = false;
+                draggedPointIndex = -1;
+            }
+        }
+
         for (int i = 0; i < 5; ++i)
         {
-            draw_list->AddCircleFilled(ImVec2(points[i].x, points[i].y), radius, col);
+            ImVec2 pointPos = ImVec2(points[i].x, points[i].y);
+            draw_list->AddCircleFilled(pointPos, radius, IsPointHovered(pointPos, mousePos) ? IM_COL32(255, 0, 0, 255) : col);
         }
     }
+
+    static bool IsPointHovered(const ImVec2& pointPos, const ImVec2& mousePos, float radius = 5.0f)
+    {
+        float dx = mousePos.x - pointPos.x;
+        float dy = mousePos.y - pointPos.y;
+        float distanceSquared = dx * dx + dy * dy;
+        return distanceSquared <= (radius * radius);
+    }
+
     static void DrawBezierSpline(ImDrawList* draw_list, glm::vec3 points[5], ImU32 col, float thickness)
     {
         glm::vec3 lastPoint = EvaluateBezier(points[0], points[1], points[2], points[3], points[4], 0.0f);
