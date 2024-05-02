@@ -1,5 +1,4 @@
 #pragma once
-class ray;
 
 class i_object
 {

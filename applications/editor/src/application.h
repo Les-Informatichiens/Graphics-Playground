@@ -101,6 +101,18 @@ private:
     std::shared_ptr<ITexture> RTtexture;
     ImageData RTimageData;
 
+    std::vector<vec3> corners{
+            {0.15f, 0.15f, 0.0f},
+            {0.65f, 0.25f, 0.0f},
+            {0.85f, 0.75f, 0.0f},
+            {0.25f, 0.55f, 0.0f}};
+
+    std::vector<vec3> controlPoints{
+            {0.15f, 0.15f, 0.0f},
+            {0.65f, 0.25f, 0.0f},
+            {0.85f, 0.75f, 0.0f},
+            {0.25f, 0.55f, 0.0f},
+            {0.55f, 0.85f, 0.0f}};
     std::string selectedImagePath;
     ImageData imageData;
     std::shared_ptr<ITexture> imageTexture;

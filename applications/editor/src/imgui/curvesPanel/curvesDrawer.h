@@ -9,44 +9,49 @@ public:
 
     //TODO : J'suis arrivée à ce DrawControlPoint, on dirait que ça veut marcher, les points ont l'air de vouloir bouger mais ils se reset immédiatement
     // j'suis trop fatiguée pour continuer dessus lol
-
-    static void DrawControlPoints(ImDrawList* draw_list, glm::vec3 points[5], float radius, ImU32 col)
+    // Reponse: les points se reset car on les redefinie a chaque frame a la valeur init, jai mis dans application.h
+    static void DrawControlPoints(ImDrawList* draw_list, std::vector<glm::vec3>& screenSpaceControlPoints , std::vector<glm::vec3>& points, float radius, ImU32 col)
     {
         ImVec2 mousePos = ImGui::GetMousePos();
         static bool isDragging = false;
         static int draggedPointIndex = -1;
 
-        if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+        if (!isDragging)
         {
-            for (int i = 0; i < 5; ++i)
+            if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
-                ImVec2 pointPos = ImVec2(points[i].x, points[i].y);
-                if (IsPointHovered(pointPos, mousePos))
+                for (int i = 0; i < 5; ++i)
                 {
-                    isDragging = true;
-                    draggedPointIndex = i;
-                    break;
+                    ImVec2 pointPos = ImVec2(screenSpaceControlPoints[i].x, screenSpaceControlPoints[i].y);
+                    if (IsPointHovered(pointPos, mousePos))
+                    {
+                        isDragging = true;
+                        draggedPointIndex = i;
+                        break;
+                    }
                 }
             }
         }
-
-        if (isDragging)
+        else
         {
             ImVec2 delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
-            points[draggedPointIndex].x += delta.x;
-            points[draggedPointIndex].y += delta.y;
-            ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
-
+            screenSpaceControlPoints[draggedPointIndex].x += delta.x;
+            screenSpaceControlPoints[draggedPointIndex].y += delta.y;
             if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
+                const auto windowSize = ImGui::GetWindowSize();
+                points[draggedPointIndex].x += delta.x / windowSize.x;
+                points[draggedPointIndex].y += delta.y / windowSize.y;
                 isDragging = false;
                 draggedPointIndex = -1;
             }
+            ImGui::ResetMouseDragDelta();
+
         }
 
         for (int i = 0; i < 5; ++i)
         {
-            ImVec2 pointPos = ImVec2(points[i].x, points[i].y);
+            ImVec2 pointPos = ImVec2(screenSpaceControlPoints[i].x, screenSpaceControlPoints[i].y);
             draw_list->AddCircleFilled(pointPos, radius, IsPointHovered(pointPos, mousePos) ? IM_COL32(255, 0, 0, 255) : col);
         }
     }
@@ -59,21 +64,37 @@ public:
         return distanceSquared <= (radius * radius);
     }
 
-    static void DrawBezierSpline(ImDrawList* draw_list, glm::vec3 points[5], ImU32 col, float thickness)
+    static void DrawBezierSpline(ImDrawList* draw_list, std::vector<glm::vec3>& points, ImU32 col, float thickness)
     {
-        glm::vec3 lastPoint = EvaluateBezier(points[0], points[1], points[2], points[3], points[4], 0.0f);
+        ImVec2 windowPos = ImGui::GetWindowPos();
+        ImVec2 windowSize = ImGui::GetWindowSize();
+
+        std::vector<glm::vec3> screenSpaceControlPoints(5);
+        for (int i = 0; i < 5; ++i) {
+            screenSpaceControlPoints[i] = glm::vec3(windowPos.x + points[i][0] * windowSize.x, windowPos.y + points[i][1] * windowSize.y, 0.0f);
+        }
+        DrawControlPoints(draw_list, screenSpaceControlPoints, points, 5.0f, IM_COL32(0, 255, 0, 255));
+
+        glm::vec3 lastPoint = EvaluateBezier(screenSpaceControlPoints[0], screenSpaceControlPoints[1], screenSpaceControlPoints[2], screenSpaceControlPoints[3], screenSpaceControlPoints[4], 0.0f);
         for (float t = 0.01f; t <= 1.0f; t += 0.01f)
         {
-            glm::vec3 point = EvaluateBezier(points[0], points[1], points[2], points[3], points[4], t);
+            glm::vec3 point = EvaluateBezier(screenSpaceControlPoints[0], screenSpaceControlPoints[1], screenSpaceControlPoints[2], screenSpaceControlPoints[3], screenSpaceControlPoints[4], t);
             draw_list->AddLine(ImVec2(lastPoint.x, lastPoint.y), ImVec2(point.x, point.y), col, thickness);
             lastPoint = point;
         }
-        DrawControlPoints(draw_list, points, 5.0f, IM_COL32(0, 255, 0, 255));
     }
 
-    void DrawCoonsSurface(ImDrawList* draw_list, const glm::vec3 corners[4], ImU32 col)
+    void DrawCoonsSurface(ImDrawList* draw_list, std::vector<glm::vec3>& corners, ImU32 col)
     {
-        glm::vec3 center = (corners[0] + corners[1] + corners[2] + corners[3]) * 0.25f;
+        ImVec2 windowPos = ImGui::GetWindowPos();
+        ImVec2 windowSize = ImGui::GetWindowSize();
+
+        std::vector<glm::vec3> screenSpaceCorners(4);
+        for (int i = 0; i < 4; ++i) {
+            screenSpaceCorners[i] = glm::vec3(windowPos.x + corners[i][0] * windowSize.x, windowPos.y + corners[i][1] * windowSize.y, 0.0f);
+        }
+
+        glm::vec3 center = (screenSpaceCorners[0] + screenSpaceCorners[1] + screenSpaceCorners[2] + screenSpaceCorners[3]) * 0.25f;
 
         if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
         {
@@ -88,7 +109,7 @@ public:
         {
             for (int v = 0; v <= 100; ++v)
             {
-                points[u][v] = EvaluateCoons(corners, u / 100.0f, v / 100.0f);
+                points[u][v] = EvaluateCoons(screenSpaceCorners, u / 100.0f, v / 100.0f);
                 points[u][v] = RotatePoint(points[u][v], rotation, center);
             }
         }
@@ -144,7 +165,7 @@ private:
                p4 * tttt;
     }
 
-    static glm::vec3 EvaluateCoons(const glm::vec3 corners[4], float u, float v)
+    static glm::vec3 EvaluateCoons(const std::vector<glm::vec3>& corners, float u, float v)
     {
         glm::vec3 p00 = corners[0];
         glm::vec3 p10 = corners[1];

@@ -1,6 +1,5 @@
 #pragma once
 #include "i_object.h"
-#include "glm/glm.hpp"
 #include "materials/i_material.h"
 
 class box final : public i_object
@@ -11,7 +10,8 @@ public:
     {
     }
 
-    bool intersect(const ray& p_ray, point3& t, vec3& normal, glm::vec2& uv) const {
+    bool intersect(const ray& p_ray, point3& t, vec3& normal, glm::vec2& uv) const override
+    {
         vec3 inv_dir = 1.0f / p_ray.get_direction();
 
         vec3 t_min = (min - p_ray.get_origin()) * inv_dir;
