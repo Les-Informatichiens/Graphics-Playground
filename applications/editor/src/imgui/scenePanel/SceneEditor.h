@@ -13,6 +13,8 @@ public:
 
     void drawSceneTree(SceneNode& node);
     void draw();
+    void drawMaterialEditor();
+    void refreshMaterialResources();
 
     void selectEntity(util::UUID uuid, bool isSelected);
     bool isEntitySelected(util::UUID uuid) const;
@@ -24,4 +26,8 @@ private:
     EngineInstance& engineInstance_;
     std::unordered_map<util::UUID, bool> selectedEntities_;
     util::UUID lastSelectedEntity_;
+
+    std::string texSamplerForSelection_;
+    std::unordered_map<std::string, std::weak_ptr<MaterialResource>> materialResources_;
+    std::string selectedMaterial_;
 };
