@@ -108,16 +108,6 @@ void EngineInstance::initialize()
                 return a / b;
             }
 
-            vec3 ACESFilmicToneMapping(vec3 x)
-            {
-                const float A = 2.51f;
-                const float B = 0.03f;
-                const float C = 2.43f;
-                const float D = 0.59f;
-                const float E = 0.14f;
-                return clamp((x*(A*x+B))/(x*(C*x+D)+E), 0.0, 1.0);
-            }
-
             vec3 applyToneMapping(vec3 color)
             {
                 if (u_toneMap)
@@ -831,11 +821,11 @@ void EngineInstance::initialize()
         cow.getSceneNode().getTransform().setScale(glm::vec3(1.0f));
         cow.getSceneNode().getTransform().setRotation({0.0f, glm::radians(20.0f), 0.0f});
 
-        EntityView bunny = defaultScene->createEntity("bunny");
-        bunny.addComponent<MeshComponent>(resourceManager.getMeshByName("bunny"), resourceManager.getMaterialByName("pbrDefaultMaterial"));
-        bunny.getSceneNode().getTransform().setPosition({0.0f, 0.0f, 0.0f});
-        bunny.getSceneNode().getTransform().setScale(glm::vec3(2.0f));
-        bunny.getSceneNode().getTransform().setRotation({0.0f, 3.0f, 0.0f});
+        EntityView suzanne = defaultScene->createEntity("suzanne");
+        suzanne.addComponent<MeshComponent>(resourceManager.getMeshByName("suzanne"), resourceManager.getMaterialByName("pbrUVCheckerMaterial"));
+        suzanne.getSceneNode().getTransform().setPosition({6.0f, 0.0f, -10.0f});
+        suzanne.getSceneNode().getTransform().setScale(glm::vec3(2.0f));
+        suzanne.getSceneNode().getTransform().setRotation({glm::radians(-90.0f), 0.0f, 0.0f});
 
         EntityView root = defaultScene->createEntity("teapot");
         root.addComponent<MeshComponent>(resourceManager.getMeshByName("teapot"), resourceManager.getMaterialByName("pbrDefaultMaterial"));
@@ -1470,6 +1460,12 @@ void EngineInstance::renderFrame()
             //raytracing
 
 
+            /*
+             * Nous appliquons un filtre de bloom. Cet effet est appliqué en post processing, après le rendu de la scène et utilise les couleurs HDR de la scène pour détecter les zones lumineuses et les rendre plus lumineuses en appliquant une convolution.
+             * Le filtre de bloom est composé de deux passes : une descente d'échelle et une montée d'échelle. La descente d'échelle réduit la taille de la texture HDR et applique un filtre de seuil pour détecter les zones lumineuses. La montée d'échelle augmente la taille de la texture HDR et applique un filtre de convolution pour rendre les zones lumineuses plus lumineuses.
+             * Le filtre de bloom est appliqué sur la texture HDR de la scène et le résultat est affiché à l'écran.
+             *
+             */
             auto cmdPool = renderer.getDevice().createCommandPool({});
 
             auto cmdBuffer = cmdPool->acquireComputeCommandBuffer({});
