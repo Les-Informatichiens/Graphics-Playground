@@ -1,8 +1,5 @@
 #pragma once
-#include "i_object.h"
-#include "glm/gtx/norm.hpp"
-#include "glm/gtx/intersect.hpp"
-#include "materials/i_material.h"
+
 
 
 class sphere final : public i_object
@@ -17,7 +14,7 @@ public:
 	bool intersect(const ray& p_ray, point3& t, vec3& normal, glm::vec2& uv) const override
 	{
 		const point3 acne_corrected_origin = p_ray.move(0.001f); //cetaphil
-		return intersectRaySphere(acne_corrected_origin, normalize(p_ray.get_direction()), center, radius, t, normal);
+		return glm::intersectRaySphere(acne_corrected_origin, glm::normalize(p_ray.get_direction()), center, radius, t, normal);
 	}
 
 	bool alter_ray_direction(const ray& incident_ray, const vec3& normal, vec3& next_direction) const override

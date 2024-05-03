@@ -33,17 +33,17 @@ public:
 
 	void append_pixel_color(const color3& color) override
 	{
-		pixels[current_pixel_index++] = clamp(sqrt(color.r), 0.0f, 1.0f) * 255.0f; //float between [0-1] to RGB
-		pixels[current_pixel_index++] = clamp(sqrt(color.g), 0.0f, 1.0f) * 255.0f;
-		pixels[current_pixel_index++] = clamp(sqrt(color.b), 0.0f, 1.0f) * 255.0f;
+		pixels[current_pixel_index++] = clamp(pow(color.r, 1.0f / 2.2f), 0.0f, 1.0f) * 255.0f; //float between [0-1] to RGB
+		pixels[current_pixel_index++] = clamp(pow(color.g, 1.0f / 2.2f), 0.0f, 1.0f) * 255.0f;
+		pixels[current_pixel_index++] = clamp(pow(color.b, 1.0f / 2.2f), 0.0f, 1.0f) * 255.0f;
 	}
 
 	void add_pixel_color_at_index(const color3& color, const uint32_t& pixel_index) const override
 	{
 		uint32_t rgb_pixel_index = pixel_index * 3;
-		pixels[rgb_pixel_index++] = clamp(sqrt(color.r), 0.0f, 1.0f) * 255.0f; //float between [0-1] to RGB
-		pixels[rgb_pixel_index++] = clamp(sqrt(color.g), 0.0f, 1.0f) * 255.0f;
-		pixels[rgb_pixel_index] = clamp(sqrt(color.b), 0.0f, 1.0f) * 255.0f;
+		pixels[rgb_pixel_index++] = clamp(pow(color.r, 1.0f / 2.2f), 0.0f, 1.0f) * 255.0f; //float between [0-1] to RGB
+		pixels[rgb_pixel_index++] = clamp(pow(color.g, 1.0f / 2.2f), 0.0f, 1.0f) * 255.0f;
+		pixels[rgb_pixel_index] = clamp(pow(color.b, 1.0f / 2.2f), 0.0f, 1.0f) * 255.0f;
 	}
 
 	uint32_t get_width() const override { return width; }

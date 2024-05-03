@@ -47,6 +47,7 @@ public:
     std::shared_ptr<MaterialResource> createExternalMaterial(const std::string& name);
     std::shared_ptr<MaterialResource> getMaterialByHandle(ResourceHandle handle);
     std::shared_ptr<MaterialResource> getMaterialByName(const std::string& name);
+    std::unordered_map<std::string, std::shared_ptr<MaterialResource>> getMaterials() { return materialsByName; }
     void releaseMaterial(ResourceHandle handle);
 
     //image
@@ -60,6 +61,7 @@ public:
     std::shared_ptr<TextureResource> createTexture(const std::string& name);
     std::shared_ptr<TextureResource> getTextureByHandle(ResourceHandle handle);
     std::shared_ptr<TextureResource> getTextureByName(const std::string& name);
+    std::unordered_map<std::string, std::shared_ptr<TextureResource>> getTextures() { return texturesByName; }
     void releaseTexture(ResourceHandle handle);
 
     //shader

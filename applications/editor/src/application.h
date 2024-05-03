@@ -68,6 +68,8 @@ public:
 
     void run();
 
+    void raycastSelection();
+
     void initImGui();
     void beginImGuiFrame();
     void endImGuiFrame();
@@ -127,4 +129,6 @@ private:
     void calculateAndDisplayHistogram();
     void histogram();
     SceneEditor sceneEditor;
+
+    std::string selectedEntityUUID;
 };

@@ -1,5 +1,8 @@
 #pragma once
-
+#include "i_object.h"
+#include "glm/gtx/norm.hpp"
+#include "glm/gtx/intersect.hpp"
+#include "materials/i_material.h"
 class i_object
 {
 public:

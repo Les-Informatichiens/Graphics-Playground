@@ -24,7 +24,7 @@ public:
 
     bool intersect(const ray& p_ray, point3& t, vec3& normal, glm::vec2& uv) const override
     {
-        const point3 acne_corrected_origin = p_ray.move(0.01f);
+        const point3 acne_corrected_origin = p_ray.move(0.001f);
         const vec3 direction = normalize(p_ray.get_direction());
         bool intersected{false};
         float min_distance{std::numeric_limits<float>::max()};

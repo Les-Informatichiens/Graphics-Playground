@@ -14,6 +14,7 @@ class UUID
 {
 public:
     static UUID generate() { return {}; }
+    static UUID zero() { return UUID(0); }
 
     UUID();
     explicit UUID(uint64_t uuid);

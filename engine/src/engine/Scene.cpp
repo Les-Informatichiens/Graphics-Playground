@@ -210,3 +210,51 @@ std::vector<EntityView> Scene::getRootEntities()
     });
     return rootEntities;
 }
+
+std::optional<RaycastHit> Scene::raycastFirstHit(util::Ray ray, float maxDistance)
+{
+    std::optional<RaycastHit> hit;
+    float closestDistance = maxDistance;
+
+    registry.view<SceneNode, MeshComponent>().each([&ray, &hit, &closestDistance](SceneNode& node, MeshComponent& mesh){
+        if (!node.isVisible())
+            return;
+
+        Bounds bounds = mesh.getMesh()->getMesh().bounds;
+        glm::mat4 model = node.getWorldTransform().getModel();
+        glm::mat4 invModel = glm::inverse(model);
+
+        glm::vec3 rayOrigin = glm::vec3(invModel * glm::vec4(ray.getOrigin(), 1.0f));
+        glm::vec3 rayDirection = glm::vec3(invModel * glm::vec4(ray.getDirection(), 0.0f));
+        util::Ray localRay(rayOrigin, rayDirection);
+
+        if (bounds.intersects(localRay))
+        {
+            glm::vec3 localIntersectionPoint = bounds.getIntersectionPoint(localRay);
+            glm::vec3 intersectionPoint = glm::vec3(model * glm::vec4(localIntersectionPoint, 1.0f));
+            // if point is not behind ray origin
+            if (glm::dot(ray.getDirection(), intersectionPoint - ray.getOrigin()) < 0.0f)
+                return;
+            float distance = glm::length(intersectionPoint - ray.getOrigin());
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                hit = RaycastHit{node.getEntityView().getUUID(), intersectionPoint, glm::vec3()};
+            }
+        }
+    });
+
+    return hit;
+}
+
+std::optional<EntityView> Scene::findMainCameraEntity()
+{
+    std::optional<EntityView> mainCameraEntity;
+    registry.view<SceneNode, CameraComponent>().each([&mainCameraEntity](SceneNode& node, CameraComponent& camera){
+        if (camera.isRenderingToScreen())
+        {
+            mainCameraEntity = node.getEntityView();
+        }
+    });
+    return mainCameraEntity;
+}

@@ -77,6 +77,7 @@ void EngineInstance::initialize()
                 float u_exposure;
                 float u_gamma;
                 bool u_useFXAA;
+                bool u_toneMap;
             };
 
             vec3 gammaCorrect(vec3 color)
@@ -107,32 +108,40 @@ void EngineInstance::initialize()
                 return a / b;
             }
 
+            vec3 ACESFilmicToneMapping(vec3 x)
+            {
+                const float A = 2.51f;
+                const float B = 0.03f;
+                const float C = 2.43f;
+                const float D = 0.59f;
+                const float E = 0.14f;
+                return clamp((x*(A*x+B))/(x*(C*x+D)+E), 0.0, 1.0);
+            }
+
+            vec3 applyToneMapping(vec3 color)
+            {
+                if (u_toneMap)
+                {
+                    color *= u_exposure;
+                    color = ACESInputMat * color;
+                    color = RRTAndODTFit(color);
+                    color = ACESOutputMat * color;
+                    color = gammaCorrect(color);
+                    color = clamp(color, 0.0, 1.0);
+                }
+                return color;
+            }
+
             vec4 filteredSample(sampler2D tex, vec2 uv)
             {
-                vec4 x = u_exposure * texture(tex, uv);
-
-                vec3 color = ACESInputMat * x.rgb;
-                color = RRTAndODTFit(color);
-                color = ACESOutputMat * color;
-
-                color = gammaCorrect(color);
-                color = clamp(color, 0.0, 1.0);
-
-                return vec4(color, 1.0);
+                vec4 x = texture(tex, uv);
+                return vec4(applyToneMapping(x.rgb), 1.0);
             }
 
             vec4 filteredSampleOffset(sampler2D tex, vec2 uv, ivec2 pixelOffset)
             {
-                vec4 x = u_exposure * textureOffset(tex, uv, pixelOffset);
-
-                vec3 color = ACESInputMat * x.rgb;
-                color = RRTAndODTFit(color);
-                color = ACESOutputMat * color;
-
-                color = gammaCorrect(color);
-                color = clamp(color, 0.0, 1.0);
-
-                return vec4(color, 1.0);
+                vec4 x = textureOffset(tex, uv, pixelOffset);
+                return vec4(applyToneMapping(x.rgb), 1.0);
             }
 
             float rgb2luma(vec3 rgb){
@@ -839,29 +848,12 @@ void EngineInstance::initialize()
         // Create a child node
         EntityView child = defaultScene->createEntity("childTeapot");
 
-        child.addComponent<MeshComponent>(resourceManager.getMeshByName("teapot"), resourceManager.getMaterialByName("testMaterial"));
+        child.addComponent<MeshComponent>(resourceManager.getMeshByName("teapot"), resourceManager.getMaterialByName("pbrDefaultMaterial"));
         auto& childNode = child.getSceneNode();
+
         childNode.getTransform().setPosition({7.0f, 0.0f, 0.0f});
         childNode.getTransform().setScale({1.f, 1.f, 1.f});
         childNode.getTransform().setRotation({0.0f, 0.0f, 0.0f});
-
-        EntityView teapotPOV = defaultScene->createEntity("teapotPOV");
-        auto& teapotPOVNode = teapotPOV.getSceneNode();
-        {
-            auto testRenderTextureCamera = std::make_shared<Camera>("testRenderTextureCamera");
-            testRenderTexture = renderer.getDevice().createTexture(TextureDesc::new2D(TextureFormat::RGBA_UNorm8, desc.width, desc.height, TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled | TextureDesc::TextureUsageBits::Storage));
-            auto testRenderTextureCameraTarget = graphics::RenderTarget{
-                    .colorTexture = testRenderTexture,
-                    .clearColor = {0.0f, 0.2f, 0.2f, 1.0f},
-            };
-            teapotPOV.addComponent<CameraComponent>(testRenderTextureCamera, testRenderTextureCameraTarget);
-            teapotPOV.addComponent<MeshComponent>(resourceManager.getMeshByName("teapot"), resourceManager.getMaterialByName("testMaterial"));
-
-            auto& teapotPOVTransform = teapotPOVNode.getTransform();
-            teapotPOVTransform.setPosition({4.0f, 0.0f, 0.0f});
-            teapotPOVTransform.setRotation({0.0f, glm::radians(90.0f), 0.0f});
-        }
-        childNode.addChild(&teapotPOVNode);
 
 
 //        // Create a child node
@@ -893,7 +885,77 @@ void EngineInstance::initialize()
 
         rootNode.addChild(&childNode);
 
+        childNode.visit([](SceneNode& node) {
+            node.setVisible(false);
+        });
+
+
         viewer.getSceneNode().getTransform().lookAt(rootNode.getTransform().getPosition(), {0.0f, 1.0f, 0.0f});
+    }
+
+    // create cube with small glowing boxes on each face
+    {
+        auto cube = defaultScene->createEntity("spinningObject");
+
+        glm::vec3 cubeSize = {1.0f, 1.0f, 1.0f};
+
+        cube.addComponent<MeshComponent>(resourceManager.getMeshByName("sphere"), resourceManager.getMaterialByName("pbrMaterial2"));
+        {
+            auto& cubeNode = cube.getSceneNode();
+            cubeNode.getTransform().setPosition({0.0f, 0.0f, 0.0f});
+            cubeNode.getTransform().setScale(cubeSize);
+            cubeNode.getTransform().setRotation({0.0f, 0.0f, 0.0f});
+        }
+
+        // add a glowing box on each face of the cube
+        std::vector<glm::vec3> facePositions = {
+                {0.0f, 0.0f, 1.0f},
+                {0.0f, 0.0f, -1.0f},
+                {0.0f, 1.0f, 0.0f},
+                {0.0f, -1.0f, 0.0f},
+                {1.0f, 0.0f, 0.0f},
+                {-1.0f, 0.0f, 0.0f}
+        };
+        for (int i = 0; i < 1; i++) {
+            auto box = defaultScene->createEntity("spinningObject" + std::to_string(i));
+            box.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrGlowMaterial"));
+            {
+                auto& boxNode = box.getSceneNode();
+                boxNode.getTransform().setPosition(facePositions[i] * cubeSize*2.0f);
+                boxNode.getTransform().setScale({0.1f, 0.1f, 0.1f});
+
+                // face outwards from the cube, so rotate the box relative to their face
+                glm::quat rotation = glm::quatLookAt(glm::vec3(0.0f, 0.0f, 0.0f) + facePositions[i], {0.0f, 1.0f, 0.0f});
+                boxNode.getTransform().setRotation(rotation);
+
+                //add spotlights to the simulate the glowing effect
+                Light spotlight;
+                spotlight.setSpot(12.5, 80.5);
+                spotlight.setColor({1.0f, 0.0f, 0.0f});
+                spotlight.setIntensity(5.0f);
+                box.addComponent<LightComponent>(spotlight);
+
+                cube.getSceneNode().addChild(&boxNode);
+            }
+        }
+
+
+        EntityView teapotPOV = defaultScene->createEntity("teapotPOV");
+        auto& teapotPOVNode = teapotPOV.getSceneNode();
+        {
+            auto testRenderTextureCamera = std::make_shared<Camera>("testRenderTextureCamera");
+            testRenderTexture = renderer.getDevice().createTexture(TextureDesc::new2D(TextureFormat::RGBA_UNorm8, desc.width, desc.height, TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled | TextureDesc::TextureUsageBits::Storage));
+            auto testRenderTextureCameraTarget = graphics::RenderTarget{
+                    .colorTexture = testRenderTexture,
+                    .clearColor = {0.0f, 0.2f, 0.2f, 1.0f},
+            };
+            teapotPOV.addComponent<CameraComponent>(testRenderTextureCamera, testRenderTextureCameraTarget);
+
+            auto& teapotPOVTransform = teapotPOVNode.getTransform();
+            teapotPOVTransform.setPosition({0.0f, 0.0f, 2.5f});
+            teapotPOVTransform.setRotation({0.0f, glm::radians(180.0f), 0.0f});
+        }
+        cube.getSceneNode().addChild(&teapotPOVNode);
     }
 
     // create a room with a floor and walls
@@ -1165,16 +1227,25 @@ void EngineInstance::updateSimulation(float dt)
 {
 //    std::cout << "Updating simulation (" << (dt * 1000.0f) << " ms)" << std::endl;
 
+    {
+        std::optional<EntityView> spinningObject = defaultScene->getEntityByName("spinningObject");
+        if (spinningObject)
+        {
+            auto& spinningObjectNode = spinningObject->getSceneNode();
+            spinningObjectNode.getTransform().rotate(glm::angleAxis(glm::radians(0.1f), glm::vec3(0.0f, 1.0f, 0.0f)));
+            spinningObjectNode.getTransform().rotate(glm::angleAxis(glm::radians(0.2f), glm::vec3(1.0f, 0.0f, 0.0f)));
+            spinningObjectNode.getTransform().rotate(glm::angleAxis(glm::radians(0.3f), glm::vec3(0.0f, 0.0f, 1.0f)));
+        }
+    }
+
     // We can move things around in our testing scene
     {
         std::optional<EntityView> root_ = defaultScene->getEntityByName("teapot");
         if (root_)
         {
             auto& root = root_->getSceneNode();
-            root.visit([](SceneNode& node) {
-                node.setVisible(false);
-            });
-            root.getTransform().rotate(glm::angleAxis(glm::radians(1.0f), glm::vec3(0.0f, 0.0f, 1.0f)));
+
+//            root.getTransform().rotate(glm::angleAxis(glm::radians(1.0f), glm::vec3(0.0f, 0.0f, 1.0f)));
             auto* childNode_ = root.findNode("childTeapot");
             if (childNode_)
             {
@@ -1378,10 +1449,22 @@ void EngineInstance::renderFrame()
                 graphics::Renderable skyboxRenderable(mat->getMaterial(), mesh->getVertexData());
                 renderer.draw(skyboxRenderable);
             }
-
+            sceneRenderData.lightModel = lightModel;
+            
             sceneRenderer.render(renderer, sceneRenderData, {mainCamera->getWorldTransform().getPosition(),
                                                              mainCamera->getWorldTransform().getForward(),
                                                              glm::inverse(mainCamera->getWorldTransform().getModel()), camera.getCamera()->getProjection(), camera.getCamera()->getViewportWidth(), camera.getCamera()->getViewportHeight()});
+//            util::Ray ray1 = util::Ray {mainCamera->getWorldTransform().getPosition() + mainCamera->getWorldTransform().getForward(), {0.0f, 0.0f, 1.0f}};
+//            LineRenderer lineRenderer;
+//            lineRenderer.setAspect((float)desc.width / (float)desc.height);
+//            lineRenderer.setVP(glm::inverse(mainCamera->getWorldTransform().getModel()), camera.getCamera()->getProjection());
+//            lineRenderer.setLineWidth(0.005f);
+//            lineRenderer.setColor({1.0f, 0.0f, 0.0f, 1.0f});
+//
+//            lineRenderer.drawLine(renderer, ray.getOrigin(), ray.getOrigin() + ray.getDirection() * 1.0f);
+//            lineRenderer.setColor({0.0f, 1.0f, 0.0f, 1.0f});
+//
+//            lineRenderer.drawLine(renderer, ray.getOrigin(), hitp);
             renderer.end();
 
             //raytracing

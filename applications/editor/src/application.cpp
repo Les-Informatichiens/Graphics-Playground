@@ -19,8 +19,9 @@
 
 RayTracer rayTracerz;
 
+
 //implement the application class here
-void application::init()
+        void application::init()
 {
 
 
@@ -260,6 +261,15 @@ void application::run()
             renderedImage = false;
         }
 
+
+        // raycasting
+        {
+            // if right click, raycastselection
+            if (input.isMouseButtonPressed(0))
+            {
+                raycastSelection();
+            }
+        }
 
         if (showImageWindow)
         {
@@ -548,10 +558,14 @@ void application::run()
 
             ImGui::SliderFloat("Exposure", &gameEngine.postProcessSettings.exposure, 0.0, 10.0, "%.1f");
             ImGui::SliderFloat("Gamma", &gameEngine.postProcessSettings.gamma, 0.0, 10.0, "%.1f");
-            bool useFXAA = gameEngine.postProcessSettings.useFXAA;
-            ImGui::Checkbox("FXAA", &useFXAA);
-            gameEngine.postProcessSettings.useFXAA = useFXAA;
+            ImGui::Checkbox("FXAA", reinterpret_cast<bool*>(&gameEngine.postProcessSettings.useFXAA));
+            ImGui::Checkbox("Apply Tone Mapping", reinterpret_cast<bool*>(&gameEngine.postProcessSettings.toneMap));
 
+            ImGui::Combo("Light Model", &gameEngine.lightModel, "Cook-Torrance\0Blinn-Phong\0Phong\0Gouraud\0Toon\0\0");
+
+            ImGui::SliderFloat("Bloom threshold",      &gameEngine.bloomThreshold,            0.0f, 15.0f, "%.1f");
+            ImGui::SliderFloat("Bloom knee",           &gameEngine.bloomKnee,                 0.0f, 1.0f,  "%.1f");
+            ImGui::SliderFloat("Bloom intensity",      &gameEngine.bloomIntensity,      0.0f, 5.0f,  "%.1f");
             ImGui::SliderFloat("Bloom threshold", &gameEngine.bloomThreshold, 0.0f, 15.0f, "%.1f");
             ImGui::SliderFloat("Bloom knee", &gameEngine.bloomKnee, 0.0f, 1.0f, "%.1f");
             ImGui::SliderFloat("Bloom intensity", &gameEngine.bloomIntensity, 0.0f, 5.0f, "%.1f");
@@ -722,4 +736,48 @@ void application::onMouseScroll(double xoffset, double yoffset)
     if (ImGui::GetIO().WantCaptureMouse)
         return;
     gameEngine.getInput().setMouseWheel(yoffset);
+}
+
+
+void application::raycastSelection()
+{
+    auto scene = gameEngine.getStage().getScene();
+    if (!scene)
+        return;
+
+    auto cameraEntity = scene->getEntityByName("viewer");//scene->findMainCameraEntity();
+    auto cameraNode = cameraEntity->getSceneNode();
+    auto camera = cameraEntity->getComponent<CameraComponent>().getCamera();
+
+    float screenX, screenY;
+    gameEngine.getInput().getMousePosition(screenX, screenY);
+
+    auto ray = camera->screenPointToRay(cameraNode.getWorldTransform(), screenX, screenY, width, height);
+    std::optional<RaycastHit> hit = scene->raycastFirstHit(ray, 100000000.0f);
+    if (hit)
+    {
+        sceneEditor.clearSelection();
+        sceneEditor.setEntitySelection(hit->entityUUID, true);
+    }
+    else
+    {
+        sceneEditor.clearSelection();
+    }
+
+    ImGui::Begin("Raycast Selection");
+    ImGui::Text("Ray Origin: (%.2f, %.2f, %.2f)", ray.getOrigin().x, ray.getOrigin().y, ray.getOrigin().z);
+    ImGui::Text("Ray Direction: (%.2f, %.2f, %.2f)", ray.getDirection().x, ray.getDirection().y, ray.getDirection().z);
+    if (hit)
+    {
+        ImGui::Text("Hit Point: (%.2f, %.2f, %.2f)", hit->hitPoint.x, hit->hitPoint.y, hit->hitPoint.z);
+        ImGui::Text("Hit Normal: (%.2f, %.2f, %.2f)", hit->hitNormal.x, hit->hitNormal.y, hit->hitNormal.z);
+    }
+    ImGui::End();
+
+    // for debugging, remove after and anything that uses this
+    if (hit)
+    {
+        gameEngine.hitp = hit->hitPoint;
+    }
+    gameEngine.ray = ray;
 }

@@ -84,6 +84,10 @@ add_library(
         src/engine/graphics/ShaderResource.cpp
         include/engine/graphics/ShaderResource.h
         src/engine/TempResourceInitializer.h
+        src/engine/util/Ray.cpp
+        include/engine/util/Ray.h
+        src/engine/TempResourceInitializer.cpp
+        src/engine/TempResourceInitializer.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
