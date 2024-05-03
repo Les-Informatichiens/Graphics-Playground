@@ -434,23 +434,24 @@ void application::run()
 
             ImGui::Begin("Menu"); // Create a window called "Hello, world!" and append into it.
 
-            ImGui::Text("This is some useful text."); // Display some text (you can use a format strings too)
-
             ImGui::Checkbox("Demo Window", &show_demo_window); // Edit bools storing our window open/close state
             ImGui::Checkbox("Image Manipulation", &showImageWindow);
             ImGui::Checkbox("Vector drawing window", &show_another_window);
             ImGui::Checkbox("Scene Editor", &show_editor);
             ImGui::Checkbox("Camera Render Texture", &show_pov_cam);
-            ImGui::Checkbox("Lock Camera on Selected", &lockCamOnSelected);
-            ImGui::Checkbox("Camera Motion", &cameraMotion);
 
+            ImGui::SeparatorText("Tone mapping");
             ImGui::SliderFloat("Exposure", &gameEngine.postProcessSettings.exposure, 0.0, 10.0, "%.1f");
             ImGui::SliderFloat("Gamma", &gameEngine.postProcessSettings.gamma, 0.0, 10.0, "%.1f");
-            ImGui::Checkbox("FXAA", reinterpret_cast<bool*>(&gameEngine.postProcessSettings.useFXAA));
             ImGui::Checkbox("Apply Tone Mapping", reinterpret_cast<bool*>(&gameEngine.postProcessSettings.toneMap));
 
+            ImGui::SeparatorText("Anti-aliasing");
+            ImGui::Checkbox("FXAA", reinterpret_cast<bool*>(&gameEngine.postProcessSettings.useFXAA));
+
+            ImGui::SeparatorText("Lighting");
             ImGui::Combo("Light Model", &gameEngine.lightModel, "Cook-Torrance\0Blinn-Phong\0Phong\0Gouraud\0Toon\0\0");
 
+            ImGui::SeparatorText("Bloom");
             ImGui::SliderFloat("Bloom threshold",      &gameEngine.bloomThreshold,            0.0f, 15.0f, "%.1f");
             ImGui::SliderFloat("Bloom knee",           &gameEngine.bloomKnee,                 0.0f, 1.0f,  "%.1f");
             ImGui::SliderFloat("Bloom intensity",      &gameEngine.bloomIntensity,      0.0f, 5.0f,  "%.1f");
