@@ -163,28 +163,42 @@ void application::run()
             static bool showSurface = false;
             static bool showSpline = false;
 
-            ImDrawList* draw_list = ImGui::GetWindowDrawList();
-
             constexpr ImU32 color = IM_COL32(255, 215, 0, 120);
             constexpr ImU32 color2 = IM_COL32(255, 0, 0, 255);
 
+            // Sliders Window
             ImGui::BeginChild("Slider Window", ImVec2(350, 0), true);
             {
-
+                // Surface
                 ImGui::Checkbox("Show Coon Surface", &showSurface);
                 if (showSurface)
                 {
 
                     for (int i = 0; i < 4; ++i)
                     {
+                        //ImGui::Text(("Corner " + std::to_string(i + 1)).c_str());
+                        //ImGui::SetNextItemWidth(125);
                         ImGui::SliderFloat(("Corner " + std::to_string(i + 1) + " X").c_str(), &corners[i][0], 0.0f, 1.0f);
+                        //ImGui::SetNextItemWidth(125);
                         ImGui::SliderFloat(("Corner " + std::to_string(i + 1) + " Y").c_str(), &corners[i][1], 0.0f, 1.0f);
+                        ImGui::NewLine();
                     }
+
+                    ImGui::NewLine(); ImGui::NewLine();
+
+                    ImGui::SliderFloat("Amplitude X", &Ax, 0.0f, 100.0f);
+                    //ImGui::SameLine();
+                    ImGui::SliderFloat("Amplitude Y", &Ay, 0.0f, 100.0f);
+
+                    ImGui::NewLine();
+
+                    ImGui::SliderFloat("Fréquence X", &fx, 0.0f, 10.0f);
+                    //ImGui::SameLine();
+                    ImGui::SliderFloat("Fréquence Y", &fy, 0.0f, 10.0f);
 
                 }
 
-
-                // Spline popup
+                // Spline
                 ImGui::Checkbox("Show Spline", &showSpline);
                 if (showSpline)
                 {
@@ -192,23 +206,24 @@ void application::run()
                     {
                         ImGui::SliderFloat(("Control Point " + std::to_string(i + 1) + " X").c_str(), &controlPoints[i][0], 0.0f, 1.0f);
                         ImGui::SliderFloat(("Control Point " + std::to_string(i + 1) + " Y").c_str(), &controlPoints[i][1], 0.0f, 1.0f);
+                        ImGui::NewLine();
                     }
 
                 }
 
-
                 ImGui::EndChild();
             }
 
-            {
-                ImGui::SameLine();
-                ImGui::BeginChild("Drawing Window", ImVec2(0, 0), true);
+            ImGui::SameLine();
 
+            // Drawing Window
+            ImGui::BeginChild("Drawing Window", ImVec2(0, 0), true);
+            {
                 ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
                 if (showSurface)
                 {
-                    curvesDrawer.DrawCoonsSurface(draw_list, corners, color);
+                    curvesDrawer.DrawCoonsSurface(draw_list, corners, color, Ax, Ay, fx, fy);
                 }
 
                 if (showSpline)

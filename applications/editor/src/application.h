@@ -114,6 +114,13 @@ private:
             {0.25f, 0.55f, 0.0f},
             {0.55f, 0.85f, 0.0f}};
 
+    // Define wave parameters
+    float Ax = 50.0f;// Amplitude for x-axis waves
+    float Ay = 50.0f;// Amplitude for y-axis waves
+    float fx = 2.0f; // Frequency for x-axis waves
+    float fy = 2.0f; // Frequency for y-axis waves
+
+
     std::string selectedImagePath;
     ImageData imageData;
     std::shared_ptr<ITexture> imageTexture;

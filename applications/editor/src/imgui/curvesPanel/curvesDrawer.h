@@ -81,7 +81,7 @@ public:
         }
     }
 
-    void DrawCoonsSurface(ImDrawList* draw_list, std::vector<glm::vec3>& corners, ImU32 col)
+    void DrawCoonsSurface(ImDrawList* draw_list, std::vector<glm::vec3>& corners, ImU32 col, float Ax, float Ay, float fx, float fy)
     {
         ImVec2 windowPos = ImGui::GetWindowPos();
         ImVec2 windowSize = ImGui::GetWindowSize();
@@ -107,7 +107,7 @@ public:
         {
             for (int v = 0; v <= 100; ++v)
             {
-                points[u][v] = EvaluateCoons(screenSpaceCorners, u / 100.0f, v / 100.0f);
+                points[u][v] = EvaluateCoons(screenSpaceCorners, u / 100.0f, v / 100.0f, Ax, Ay, fx, fy);
                 points[u][v] = RotatePoint(points[u][v], rotation, center);
             }
         }
@@ -163,7 +163,7 @@ private:
                p4 * tttt;
     }
 
-    static glm::vec3 EvaluateCoons(const std::vector<glm::vec3>& corners, float u, float v)
+    static glm::vec3 EvaluateCoons(const std::vector<glm::vec3>& corners, float u, float v, float Ax, float Ay, float fx, float fy)
     {
         glm::vec3 p00 = corners[0];
         glm::vec3 p10 = corners[1];
@@ -176,11 +176,6 @@ private:
         glm::vec3 pv0 = (1.0f - v) * p00 + v * p01;
         glm::vec3 pv1 = (1.0f - v) * p10 + v * p11;
 
-        // Define wave parameters
-        float Ax = 50.1f;// Amplitude for x-axis waves
-        float Ay = 50.1f;// Amplitude for y-axis waves
-        float fx = 2.0f; // Frequency for x-axis waves
-        float fy = 2.0f; // Frequency for y-axis waves
 
         // Compute the Coons patch
         glm::vec3 puv = (1.0f - v) * p0u + v * p1u + (1.0f - u) * pv0 + u * pv1 - ((1.0f - u) * (1.0f - v) * p00 + u * (1.0f - v) * p10 + (1.0f - u) * v * p01 + u * v * p11);
