@@ -436,7 +436,7 @@ void application::run()
 
             ImGui::Checkbox("Demo Window", &show_demo_window); // Edit bools storing our window open/close state
             ImGui::Checkbox("Image Manipulation", &showImageWindow);
-            ImGui::Checkbox("Vector drawing window", &show_another_window);
+            ImGui::Checkbox("Vector Drawing Window", &show_another_window);
             ImGui::Checkbox("Scene Editor", &show_editor);
             ImGui::Checkbox("Camera Render Texture", &show_pov_cam);
 
@@ -449,7 +449,7 @@ void application::run()
             ImGui::Checkbox("FXAA", reinterpret_cast<bool*>(&gameEngine.postProcessSettings.useFXAA));
 
             ImGui::SeparatorText("Lighting");
-            ImGui::Combo("Light Model", &gameEngine.lightModel, "Cook-Torrance\0Blinn-Phong\0Phong\0Gouraud\0Toon\0\0");
+            ImGui::Combo("Light Model", &gameEngine.lightModel, "PBR\0Blinn-Phong\0Phong\0Gouraud\0Toon\0\0");
 
             ImGui::SeparatorText("Bloom");
             ImGui::SliderFloat("Bloom threshold",      &gameEngine.bloomThreshold,            0.0f, 15.0f, "%.1f");
