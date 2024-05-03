@@ -138,13 +138,13 @@ void RayTracer::load()
     const i_texture* sphere_texture2 = new base_color{new const color3{0.0f, 0.0f, 0.6f}};
     const i_texture* sphere_texture3 = new checker{new color3{1.0f, 1.0f, 0.0f}, new color3{0, 1, 1}};
 
-    const i_material* mesh_material = new metal{mesh_texture, 0.0f, 0.0f};
-    const i_material* floor_material = new metal{floor_texture, 0.0f, 0.0f};
-    const i_material* sphere_material = new metal{sphere_texture2, 0.0f, 0.0f};
+    const i_material* mesh_material = new metal{mesh_texture, 0.0f, 60.0f};
+    const i_material* floor_material = new metal{floor_texture, 0.0f, 1.0f};
+    const i_material* sphere_material = new metal{sphere_texture2, 0.0f, 25.0f};
     const i_material* sphere_material2 = new metal{sphere_texture3, 0.0f, 0};
-    const i_material* sphere_material3 = new glass{sphere_texture, 1.52f, 0.0f};
+    const i_material* sphere_material3 = new glass{sphere_texture, 1.52f, 25.0f};
 
-    const i_light* light = new point_light({-5.0f, 2.0f, -1.0f}, {1, 1, 1}, 0.7f);
+    const i_light* light = new point_light({-5.0f, 2.0f, -1.0f}, {1, 1, 1}, 2.0f);
     const i_light* light2 = new point_light({-1.0f, 2.0f, 0.0f}, {1, 1, 1}, 1.0f);
 
     scene_objects.add_object(new sphere{{0.5f, 0.3f, -1.0f}, 0.3f, sphere_material3});
@@ -160,7 +160,7 @@ void RayTracer::load()
     //  scene_objects.add_light(light2);
 }
 RayTracer::RayTracer() : rgb_image(
-                                 3, 1920 * 1, 1080 * 1, 3)
+                                 3, 1920 * 1, 1080 * 1, 4)
 
 {
     load();
