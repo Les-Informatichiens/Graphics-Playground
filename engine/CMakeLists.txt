@@ -86,6 +86,7 @@ add_library(
         src/engine/TempResourceInitializer.h
         src/engine/util/Ray.cpp
         include/engine/util/Ray.h
+        src/engine/TempResourceInitializer.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)

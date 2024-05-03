@@ -232,6 +232,9 @@ std::optional<RaycastHit> Scene::raycastFirstHit(util::Ray ray, float maxDistanc
         {
             glm::vec3 localIntersectionPoint = bounds.getIntersectionPoint(localRay);
             glm::vec3 intersectionPoint = glm::vec3(model * glm::vec4(localIntersectionPoint, 1.0f));
+            // if point is not behind ray origin
+            if (glm::dot(ray.getDirection(), intersectionPoint - ray.getOrigin()) < 0.0f)
+                return;
             float distance = glm::length(intersectionPoint - ray.getOrigin());
             if (distance < closestDistance)
             {
