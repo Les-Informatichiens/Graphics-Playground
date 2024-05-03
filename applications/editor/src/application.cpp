@@ -168,29 +168,55 @@ void application::run()
             constexpr ImU32 color = IM_COL32(255, 215, 0, 120);
             constexpr ImU32 color2 = IM_COL32(255, 0, 0, 255);
 
-            ImGui::Checkbox("Show Coon Surface", &showSurface);
-            if (showSurface)
+            ImGui::BeginChild("Slider Window", ImVec2(350, 0), true);
             {
 
-                for (int i = 0; i < 4; ++i)
+                ImGui::Checkbox("Show Coon Surface", &showSurface);
+                if (showSurface)
                 {
-                    ImGui::SliderFloat(("Corner " + std::to_string(i + 1) + " X").c_str(), &corners[i][0], 0.0f, 1.0f);
-                    ImGui::SliderFloat(("Corner " + std::to_string(i + 1) + " Y").c_str(), &corners[i][1], 0.0f, 1.0f);
+
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        ImGui::SliderFloat(("Corner " + std::to_string(i + 1) + " X").c_str(), &corners[i][0], 0.0f, 1.0f);
+                        ImGui::SliderFloat(("Corner " + std::to_string(i + 1) + " Y").c_str(), &corners[i][1], 0.0f, 1.0f);
+                    }
+
                 }
-                curvesDrawer.DrawCoonsSurface(draw_list, corners, color);
+
+
+                // Spline popup
+                ImGui::Checkbox("Show Spline", &showSpline);
+                if (showSpline)
+                {
+                    for (int i = 0; i < 5; ++i)
+                    {
+                        ImGui::SliderFloat(("Control Point " + std::to_string(i + 1) + " X").c_str(), &controlPoints[i][0], 0.0f, 1.0f);
+                        ImGui::SliderFloat(("Control Point " + std::to_string(i + 1) + " Y").c_str(), &controlPoints[i][1], 0.0f, 1.0f);
+                    }
+
+                }
+
+
+                ImGui::EndChild();
             }
 
-
-            // Spline popup
-            ImGui::Checkbox("Show Spline", &showSpline);
-            if (showSpline)
             {
-                for (int i = 0; i < 5; ++i)
+                ImGui::SameLine();
+                ImGui::BeginChild("Drawing Window", ImVec2(0, 0), true);
+
+                ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
+                if (showSurface)
                 {
-                    ImGui::SliderFloat(("Control Point " + std::to_string(i + 1) + " X").c_str(), &controlPoints[i][0], 0.0f, 1.0f);
-                    ImGui::SliderFloat(("Control Point " + std::to_string(i + 1) + " Y").c_str(), &controlPoints[i][1], 0.0f, 1.0f);
+                    curvesDrawer.DrawCoonsSurface(draw_list, corners, color);
                 }
-                CurvesDrawer::DrawBezierSpline(draw_list, controlPoints, color2, 2.0f);
+
+                if (showSpline)
+                {
+                    CurvesDrawer::DrawBezierSpline(draw_list, controlPoints, color2, 2.0f);
+                }
+
+                ImGui::EndChild();
             }
 
             ImGui::End();
