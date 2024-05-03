@@ -135,14 +135,14 @@ void RayTracer::load()
     const i_texture* mesh_texture = new base_color{new color3{0.5f, 0.0f, 0.0f}};
     const i_texture* floor_texture = new checker{new color3{0.0f, 0.0f, 0.0f}, new color3{1, 1, 1}};
     const i_texture* sphere_texture = new base_color{new const color3{1.0f, 1.0f, 1.0f}};
-    const i_texture* sphere_texture2 = new base_color{new const color3{0.0f, 0.0f, 0.6f}};
+    const i_texture* sphere_texture2 = new base_color{new const color3{0.0f, 0.6f, 0.0f}};
     const i_texture* sphere_texture3 = new checker{new color3{1.0f, 1.0f, 0.0f}, new color3{0, 1, 1}};
 
-    const i_material* mesh_material = new metal{mesh_texture, 0.0f, 60.0f};
-    const i_material* floor_material = new metal{floor_texture, 0.0f, 1.0f};
-    const i_material* sphere_material = new metal{sphere_texture2, 0.0f, 25.0f};
+    const i_material* mesh_material = new metal{mesh_texture, 0.0f, 600.0f};
+    const i_material* floor_material = new metal{floor_texture, 0.0f, 0.1f};
+    const i_material* box_material = new metal{sphere_texture2, 0.0f, 25.0f};
     const i_material* sphere_material2 = new metal{sphere_texture3, 0.0f, 0};
-    const i_material* sphere_material3 = new glass{sphere_texture, 1.52f, 25.0f};
+    const i_material* sphere_material3 = new glass{sphere_texture, 1.52f, 75.0f};
 
     const i_light* light = new point_light({-5.0f, 2.0f, -1.0f}, {1, 1, 1}, 2.0f);
     const i_light* light2 = new point_light({-1.0f, 2.0f, 0.0f}, {1, 1, 1}, 1.0f);
@@ -150,7 +150,7 @@ void RayTracer::load()
     scene_objects.add_object(new sphere{{0.5f, 0.3f, -1.0f}, 0.3f, sphere_material3});
     //scene_objects.add_object(new sphere{{1.5f, 1.3f, -3.2f}, 0.3f, sphere_material2});
     //scene_objects.add_object(new sphere{{-1.5f, 0.7f, -2.2f}, 0.3f, sphere_material3});
-    scene_objects.add_object(new box{{4.5f, -1.9f, -1.0f}, {5.3f, 8.0f, -2.8f}, sphere_material});
+    scene_objects.add_object(new box{{4.5f, -1.9f, -1.0f}, {5.3f, 8.0f, -2.8f}, box_material});
     scene_objects.add_object(new triangle_mesh{mesh_material, static_cast<int>(mesh_data.size()), mesh_data});
 
     scene_objects.add_object(new triangle_mesh{
@@ -160,7 +160,7 @@ void RayTracer::load()
     //  scene_objects.add_light(light2);
 }
 RayTracer::RayTracer() : rgb_image(
-                                 3, 1920 * 1, 1080 * 1, 4)
+                                 3, 1920 * 1, 1080 * 1, 5)
 
 {
     load();

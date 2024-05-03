@@ -74,33 +74,6 @@ public:
         return sample_vec;
     }
 
-    // color3 global_illumination(const ray& incident_ray, const uint32_t& max_rays,
-    //                            const i_object* closest_hit_object,
-    //                            const point3& closest_hit_t, const vec3& closest_hit_normal,
-    //                            const glm::vec2& closest_hit_uv,
-    //                            const color3& local_color, const i_light* light)
-    // {
-    //     if (max_rays == 0)
-    //     {
-    //         return local_color;
-    //     }
-    //
-    //     vec3 next_ray_direction;
-    //     closest_hit_object->alter_ray_direction(incident_ray, closest_hit_normal, next_ray_direction);
-    //     color3 next_color{0.0f, 0.0f, 0.0f};
-    //     constexpr int num_samples = 16;
-    //
-    //     for (int i = 0; i < num_samples; ++i)
-    //     {
-    //         next_ray_direction = sample_hemisphere(closest_hit_normal);
-    //         ray next_ray(closest_hit_t + EPSILON, next_ray_direction);
-    //         next_color += compute_color(next_ray, max_rays - 1);
-    //     }
-    //     next_color /= static_cast<float>(num_samples);
-    //
-    //     return next_color * closest_hit_object->color_at(closest_hit_t, closest_hit_uv);
-    // }
-
     void local_illumination(const i_object* closest_hit_object, const point3& closest_hit_t,
                             const vec3& closest_hit_normal, const glm::vec2& closest_hit_uv,
                             color3& local_color, const i_light* light)
@@ -184,8 +157,9 @@ color3 compute_color(const ray& incident_ray, const uint32_t max_rays)
     }
 
     // Global illumination (indirect)
-    constexpr int num_samples = 8;
-        // Dynamic specular weight based on material shinines
+    constexpr int num_samples = 32;
+
+    // Dynamic specular weight based on material shinines
     const float specular_weight = std::min(1.0f, std::max(0.1f, 1.0f - exp(-0.1f * closest_hit_object->get_shininess())));
 
     color3 global_illumination{0.0f, 0.0f, 0.0f};
