@@ -7,10 +7,7 @@
 #include "engine/EngineInstance.h"
 #include "engine/Mesh.h"
 #include "engine/ResourceManager.h"
-#include "engine/graphics/DeviceManager.h"
-#include "engine/graphics/Material.h"
 #include "engine/graphics/Renderer.h"
-
 
 namespace TempResourceInitializer
 {

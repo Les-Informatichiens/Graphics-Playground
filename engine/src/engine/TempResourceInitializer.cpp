@@ -3,10 +3,8 @@
 //
 
 #include "TempResourceInitializer.h"
-
-#define TINYOBJLOADER_IMPLEMENTATION
-#include "util/tiny_obj_loader.h"
-
+#include "../../applications/editor/src/imgui/raytracerPanel/object_loader/tiny_obj_loader.h"
+#include <fstream>
 
 namespace TempResourceInitializer
 {

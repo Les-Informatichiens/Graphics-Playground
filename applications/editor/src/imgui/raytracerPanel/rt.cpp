@@ -2,12 +2,9 @@
 //
 // Created by Jean
 //
-#define TINYOBJLOADER_IMPLEMENTATION// define this in only *one* .cc
-// Optional. define TINYOBJLOADER_USE_MAPBOX_EARCUT gives robust trinagulation. Requires C++11
-#define TINYOBJLOADER_USE_MAPBOX_EARCUT
-#include "object_loader/tiny_obj_loader.h"
-#include "renderer/scene/objects/box.h"
 
+#include "renderer/scene/objects/box.h"
+#include "object_loader/tiny_obj_loader.h"
 void RayTracer::load()
 {
 

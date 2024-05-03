@@ -157,7 +157,7 @@ color3 compute_color(const ray& incident_ray, const uint32_t max_rays)
     }
 
     // Global illumination (indirect)
-    constexpr int num_samples = 32;
+    constexpr int num_samples = 16;
 
     // Dynamic specular weight based on material shinines
     const float specular_weight = std::min(1.0f, std::max(0.1f, 1.0f - exp(-0.1f * closest_hit_object->get_shininess())));

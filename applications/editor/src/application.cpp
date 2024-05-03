@@ -19,6 +19,7 @@
 
 RayTracer rayTracerz;
 
+
 //implement the application class here
         void application::init()
 {
