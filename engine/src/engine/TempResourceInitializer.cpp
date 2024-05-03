@@ -82,12 +82,19 @@ void init(ResourceManager& resourceManager, graphics::Renderer& renderer, const 
     {
         {
             auto tex = renderer.getDeviceManager().getDevice().createTexture(TextureDesc::new2D(TextureFormat::RGBA_UNorm8, 1, 1, TextureDesc::TextureUsageBits::Sampled));
-            uint8_t data[] = {255, 255, 255, 0};
+            uint8_t data[] = {0, 0, 0, 0};
             tex->upload(data, TextureRangeDesc::new2D(0, 0, 1, 1));
-            auto texRes = resourceManager.createTexture("emtpyTexture");
+            auto texRes = resourceManager.createTexture("emptyTexture");
             texRes->loadFromManagedResource(tex, renderer.getDeviceManager().getDevice().createSamplerState(SamplerStateDesc::newLinear()));
         }
 
+        {
+            auto tex = renderer.getDeviceManager().getDevice().createTexture(TextureDesc::new2D(TextureFormat::RGBA_UNorm8, 1, 1, TextureDesc::TextureUsageBits::Sampled));
+            uint8_t data[] = {255, 255, 255, 255};
+            tex->upload(data, TextureRangeDesc::new2D(0, 0, 1, 1));
+            auto texRes = resourceManager.createTexture("whiteTexture");
+            texRes->loadFromManagedResource(tex, renderer.getDeviceManager().getDevice().createSamplerState(SamplerStateDesc::newLinear()));
+        }
 
         {
             auto tex = renderer.getDeviceManager().getDevice().createTexture(TextureDesc::new2D(TextureFormat::RGBA_UNorm8, 1, 1, TextureDesc::TextureUsageBits::Sampled));
@@ -95,6 +102,18 @@ void init(ResourceManager& resourceManager, graphics::Renderer& renderer, const 
             tex->upload(data, TextureRangeDesc::new2D(0, 0, 1, 1));
             auto texRes = resourceManager.createTexture("missingTexture");
             texRes->loadFromManagedResource(tex, renderer.getDeviceManager().getDevice().createSamplerState(SamplerStateDesc::newLinear()));
+        }
+
+        // import uv checker test
+        {
+            auto image = resourceManager.createExternalImage(desc.assetPath + "/test/textures/checkerTest.jpg");
+            image->load();
+            auto samplerState = renderer.getDevice().createSamplerState(SamplerStateDesc::newLinear());
+            TextureDesc texDesc = TextureDesc::new2D(TextureFormat::RGBA_UNorm8, image->getWidth(), image->getHeight(), TextureDesc::TextureUsageBits::Sampled);
+            auto tex = renderer.getDeviceManager().getDevice().createTexture(texDesc);
+            tex->upload(image->getData(), TextureRangeDesc::new2D(0, 0, image->getWidth(), image->getHeight()));
+            auto texRes = resourceManager.createTexture("checkerTest");
+            texRes->loadFromManagedResource(tex, samplerState);
         }
     }
 
@@ -144,6 +163,54 @@ void init(ResourceManager& resourceManager, graphics::Renderer& renderer, const 
             settings.baseColor = glm::vec3(0.5f, 0.0f, 0.0f);
             settings.emissionIntensity = 0.0f;
             matres->setUniformBuffer("Settings", &settings, sizeof(PBRSettings), 2);
+        }
+
+        {
+            auto matres = resourceManager.createMaterial("pbrEmptyMaterial");
+            matres->loadFromManagedResource(renderer.getDeviceManager().createMaterial(nullptr));
+            matres->setShader(shaderRes);
+
+            PBRSettings settings;
+            settings.useAlbedoMap = true;
+            settings.useNormalMap = true;
+            settings.useMetallicMap = true;
+            settings.useRoughnessMap = true;
+            settings.useAOMap = true;
+            settings.useEmissiveMap = true;
+
+            settings.baseColor = glm::vec3(0.5f, 0.0f, 0.0f);
+            settings.emissionIntensity = 0.0f;
+            matres->setUniformBuffer("Settings", &settings, sizeof(PBRSettings), 2);
+
+            // set all map textures to empty
+            matres->setTextureSampler("albedoMap", resourceManager.getTextureByName("emptyTexture"), 1);
+            matres->setTextureSampler("normalMap", resourceManager.getTextureByName("emptyTexture"), 2);
+            matres->setTextureSampler("metallicMap", resourceManager.getTextureByName("emptyTexture"), 3);
+            matres->setTextureSampler("roughnessMap", resourceManager.getTextureByName("emptyTexture"), 4);
+            matres->setTextureSampler("aoMap", resourceManager.getTextureByName("emptyTexture"), 5);
+            matres->setTextureSampler("emissiveMap", resourceManager.getTextureByName("emptyTexture"), 6);
+        }
+
+
+        {
+            auto matres = resourceManager.createMaterial("pbrUVCheckerMaterial");
+            matres->loadFromManagedResource(renderer.getDeviceManager().createMaterial(nullptr));
+            matres->setShader(shaderRes);
+
+            PBRSettings settings;
+            settings.useAlbedoMap = true;
+            settings.useNormalMap = false;
+            settings.useMetallicMap = false;
+            settings.useRoughnessMap = false;
+            settings.useAOMap = false;
+            settings.useEmissiveMap = false;
+
+            settings.baseColor = glm::vec3(1.0f);
+            settings.emissionIntensity = 0.0f;
+            matres->setUniformBuffer("Settings", &settings, sizeof(PBRSettings), 2);
+
+            // set all map textures to empty
+            matres->setTextureSampler("albedoMap", resourceManager.getTextureByName("checkerTest"), 1);
         }
 
         {
@@ -782,7 +849,7 @@ void init(ResourceManager& resourceManager, graphics::Renderer& renderer, const 
         bunnyMesh->recalculateBounds();
     }
     {
-        auto bunnyMeshRes = resourceManager.createMesh("bunny");
+        auto bunnyMeshRes = resourceManager.createMesh("suzanne");
         bunnyMeshRes->getMesh() = *bunnyMesh;
 
         graphics::VertexDataLayout attribLayout({

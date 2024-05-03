@@ -120,6 +120,8 @@ set(TestAssets
         "assets/test/textures/skybox/front.jpg"
         "assets/test/textures/skybox/back.jpg"
 
+        "assets/test/textures/checkerTest.jpg"
+
         "assets/test/shaders/lighting.vert"
         "assets/test/shaders/lighting.frag"
 )
