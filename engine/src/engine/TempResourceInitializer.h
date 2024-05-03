@@ -40,7 +40,75 @@ namespace TempResourceInitializer
 //            layout(location = 4) out vec3 tangentLightPos[10];
 //            layout(location = 5) out vec3 tangentFragPos;
 
+            struct Light {
+                vec3 position;
+                vec3 color;
+                float intensity;
+                float constant;
+                float linear;
+                float quadratic;
+            };
 
+            struct Spotlight {
+                vec3 position;
+                vec3 direction;
+                vec3 color;
+
+                float cutoff;
+                float outerCutoff;
+
+                float intensity;
+                float constant;
+                float linear;
+                float quadratic;
+            };
+
+            layout(binding = 6, std140) uniform Lights {
+                int lightCount;
+                Light lights[MAX_LIGHTS];
+            } pointLights;
+
+
+            layout(binding = 7, std140) uniform Spotlights {
+                int lightCount;
+                Spotlight lights[MAX_LIGHTS];
+            } spotlights;
+
+            struct DirectionalLight {
+                vec3 color;
+                vec3 direction;
+                float intensity;
+            };
+
+            layout(binding = 8, std140) uniform DirectionalLights {
+                DirectionalLight directionalLight;
+            } directionalLights;
+
+
+            layout(binding = 1) uniform Constants {
+                vec3 cameraPos;
+                vec3 cameraDir;
+                vec3 unused_;
+                int lightModel;
+            } constants;
+
+            layout(binding = 2, std140) uniform Settings {
+                bool useAlbedoMap;
+                bool useNormalMap;
+                bool useMetallicMap;
+                bool useRoughnessMap;
+                bool useAOMap;
+                bool useEmissiveMap;
+
+                vec3 baseColor;
+                float metallic;
+                float roughness;
+                float ao;
+                vec3 emissionColor;
+                float emissionIntensity;
+
+                int lightModel; // 0 = PBR, 1 = Blinn-Phong, 2 = Gouraud
+            } settings;
 
             layout(binding = 0) uniform UBO {
                 mat4 model;
@@ -48,16 +116,45 @@ namespace TempResourceInitializer
                 mat4 proj;
             } ubo;
 
+            layout(location = 3) out vec3 gouraudColor;
 
-//            struct Light {
-//                vec3 position;
-//                vec3 color;
-//            };
-//
-//            layout(binding = 6) uniform Lights {
-//                int lightCount;
-//                Light lights[MAX_LIGHTS];
-//            };
+            vec3 calcGouraud(vec3 N, vec3 V, vec3 L, vec3 color, vec3 albedo, float intensity)
+            {
+                vec3 lightDir = normalize(L);
+                vec3 normal = normalize(N);
+                float diff = max(dot(lightDir, normal), 0.0);
+                vec3 diffuse = albedo * diff * color;
+
+                vec3 viewDir = normalize(V);
+                vec3 halfwayDir = normalize(lightDir + viewDir);
+                float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
+                vec3 specular = color * spec;
+
+                return (diffuse + specular) * intensity;
+            }
+
+            float calcAttenuation(float distance, float constant, float linear, float quadratic)
+            {
+                return 1.0 / (constant + linear * distance + quadratic * distance * distance);
+            }
+
+            float calcPointLightIntensity(vec3 lightPos, vec3 fragPos, float constant, float linear, float quadratic)
+            {
+                float distance = length(lightPos - fragPos);
+                float attenuation = calcAttenuation(distance, constant, linear, quadratic);
+                return attenuation;
+            }
+
+            float calcSpotlightIntensity(vec3 lightPos, vec3 spotDir, vec3 fragPos, float constant, float linear, float quadratic, float cutoff, float outerCutoff)
+            {
+                float distance = length(lightPos - fragPos);
+                float attenuation = calcAttenuation(distance, constant, linear, quadratic);
+                vec3 lightDir = normalize(lightPos - fragPos);
+                float theta = dot(lightDir, normalize(-spotDir));
+                float epsilon = cutoff - outerCutoff;
+                float intensity = clamp((theta - outerCutoff) / epsilon, 0.0, 1.0) * attenuation;
+                return intensity;
+            }
 
             void main() {
                 gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
@@ -66,19 +163,34 @@ namespace TempResourceInitializer
                 mat3 normalMatrix = transpose(inverse(mat3(ubo.model)));
                 fragNormal = normalMatrix * inNormal;
 
-//                // Gram-Schmidt Orthogonalisation
-//                vec3 T = normalize(normalMatrix * inTangent);
-//                vec3 N = normalize(normalMatrix * inNormal);
-//                T = normalize(T - dot(T, N) * N);
-//                vec3 B = cross(N, T);
-//
-//                mat3 TBN = transpose(mat3(T, B, N));
-//
-//                tangentViewPos = TBN * vec3(ubo.view * vec4(fragWorldPos, 1.0));
-//                tangentFragPos = TBN * vec3(ubo.model * vec4(inPosition, 1.0));
-//                for (int i = 0; i < lightCount; ++i) {
-//                    tangentLightPos[i] = TBN * lights[i].position;
-//                }
+                if (constants.lightModel == 3) {
+                    vec3 albedo =  settings.baseColor;
+                    vec3 emission = settings.emissionColor * settings.emissionIntensity;
+
+                    vec3 fragNormal = normalize(fragNormal);
+                    vec3 fragWorldPos = vec3(ubo.model * vec4(inPosition, 1.0));
+
+                    vec3 Lo = vec3(0.0);
+                    for (int i = 0; i < 1; ++i) {
+                        Lo += calcGouraud(fragNormal, constants.cameraPos - fragWorldPos, directionalLights.directionalLight.direction, directionalLights.directionalLight.color, albedo, directionalLights.directionalLight.intensity);
+                    }
+
+                    for (int i = 0; i < pointLights.lightCount; ++i) {
+                        Light light = pointLights.lights[i];
+                        float intensity = calcPointLightIntensity(light.position, fragWorldPos, light.constant, light.linear, light.quadratic);
+                        Lo += calcGouraud(fragNormal, constants.cameraPos - fragWorldPos, light.position - fragWorldPos, light.color, albedo, light.intensity) * intensity;
+                    }
+
+                    for (int i = 0; i < spotlights.lightCount; ++i) {
+                        Spotlight light = spotlights.lights[i];
+                        float intensity = calcSpotlightIntensity(light.position, light.direction, fragWorldPos, light.constant, light.linear, light.quadratic, light.cutoff, light.outerCutoff);
+                        Lo += calcGouraud(fragNormal, constants.cameraPos - fragWorldPos, light.position - fragWorldPos, light.color, albedo, light.intensity) * intensity;
+                    }
+                    vec3 ambient = vec3(0.00) * albedo;
+
+                    gouraudColor = ambient + emission + Lo;
+                }
+
             }
         )";
 
@@ -90,9 +202,7 @@ namespace TempResourceInitializer
             layout(location = 0) in vec2 fragTexCoord;
             layout(location = 1) in vec3 fragWorldPos;
             layout(location = 2) in vec3 fragNormal;
-//            layout(location = 3) in vec3 tangentViewPos;
-//            layout(location = 4) in vec3 tangentLightPos[10];
-//            layout(location = 5) in vec3 tangentFragPos;
+            layout(location = 3) in vec3 gouraudColor;
 
             out vec4 fragColor;
 
@@ -158,8 +268,8 @@ namespace TempResourceInitializer
             layout(binding = 1) uniform Constants {
                 vec3 cameraPos;
                 vec3 cameraDir;
-                vec3 lightDir;
-                float shininess;
+                vec3 unused_;
+                int lightModel;
             } constants;
 
             layout(binding = 2, std140) uniform Settings {
@@ -176,6 +286,8 @@ namespace TempResourceInitializer
                 float ao;
                 vec3 emissionColor;
                 float emissionIntensity;
+
+                int lightModel; // 0 = PBR, 1 = Blinn-Phong, 2 = Gouraud
             } settings;
 
             const float PI = 3.14159265359;
@@ -205,44 +317,6 @@ namespace TempResourceInitializer
 //                map.y = -map.y;
 
                 return normalize(TBN * map);
-            }
-
-            vec3 getNormalFromMap()
-            {
-                vec3 tangentNormal = texture(normalMap, fragTexCoord).xyz * 2.0 - 1.0;
-
-                vec3 Q1  = dFdx(fragWorldPos);
-                vec3 Q2  = dFdy(fragWorldPos);
-                vec2 st1 = dFdx(fragTexCoord);
-                vec2 st2 = dFdy(fragTexCoord);
-
-                vec3 N   = normalize(fragNormal);
-                vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
-                vec3 B  = -normalize(cross(N, T));
-                mat3 TBN = mat3(T, B, N);
-
-                return normalize(TBN * tangentNormal);
-            }
-
-            //http://pocket.gl/normal-maps/
-            vec3 perturbNormal2( vec3 eye_pos, vec3 surf_norm, vec2 uv_coords, sampler2D tex){
-                vec3 pNorm	= texture( tex, uv_coords ).rgb * 2.0 - 1.0;
-
-                vec2 st0	= dFdx( uv_coords.st ),
-                     st1	= dFdy( uv_coords.st );
-                vec3 q0		= dFdx( eye_pos.xyz ),
-                     q1		= dFdy( eye_pos.xyz ),
-                     S		= normalize(  q0 * st1.t - q1 * st0.t ),
-                     T		= normalize( -q0 * st1.s + q1 * st0.s ),
-                     N		= normalize( surf_norm );
-
-//                vec3 NfromST = cross( S, T );
-//                if( dot( NfromST, N ) < 0.0 ) {
-//                S *= -1.0;
-//                T *= -1.0;
-//                }
-
-                return normalize( mat3( S, T, N ) * pNorm );
             }
 
             // ----------------------------------------------------------------------------
@@ -287,100 +361,82 @@ namespace TempResourceInitializer
             }
             // ----------------------------------------------------------------------------
 
-            // function that calculates the lighting for point lights
-            // using the Cook-Torrance model
-            // and light properties such as
-            // position, color, intensity, constant, linear, quadratic
-            vec3 calcPointLight(Light light, vec3 normal, vec3 viewDir, vec3 fragPos, Material material, vec3 F0)
+
+            vec3 calcCookTorrance(vec3 N, vec3 V, vec3 L, vec3 F0, vec3 albedo, float roughness, float metallic)
             {
-                vec3 lightDir = normalize(light.position - fragPos);
-                vec3 reflectDir = reflect(-lightDir, normal);
-                vec3 halfwayDir = normalize(lightDir + viewDir);
+                N = normalize(N);
+                V = normalize(V);
+                L = normalize(L);
 
-                float distance = length(light.position - fragPos);
-                float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
-
-                float NDF = DistributionGGX(normal, halfwayDir, material.roughness);
-                float G = GeometrySmith(normal, viewDir, lightDir, material.roughness);
-                vec3 F = fresnelSchlick(clamp(dot(halfwayDir, viewDir), 0.0, 1.0), F0);
+                vec3 H = normalize(V + L);
+                float NDF = DistributionGGX(N, H, roughness);
+                float G = GeometrySmith(N, V, L, roughness);
+                vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
 
                 vec3 kS = F;
                 vec3 kD = vec3(1.0) - kS;
-                kD *= 1.0 - material.metallic;
-
-                float NdotL = max(dot(normal, lightDir), 0.0);
-                float NdotV = max(dot(normal, viewDir), 0.0);
-                float NdotH = max(dot(normal, halfwayDir), 0.0);
-                float VdotH = max(dot(viewDir, halfwayDir), 0.0);
+                kD *= 1.0 - metallic;
 
                 vec3 numerator = NDF * G * F;
-                float denominator = 4.0 * max(dot(normal, viewDir), 0.0) * max(dot(normal, lightDir), 0.0) + 0.0001;
+                float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
                 vec3 specular = numerator / denominator;
 
-                return (kD * material.albedo / PI + specular) * light.color * light.intensity * NdotL * attenuation;
+                float NdotL = max(dot(N, L), 0.0);
+
+                return (kD * albedo / PI + specular) * NdotL;
             }
 
-            // function that calculates the lighting for spot lights
-            // and spotlight properties such as
-            // position, direction, color, intensity, constant, linear, quadratic, cutoff, outerCutoff
-            vec3 calcSpotlight(Spotlight spotlight, vec3 normal, vec3 viewDir, vec3 fragPos, Material material, vec3 F0)
+            vec3 calcBlinnPhong(vec3 N, vec3 V, vec3 L, vec3 color, vec3 albedo, float intensity, float shininess)
             {
-                vec3 lightDir = normalize(spotlight.position - fragPos);
-                vec3 reflectDir = reflect(-lightDir, normal);
+                vec3 lightDir = normalize(L);
+                vec3 normal = normalize(N);
+                float diff = max(dot(lightDir, normal), 0.0);
+                vec3 diffuse = albedo * diff * color;
+
+                vec3 viewDir = normalize(V);
                 vec3 halfwayDir = normalize(lightDir + viewDir);
+                float spec = pow(max(dot(normal, halfwayDir), 0.0), shininess);
+                vec3 specular = color * spec;
 
-                float distance = length(spotlight.position - fragPos);
-                float attenuation = 1.0 / (spotlight.constant + spotlight.linear * distance + spotlight.quadratic * (distance * distance));
-
-                float theta = dot(lightDir, normalize(-spotlight.direction));
-                float epsilon = spotlight.cutoff - spotlight.outerCutoff;
-                float intensity = clamp((theta - spotlight.outerCutoff) / epsilon, 0.0, 1.0);
-
-                float NDF = DistributionGGX(normal, halfwayDir, material.roughness);
-                float G = GeometrySmith(normal, viewDir, lightDir, material.roughness);
-                vec3 F = fresnelSchlick(clamp(dot(halfwayDir, viewDir), 0.0, 1.0), F0);
-
-                vec3 kS = F;
-                vec3 kD = vec3(1.0) - kS;
-                kD *= 1.0 - material.metallic;
-
-                float NdotL = max(dot(normal, lightDir), 0.0);
-                float NdotV = max(dot(normal, viewDir), 0.0);
-                float NdotH = max(dot(normal, halfwayDir), 0.0);
-                float VdotH = max(dot(viewDir, halfwayDir), 0.0);
-
-                vec3 numerator = NDF * G * F;
-                float denominator = 4.0 * max(dot(normal, viewDir), 0.0) * max(dot(normal, lightDir), 0.0) + 0.0001;
-                vec3 specular = numerator / denominator;
-
-                return (kD * material.albedo / PI + specular) * spotlight.color * spotlight.intensity * NdotL * attenuation * intensity;
+                return (diffuse + specular) * intensity;
             }
 
-            // function that calculates the lighting for directional lights
-            vec3 calcDirLight(DirectionalLight light, vec3 normal, vec3 viewDir, vec3 fragPos, Material material, vec3 F0)
+            vec3 calculatePhong(vec3 N, vec3 V, vec3 L, vec3 color, vec3 albedo, float intensity, float shininess)
             {
-                vec3 lightDir = normalize(-light.direction);
+                vec3 lightDir = normalize(L);
+                vec3 normal = normalize(N);
+                float diff = max(dot(lightDir, normal), 0.0);
+                vec3 diffuse = albedo * diff * color;
+
+                vec3 viewDir = normalize(V);
                 vec3 reflectDir = reflect(-lightDir, normal);
-                vec3 halfwayDir = normalize(lightDir + viewDir);
+                float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+                vec3 specular = color * spec;
 
-                float NDF = DistributionGGX(normal, halfwayDir, material.roughness);
-                float G = GeometrySmith(normal, viewDir, lightDir, material.roughness);
-                vec3 F = fresnelSchlick(clamp(dot(halfwayDir, viewDir), 0.0, 1.0), F0);
+                return (diffuse + specular) * intensity;
+            }
 
-                vec3 kS = F;
-                vec3 kD = vec3(1.0) - kS;
-                kD *= 1.0 - material.metallic;
+            float calcAttenuation(float distance, float constant, float linear, float quadratic)
+            {
+                return 1.0 / (constant + linear * distance + quadratic * distance * distance);
+            }
 
-                float NdotL = max(dot(normal, lightDir), 0.0);
-                float NdotV = max(dot(normal, viewDir), 0.0);
-                float NdotH = max(dot(normal, halfwayDir), 0.0);
-                float VdotH = max(dot(viewDir, halfwayDir), 0.0);
+            float calcPointLightIntensity(vec3 lightPos, vec3 fragPos, float constant, float linear, float quadratic)
+            {
+                float distance = length(lightPos - fragPos);
+                float attenuation = calcAttenuation(distance, constant, linear, quadratic);
+                return attenuation;
+            }
 
-                vec3 numerator = NDF * G * F;
-                float denominator = 4.0 * max(dot(normal, viewDir), 0.0) * max(dot(normal, lightDir), 0.0) + 0.0001;
-                vec3 specular = numerator / denominator;
-
-                return (kD * material.albedo / PI + specular) * light.color * light.intensity * NdotL;
+            float calcSpotlightIntensity(vec3 lightPos, vec3 spotDir, vec3 fragPos, float constant, float linear, float quadratic, float cutoff, float outerCutoff)
+            {
+                float distance = length(lightPos - fragPos);
+                float attenuation = calcAttenuation(distance, constant, linear, quadratic);
+                vec3 lightDir = normalize(lightPos - fragPos);
+                float theta = dot(lightDir, normalize(-spotDir));
+                float epsilon = cutoff - outerCutoff;
+                float intensity = clamp((theta - outerCutoff) / epsilon, 0.0, 1.0) * attenuation;
+                return intensity;
             }
 
             void main() {
@@ -389,7 +445,6 @@ namespace TempResourceInitializer
                 vec3 fragNormal = normalize(fragNormal);
 
                 vec3 albedo =  settings.useAlbedoMap ? pow(texture(albedoMap, fragTexCoord).rgb, vec3(2.2)) : vec3(1.0);
-//                vec3 albedo = texture(albedoMap, fragTexCoord).rgb;
                 albedo = albedo * settings.baseColor;
 
                 vec3 normal = settings.useNormalMap ? perturbNormal(fragNormal, camPos - fragWorldPos, fragTexCoord) : fragNormal;
@@ -405,62 +460,102 @@ namespace TempResourceInitializer
                 vec3 V = normalize(camPos - fragWorldPos);
                 vec3 N = normal;
 
-                vec3 F0 = vec3(0.04);
-                F0 = mix(F0, albedo, metallic);
+                vec3 color = vec3(0.0);
 
-                vec3 Lo = vec3(0.0);
+                if (constants.lightModel == 0) {
+                    vec3 F0 = vec3(0.04);
+                    F0 = mix(F0, albedo, metallic);
 
-                for (int i = 0; i < 1; ++i) {
-                    Lo += calcDirLight(directionalLights.directionalLight, N, V, fragWorldPos, material, F0);
+                    vec3 Lo = vec3(0.0);
+
+                    for (int i = 0; i < 1; ++i) {
+                        Lo += calcCookTorrance(N, V, directionalLights.directionalLight.direction, F0, material.albedo, material.roughness, material.metallic) * directionalLights.directionalLight.color * directionalLights.directionalLight.intensity;
+                    }
+
+                    for (int i = 0; i < pointLights.lightCount; ++i) {
+                        Light light = pointLights.lights[i];
+                        float intensity = calcPointLightIntensity(light.position, fragWorldPos, light.constant, light.linear, light.quadratic);
+                        Lo += calcCookTorrance(N, V, light.position - fragWorldPos, F0, material.albedo, material.roughness, material.metallic) * light.color * intensity * light.intensity;
+                    }
+
+                    for (int i = 0; i < spotlights.lightCount; ++i) {
+                        Spotlight light = spotlights.lights[i];
+                        float intensity = calcSpotlightIntensity(light.position, light.direction, fragWorldPos, light.constant, light.linear, light.quadratic, light.cutoff, light.outerCutoff);
+                        Lo += calcCookTorrance(N, V, light.position - fragWorldPos, F0, material.albedo, material.roughness, material.metallic) * light.color * intensity * light.intensity;
+                    }
+
+                    vec3 ambient = vec3(0.00) * material.albedo * material.ao;
+
+                    color = ambient + Lo;
+
+                    color = color / (color + vec3(1.0));
+                    color = pow(color, vec3(1.0 / 2.2));
+
+                    color += emission;
+                }
+                else if (constants.lightModel == 1) {
+                    vec3 Lo = vec3(0.0);
+
+                    for (int i = 0; i < 1; ++i) {
+                        Lo += calcBlinnPhong(N, V, directionalLights.directionalLight.direction, directionalLights.directionalLight.color, material.albedo, directionalLights.directionalLight.intensity, 32.0);
+                    }
+
+                    for (int i = 0; i < pointLights.lightCount; ++i) {
+                        Light light = pointLights.lights[i];
+                        float intensity = calcPointLightIntensity(light.position, fragWorldPos, light.constant, light.linear, light.quadratic);
+                        Lo += calcBlinnPhong(N, V, light.position - fragWorldPos, light.color, material.albedo, light.intensity, 32.0) * intensity;
+                    }
+
+                    for (int i = 0; i < spotlights.lightCount; ++i) {
+                        Spotlight light = spotlights.lights[i];
+                        float intensity = calcSpotlightIntensity(light.position, light.direction, fragWorldPos, light.constant, light.linear, light.quadratic, light.cutoff, light.outerCutoff);
+                        Lo += calcBlinnPhong(N, V, light.position - fragWorldPos, light.color, material.albedo, light.intensity, 32.0) * intensity;
+                    }
+
+                    vec3 ambient = vec3(0.00) * material.albedo * material.ao;
+
+                    color = ambient + Lo;
+
+//                    color = color / (color + vec3(1.0));
+//                    color = pow(color, vec3(1.0 / 2.2));
+
+                    color += emission;
+                }
+                else if (constants.lightModel == 2) {
+                    vec3 Lo = vec3(0.0);
+
+                    for (int i = 0; i < 1; ++i) {
+                        Lo += calculatePhong(N, V, directionalLights.directionalLight.direction, directionalLights.directionalLight.color, material.albedo, directionalLights.directionalLight.intensity, 32.0);
+                    }
+
+                    for (int i = 0; i < pointLights.lightCount; ++i) {
+                        Light light = pointLights.lights[i];
+                        float intensity = calcPointLightIntensity(light.position, fragWorldPos, light.constant, light.linear, light.quadratic);
+                        Lo += calculatePhong(N, V, light.position - fragWorldPos, light.color, material.albedo, light.intensity, 32.0) * intensity;
+                    }
+
+                    for (int i = 0; i < spotlights.lightCount; ++i) {
+                        Spotlight light = spotlights.lights[i];
+                        float intensity = calcSpotlightIntensity(light.position, light.direction, fragWorldPos, light.constant, light.linear, light.quadratic, light.cutoff, light.outerCutoff);
+                        Lo += calculatePhong(N, V, light.position - fragWorldPos, light.color, material.albedo, light.intensity, 32.0) * intensity;
+                    }
+
+                    vec3 ambient = vec3(0.00) * material.albedo * material.ao;
+
+                    color = ambient + Lo;
+                    color += emission;
+                }
+                else if (constants.lightModel == 3) {
+                    color = gouraudColor;// * material.albedo;
                 }
 
-                for (int i = 0; i < pointLights.lightCount; ++i) {
-                    Lo += calcPointLight(pointLights.lights[i], N, V, fragWorldPos, material, F0);
-                }
 
-                for (int i = 0; i < spotlights.lightCount; ++i) {
-                    Lo += calcSpotlight(spotlights.lights[i], N, V, fragWorldPos, material, F0);
-                }
-
-                vec3 ambient = vec3(0.00) * material.albedo * material.ao;
-
-                vec3 color = ambient + Lo;
-
-                color = color / (color + vec3(1.0));
-                color = pow(color, vec3(1.0 / 2.2));
-
-                color += emission;
 
                 color.r = max(color.r, 0.0);
                 color.g = max(color.g, 0.0);
                 color.b = max(color.b, 0.0);
 
                 fragColor = vec4(color, 1.0);
-
-//                // Calculate direct lighting...
-//                vec3 directLighting = vec3(0.0);
-//                for (int i = 0; i < 1; ++i) {
-//                    directLighting += calcDirLight(directionalLights.directionalLight, N, V, fragWorldPos, material, F0);
-//                }
-//                for (int i = 0; i < pointLights.lightCount; ++i) {
-//                    directLighting += calcPointLight(pointLights.lights[i], N, V, fragWorldPos, material, F0);
-//                }
-//                for (int i = 0; i < spotlights.lightCount; ++i) {
-//                    directLighting += calcSpotlight(spotlights.lights[i], N, V, fragWorldPos, material, F0);
-//                }
-//
-//                // Calculate ambient lighting...
-//                vec3 ambient = vec3(0.03) * material.albedo * material.ao;
-//
-//                // Combine ambient and direct lighting...
-//                vec3 colorLinear = ambient + directLighting;
-//
-//                // Convert linear color to gamma space...
-//                vec3 colorGamma = pow(colorLinear, vec3(1.0 / 2.2));
-//
-//                // Output final color...
-//                fragColor = vec4(colorGamma, 1.0);
-
             }
         )";
 
@@ -483,6 +578,7 @@ namespace TempResourceInitializer
             float ao = 1.0f;
             alignas(16) glm::vec3 emissionColor = glm::vec3(1.0f);
             float emissionIntensity = 1.0f;
+            int lightModel = 0;
         };
 
         {
@@ -1093,8 +1189,7 @@ namespace TempResourceInitializer
     }
     {
         auto spiderMeshRes = resourceManager.createMesh("spider");
-        spiderMeshRes->getMesh().vertices = spiderMesh->vertices;
-        spiderMeshRes->getMesh().indices = spiderMesh->indices;
+        spiderMeshRes->getMesh() = *spiderMesh;
 
         graphics::VertexDataLayout attribLayout({
                 { "inPosition", 0, VertexAttributeFormat::Float3 },
@@ -1139,8 +1234,7 @@ namespace TempResourceInitializer
     }
     {
         auto bunnyMeshRes = resourceManager.createMesh("bunny");
-        bunnyMeshRes->getMesh().vertices = bunnyMesh->vertices;
-        bunnyMeshRes->getMesh().indices = bunnyMesh->indices;
+        bunnyMeshRes->getMesh() = *bunnyMesh;
 
         graphics::VertexDataLayout attribLayout({
                 { "inPosition", 0, VertexAttributeFormat::Float3 },

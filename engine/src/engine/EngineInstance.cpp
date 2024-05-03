@@ -107,32 +107,42 @@ void EngineInstance::initialize()
                 return a / b;
             }
 
-            vec4 filteredSample(sampler2D tex, vec2 uv)
+            vec3 ACESFilmicToneMapping(vec3 x)
             {
-                vec4 x = u_exposure * texture(tex, uv);
+                const float A = 2.51f;
+                const float B = 0.03f;
+                const float C = 2.43f;
+                const float D = 0.59f;
+                const float E = 0.14f;
+                return clamp((x*(A*x+B))/(x*(C*x+D)+E), 0.0, 1.0);
+            }
 
-                vec3 color = ACESInputMat * x.rgb;
-                color = RRTAndODTFit(color);
-                color = ACESOutputMat * color;
-
+            vec3 applyToneMapping(vec3 color)
+            {
+                color *= u_exposure;
+                if (u_useFXAA) {
+                    color = ACESInputMat * color;
+                    color = RRTAndODTFit(color);
+                    color = ACESOutputMat * color;
+                }
+                else {
+//                    color = ACESFilmicToneMapping(color);
+                }
                 color = gammaCorrect(color);
                 color = clamp(color, 0.0, 1.0);
+                return color;
+            }
 
-                return vec4(color, 1.0);
+            vec4 filteredSample(sampler2D tex, vec2 uv)
+            {
+                vec4 x = texture(tex, uv);
+                return vec4(applyToneMapping(x.rgb), 1.0);
             }
 
             vec4 filteredSampleOffset(sampler2D tex, vec2 uv, ivec2 pixelOffset)
             {
-                vec4 x = u_exposure * textureOffset(tex, uv, pixelOffset);
-
-                vec3 color = ACESInputMat * x.rgb;
-                color = RRTAndODTFit(color);
-                color = ACESOutputMat * color;
-
-                color = gammaCorrect(color);
-                color = clamp(color, 0.0, 1.0);
-
-                return vec4(color, 1.0);
+                vec4 x = textureOffset(tex, uv, pixelOffset);
+                return vec4(applyToneMapping(x.rgb), 1.0);
             }
 
             float rgb2luma(vec3 rgb){
@@ -1378,10 +1388,22 @@ void EngineInstance::renderFrame()
                 graphics::Renderable skyboxRenderable(mat->getMaterial(), mesh->getVertexData());
                 renderer.draw(skyboxRenderable);
             }
-
+            sceneRenderData.lightModel = lightModel;
+            
             sceneRenderer.render(renderer, sceneRenderData, {mainCamera->getWorldTransform().getPosition(),
                                                              mainCamera->getWorldTransform().getForward(),
                                                              glm::inverse(mainCamera->getWorldTransform().getModel()), camera.getCamera()->getProjection(), camera.getCamera()->getViewportWidth(), camera.getCamera()->getViewportHeight()});
+//            util::Ray ray1 = util::Ray {mainCamera->getWorldTransform().getPosition() + mainCamera->getWorldTransform().getForward(), {0.0f, 0.0f, 1.0f}};
+//            LineRenderer lineRenderer;
+//            lineRenderer.setAspect((float)desc.width / (float)desc.height);
+//            lineRenderer.setVP(glm::inverse(mainCamera->getWorldTransform().getModel()), camera.getCamera()->getProjection());
+//            lineRenderer.setLineWidth(0.005f);
+//            lineRenderer.setColor({1.0f, 0.0f, 0.0f, 1.0f});
+//
+//            lineRenderer.drawLine(renderer, ray.getOrigin(), ray.getOrigin() + ray.getDirection() * 1.0f);
+//            lineRenderer.setColor({0.0f, 1.0f, 0.0f, 1.0f});
+//
+//            lineRenderer.drawLine(renderer, ray.getOrigin(), hitp);
             renderer.end();
 
             //raytracing

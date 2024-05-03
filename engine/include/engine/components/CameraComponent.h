@@ -13,6 +13,7 @@
 class CameraComponent
 {
     friend class SceneEditor;
+    friend class SceneNode;
 public:
     CameraComponent(std::shared_ptr<Camera> camera);
     CameraComponent(std::shared_ptr<Camera> camera, const graphics::RenderTarget& renderTarget);
@@ -24,7 +25,10 @@ public:
     void setCamera(std::shared_ptr<Camera> camera_);
     std::shared_ptr<Camera> getCamera() const;
 
+    bool isRenderingToScreen() const { return renderTarget.colorTexture == nullptr; }
+
 private:
     std::shared_ptr<Camera> camera;
     graphics::RenderTarget renderTarget;
+    SceneNode* node;
 };

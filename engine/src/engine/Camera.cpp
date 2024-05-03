@@ -11,9 +11,9 @@ Camera::Camera(const std::string& name)
     this->updateProjectionMatrix();
 }
 
-glm::mat4 Camera::getView()
+glm::mat4 Camera::getView() const
 {
-    return glm::inverse(getTransform().getModel());
+    return glm::mat4(1.0);//glm::inverse(getTransform().getModel());
 }
 
 const glm::mat4& Camera::getProjection() const
@@ -74,4 +74,15 @@ void Camera::setProjectionConfigVP(float fov, float viewportWidth, float viewpor
     this->nearClip = nearClip;
     this->farClip = farClip;
     this->updateProjectionMatrix();
+}
+
+util::Ray Camera::screenPointToRay(const Transform& transform, float x, float y, int screenWidth, int screenHeight) const
+{
+    auto view = glm::inverse(transform.getModel());
+    glm::vec4 viewport = {0.0f, 0.0f, static_cast<float>(screenWidth), static_cast<float>(screenHeight)};
+    glm::vec3 screenPos = {x, screenHeight - y, 0.0f};
+    glm::vec3 near = glm::unProject(screenPos, view, this->projectionMatrix, viewport);
+    screenPos.z = 1.0f;
+    glm::vec3 far = glm::unProject(screenPos, view, this->projectionMatrix, viewport);
+    return util::Ray(near, glm::normalize(far - near));
 }

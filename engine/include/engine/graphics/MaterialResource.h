@@ -125,6 +125,33 @@ public:
         return shaderResource_.lock();
     }
 
+    template<typename T>
+    void getCachedUniformData(const std::string& name, T& data)
+    {
+        if (uniformBuffers.find(name) != uniformBuffers.end())
+        {
+            data = *static_cast<T*>(uniformBuffers[name].data);
+        }
+    }
+
+    void getCachedTextureSampler(const std::string& name, std::shared_ptr<TextureResource>& textureResource)
+    {
+        if (textureSamplers.find(name) != textureSamplers.end())
+        {
+            textureResource = textureSamplers[name].textureResource;
+        }
+    }
+
+    std::unordered_map<std::string, std::shared_ptr<TextureResource>> getAllCachedTextureSamplers()
+    {
+        std::unordered_map<std::string, std::shared_ptr<TextureResource>> textureResources;
+        for (const auto& [name, desc] : textureSamplers)
+        {
+            textureResources[name] = desc.textureResource;
+        }
+        return textureResources;
+    }
+
 private:
     std::shared_ptr<graphics::Material> internalMaterial_;
 
