@@ -183,6 +183,9 @@ set(
         "assets/test/textures/skybox/bottom.jpg"
         "assets/test/textures/skybox/front.jpg"
         "assets/test/textures/skybox/back.jpg"
+
+        "assets/test/shaders/lighting.vert"
+        "assets/test/shaders/lighting.frag"
 )
 
 message("OUTPUT DIR IS: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")

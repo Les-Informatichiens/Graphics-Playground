@@ -77,6 +77,7 @@ void EngineInstance::initialize()
                 float u_exposure;
                 float u_gamma;
                 bool u_useFXAA;
+                bool u_toneMap;
             };
 
             vec3 gammaCorrect(vec3 color)
@@ -119,17 +120,15 @@ void EngineInstance::initialize()
 
             vec3 applyToneMapping(vec3 color)
             {
-                color *= u_exposure;
-                if (u_useFXAA) {
+                if (u_toneMap)
+                {
+                    color *= u_exposure;
                     color = ACESInputMat * color;
                     color = RRTAndODTFit(color);
                     color = ACESOutputMat * color;
+                    color = gammaCorrect(color);
+                    color = clamp(color, 0.0, 1.0);
                 }
-                else {
-//                    color = ACESFilmicToneMapping(color);
-                }
-                color = gammaCorrect(color);
-                color = clamp(color, 0.0, 1.0);
                 return color;
             }
 
@@ -849,7 +848,7 @@ void EngineInstance::initialize()
         // Create a child node
         EntityView child = defaultScene->createEntity("childTeapot");
 
-        child.addComponent<MeshComponent>(resourceManager.getMeshByName("teapot"), resourceManager.getMaterialByName("testMaterial"));
+        child.addComponent<MeshComponent>(resourceManager.getMeshByName("teapot"), resourceManager.getMaterialByName("pbrDefaultMaterial"));
         auto& childNode = child.getSceneNode();
         childNode.getTransform().setPosition({7.0f, 0.0f, 0.0f});
         childNode.getTransform().setScale({1.f, 1.f, 1.f});
@@ -865,7 +864,7 @@ void EngineInstance::initialize()
                     .clearColor = {0.0f, 0.2f, 0.2f, 1.0f},
             };
             teapotPOV.addComponent<CameraComponent>(testRenderTextureCamera, testRenderTextureCameraTarget);
-            teapotPOV.addComponent<MeshComponent>(resourceManager.getMeshByName("teapot"), resourceManager.getMaterialByName("testMaterial"));
+            teapotPOV.addComponent<MeshComponent>(resourceManager.getMeshByName("teapot"), resourceManager.getMaterialByName("pbrDefaultMaterial"));
 
             auto& teapotPOVTransform = teapotPOVNode.getTransform();
             teapotPOVTransform.setPosition({4.0f, 0.0f, 0.0f});
@@ -904,6 +903,53 @@ void EngineInstance::initialize()
         rootNode.addChild(&childNode);
 
         viewer.getSceneNode().getTransform().lookAt(rootNode.getTransform().getPosition(), {0.0f, 1.0f, 0.0f});
+    }
+
+    // create cube with small glowing boxes on each face
+    {
+        auto cube = defaultScene->createEntity("artifactCube");
+
+        glm::vec3 cubeSize = {1.0f, 1.0f, 1.0f};
+
+        cube.addComponent<MeshComponent>(resourceManager.getMeshByName("sphere"), resourceManager.getMaterialByName("pbrMaterial2"));
+        {
+            auto& cubeNode = cube.getSceneNode();
+            cubeNode.getTransform().setPosition({0.0f, 0.0f, 0.0f});
+            cubeNode.getTransform().setScale(cubeSize);
+            cubeNode.getTransform().setRotation({0.0f, 0.0f, 0.0f});
+        }
+
+        // add a glowing box on each face of the cube
+        std::vector<glm::vec3> facePositions = {
+                {0.0f, 0.0f, 1.0f},
+                {0.0f, 0.0f, -1.0f},
+                {0.0f, 1.0f, 0.0f},
+                {0.0f, -1.0f, 0.0f},
+                {1.0f, 0.0f, 0.0f},
+                {-1.0f, 0.0f, 0.0f}
+        };
+        for (int i = 0; i < 1; i++) {
+            auto box = defaultScene->createEntity("artifactBox" + std::to_string(i));
+            box.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrGlowMaterial"));
+            {
+                auto& boxNode = box.getSceneNode();
+                boxNode.getTransform().setPosition(facePositions[i] * cubeSize);
+                boxNode.getTransform().setScale({0.1f, 0.1f, 0.1f});
+
+                // face outwards from the cube, so rotate the box relative to their face
+                glm::quat rotation = glm::quatLookAt(glm::vec3(0.0f, 0.0f, 0.0f) + facePositions[i], {0.0f, 1.0f, 0.0f});
+                boxNode.getTransform().setRotation(rotation);
+
+                //add spotlights to the simulate the glowing effect
+                Light spotlight;
+                spotlight.setSpot(12.5, 80.5);
+                spotlight.setColor({1.0f, 0.0f, 0.0f});
+                spotlight.setIntensity(5.0f);
+                box.addComponent<LightComponent>(spotlight);
+
+                cube.getSceneNode().addChild(&boxNode);
+            }
+        }
     }
 
     // create a room with a floor and walls
@@ -1175,6 +1221,18 @@ void EngineInstance::updateSimulation(float dt)
 {
 //    std::cout << "Updating simulation (" << (dt * 1000.0f) << " ms)" << std::endl;
 
+    // rotate the cube artifact in a chaotic manner
+    {
+        std::optional<EntityView> cubeArtifact_ = defaultScene->getEntityByName("artifactCube");
+        if (cubeArtifact_)
+        {
+            auto& cubeArtifact = cubeArtifact_->getSceneNode();
+            cubeArtifact.getTransform().rotate(glm::angleAxis(glm::radians(0.1f), glm::vec3(0.0f, 1.0f, 0.0f)));
+            cubeArtifact.getTransform().rotate(glm::angleAxis(glm::radians(0.2f), glm::vec3(1.0f, 0.0f, 0.0f)));
+            cubeArtifact.getTransform().rotate(glm::angleAxis(glm::radians(0.3f), glm::vec3(0.0f, 0.0f, 1.0f)));
+        }
+    }
+
     // We can move things around in our testing scene
     {
         std::optional<EntityView> root_ = defaultScene->getEntityByName("teapot");
@@ -1182,9 +1240,9 @@ void EngineInstance::updateSimulation(float dt)
         {
             auto& root = root_->getSceneNode();
             root.visit([](SceneNode& node) {
-                node.setVisible(false);
+                node.setVisible(true);
             });
-            root.getTransform().rotate(glm::angleAxis(glm::radians(1.0f), glm::vec3(0.0f, 0.0f, 1.0f)));
+//            root.getTransform().rotate(glm::angleAxis(glm::radians(1.0f), glm::vec3(0.0f, 0.0f, 1.0f)));
             auto* childNode_ = root.findNode("childTeapot");
             if (childNode_)
             {

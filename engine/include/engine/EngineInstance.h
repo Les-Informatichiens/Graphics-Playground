@@ -140,6 +140,7 @@ private:
         float exposure = 1.0f;
         float gamma = 2.2f;
         int useFXAA = true;
+        int toneMap = true;
     } postProcessSettings;
 
     int lightModel = 0; // test variable
