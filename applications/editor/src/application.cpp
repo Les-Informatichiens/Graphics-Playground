@@ -18,7 +18,7 @@
 #include "engine/stb_image_write.h"
 
 
-        //implement the application class here
+//implement the application class here
         void application::init()
 {
     // Set the user pointer of the window to the application object
@@ -143,6 +143,15 @@ void application::run()
         gameEngine.renderFrame();
 
         beginImGuiFrame();
+
+        // raycasting
+        {
+            // if right click, raycastselection
+            if (input.isMouseButtonPressed(0))
+            {
+                raycastSelection();
+            }
+        }
 
         if (showImageWindow)
         {
@@ -617,4 +626,48 @@ void application::onMouseScroll(double xoffset, double yoffset)
     if (ImGui::GetIO().WantCaptureMouse)
         return;
     gameEngine.getInput().setMouseWheel(yoffset);
+}
+
+
+void application::raycastSelection()
+{
+    auto scene = gameEngine.getStage().getScene();
+    if (!scene)
+        return;
+
+    auto cameraEntity = scene->getEntityByName("viewer");//scene->findMainCameraEntity();
+    auto cameraNode = cameraEntity->getSceneNode();
+    auto camera = cameraEntity->getComponent<CameraComponent>().getCamera();
+
+    float screenX, screenY;
+    gameEngine.getInput().getMousePosition(screenX, screenY);
+
+    auto ray = camera->screenPointToRay(cameraNode.getWorldTransform(), screenX, screenY, width, height);
+    std::optional<RaycastHit> hit = scene->raycastFirstHit(ray, 100000000.0f);
+    if (hit)
+    {
+        sceneEditor.clearSelection();
+        sceneEditor.setEntitySelection(hit->entityUUID, true);
+    }
+    else
+    {
+        sceneEditor.clearSelection();
+    }
+
+    ImGui::Begin("Raycast Selection");
+    ImGui::Text("Ray Origin: (%.2f, %.2f, %.2f)", ray.getOrigin().x, ray.getOrigin().y, ray.getOrigin().z);
+    ImGui::Text("Ray Direction: (%.2f, %.2f, %.2f)", ray.getDirection().x, ray.getDirection().y, ray.getDirection().z);
+    if (hit)
+    {
+        ImGui::Text("Hit Point: (%.2f, %.2f, %.2f)", hit->hitPoint.x, hit->hitPoint.y, hit->hitPoint.z);
+        ImGui::Text("Hit Normal: (%.2f, %.2f, %.2f)", hit->hitNormal.x, hit->hitNormal.y, hit->hitNormal.z);
+    }
+    ImGui::End();
+
+    // for debugging, remove after and anything that uses this
+    if (hit)
+    {
+        gameEngine.hitp = hit->hitPoint;
+    }
+    gameEngine.ray = ray;
 }

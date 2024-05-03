@@ -16,8 +16,9 @@ public:
     void drawMaterialEditor();
     void refreshMaterialResources();
 
-    void selectEntity(util::UUID uuid, bool isSelected);
+    void setEntitySelection(util::UUID uuid, bool isSelected);
     bool isEntitySelected(util::UUID uuid) const;
+    void clearSelection();
     auto getSelectedEntities() const { return selectedEntities_; }
     std::pair<bool, util::UUID> getLastSelectedEntity() const { return {!selectedEntities_.empty(), lastSelectedEntity_}; }
 

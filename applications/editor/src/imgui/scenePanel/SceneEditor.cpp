@@ -422,3 +422,19 @@ void SceneEditor::refreshMaterialResources()
         selectedMaterial_ = materialResources_.begin()->first;
     }
 }
+
+void SceneEditor::clearSelection()
+{
+    selectedEntities_.clear();
+    lastSelectedEntity_ = util::UUID::zero();
+}
+void SceneEditor::setEntitySelection(util::UUID uuid, bool isSelected)
+{
+    selectedEntities_[uuid] = isSelected;
+    lastSelectedEntity_ = uuid;
+}
+
+bool SceneEditor::isEntitySelected(util::UUID uuid) const
+{
+    return selectedEntities_.find(uuid) != selectedEntities_.end();
+}

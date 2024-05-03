@@ -24,10 +24,13 @@ public:
     void setProjectionConfig(float fov, float aspectRatio, float nearClip, float farClip);
     void setProjectionType(ProjectionType type);
 
-    [[nodiscard]] glm::mat4 getView();
+    [[nodiscard]] glm::mat4 getView() const;
     [[nodiscard]] const glm::mat4& getProjection() const;
     [[nodiscard]] int getViewportWidth() const;
     [[nodiscard]] int getViewportHeight() const;
+
+    [[nodiscard]] util::Ray screenPointToRay(const Transform& transform, float x, float y, int screenWidth, int screenHeight) const;
+
 private:
     void updateProjectionMatrix();
 

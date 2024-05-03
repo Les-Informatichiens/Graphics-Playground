@@ -1393,6 +1393,17 @@ void EngineInstance::renderFrame()
             sceneRenderer.render(renderer, sceneRenderData, {mainCamera->getWorldTransform().getPosition(),
                                                              mainCamera->getWorldTransform().getForward(),
                                                              glm::inverse(mainCamera->getWorldTransform().getModel()), camera.getCamera()->getProjection(), camera.getCamera()->getViewportWidth(), camera.getCamera()->getViewportHeight()});
+//            util::Ray ray1 = util::Ray {mainCamera->getWorldTransform().getPosition() + mainCamera->getWorldTransform().getForward(), {0.0f, 0.0f, 1.0f}};
+//            LineRenderer lineRenderer;
+//            lineRenderer.setAspect((float)desc.width / (float)desc.height);
+//            lineRenderer.setVP(glm::inverse(mainCamera->getWorldTransform().getModel()), camera.getCamera()->getProjection());
+//            lineRenderer.setLineWidth(0.005f);
+//            lineRenderer.setColor({1.0f, 0.0f, 0.0f, 1.0f});
+//
+//            lineRenderer.drawLine(renderer, ray.getOrigin(), ray.getOrigin() + ray.getDirection() * 1.0f);
+//            lineRenderer.setColor({0.0f, 1.0f, 0.0f, 1.0f});
+//
+//            lineRenderer.drawLine(renderer, ray.getOrigin(), hitp);
             renderer.end();
 
             //raytracing

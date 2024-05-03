@@ -1189,8 +1189,7 @@ namespace TempResourceInitializer
     }
     {
         auto spiderMeshRes = resourceManager.createMesh("spider");
-        spiderMeshRes->getMesh().vertices = spiderMesh->vertices;
-        spiderMeshRes->getMesh().indices = spiderMesh->indices;
+        spiderMeshRes->getMesh() = *spiderMesh;
 
         graphics::VertexDataLayout attribLayout({
                 { "inPosition", 0, VertexAttributeFormat::Float3 },
@@ -1235,8 +1234,7 @@ namespace TempResourceInitializer
     }
     {
         auto bunnyMeshRes = resourceManager.createMesh("bunny");
-        bunnyMeshRes->getMesh().vertices = bunnyMesh->vertices;
-        bunnyMeshRes->getMesh().indices = bunnyMesh->indices;
+        bunnyMeshRes->getMesh() = *bunnyMesh;
 
         graphics::VertexDataLayout attribLayout({
                 { "inPosition", 0, VertexAttributeFormat::Float3 },
