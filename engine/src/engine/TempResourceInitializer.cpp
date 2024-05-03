@@ -80,6 +80,26 @@ void init(ResourceManager& resourceManager, graphics::Renderer& renderer, const 
 {
     // Create materials
 
+    // create default textures
+    {
+        {
+            auto tex = renderer.getDeviceManager().getDevice().createTexture(TextureDesc::new2D(TextureFormat::RGBA_UNorm8, 1, 1, TextureDesc::TextureUsageBits::Sampled));
+            uint8_t data[] = {255, 255, 255, 0};
+            tex->upload(data, TextureRangeDesc::new2D(0, 0, 1, 1));
+            auto texRes = resourceManager.createTexture("emtpyTexture");
+            texRes->loadFromManagedResource(tex, renderer.getDeviceManager().getDevice().createSamplerState(SamplerStateDesc::newLinear()));
+        }
+
+
+        {
+            auto tex = renderer.getDeviceManager().getDevice().createTexture(TextureDesc::new2D(TextureFormat::RGBA_UNorm8, 1, 1, TextureDesc::TextureUsageBits::Sampled));
+            uint8_t data[] = {255, 0, 255, 255};
+            tex->upload(data, TextureRangeDesc::new2D(0, 0, 1, 1));
+            auto texRes = resourceManager.createTexture("missingTexture");
+            texRes->loadFromManagedResource(tex, renderer.getDeviceManager().getDevice().createSamplerState(SamplerStateDesc::newLinear()));
+        }
+    }
+
     // PBR material
     {
         std::string vs;

@@ -850,27 +850,10 @@ void EngineInstance::initialize()
 
         child.addComponent<MeshComponent>(resourceManager.getMeshByName("teapot"), resourceManager.getMaterialByName("pbrDefaultMaterial"));
         auto& childNode = child.getSceneNode();
+
         childNode.getTransform().setPosition({7.0f, 0.0f, 0.0f});
         childNode.getTransform().setScale({1.f, 1.f, 1.f});
         childNode.getTransform().setRotation({0.0f, 0.0f, 0.0f});
-
-        EntityView teapotPOV = defaultScene->createEntity("teapotPOV");
-        auto& teapotPOVNode = teapotPOV.getSceneNode();
-        {
-            auto testRenderTextureCamera = std::make_shared<Camera>("testRenderTextureCamera");
-            testRenderTexture = renderer.getDevice().createTexture(TextureDesc::new2D(TextureFormat::RGBA_UNorm8, desc.width, desc.height, TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled | TextureDesc::TextureUsageBits::Storage));
-            auto testRenderTextureCameraTarget = graphics::RenderTarget{
-                    .colorTexture = testRenderTexture,
-                    .clearColor = {0.0f, 0.2f, 0.2f, 1.0f},
-            };
-            teapotPOV.addComponent<CameraComponent>(testRenderTextureCamera, testRenderTextureCameraTarget);
-            teapotPOV.addComponent<MeshComponent>(resourceManager.getMeshByName("teapot"), resourceManager.getMaterialByName("pbrDefaultMaterial"));
-
-            auto& teapotPOVTransform = teapotPOVNode.getTransform();
-            teapotPOVTransform.setPosition({4.0f, 0.0f, 0.0f});
-            teapotPOVTransform.setRotation({0.0f, glm::radians(90.0f), 0.0f});
-        }
-        childNode.addChild(&teapotPOVNode);
 
 
 //        // Create a child node
@@ -902,12 +885,17 @@ void EngineInstance::initialize()
 
         rootNode.addChild(&childNode);
 
+        childNode.visit([](SceneNode& node) {
+            node.setVisible(false);
+        });
+
+
         viewer.getSceneNode().getTransform().lookAt(rootNode.getTransform().getPosition(), {0.0f, 1.0f, 0.0f});
     }
 
     // create cube with small glowing boxes on each face
     {
-        auto cube = defaultScene->createEntity("artifactCube");
+        auto cube = defaultScene->createEntity("spinningObject");
 
         glm::vec3 cubeSize = {1.0f, 1.0f, 1.0f};
 
@@ -929,11 +917,11 @@ void EngineInstance::initialize()
                 {-1.0f, 0.0f, 0.0f}
         };
         for (int i = 0; i < 1; i++) {
-            auto box = defaultScene->createEntity("artifactBox" + std::to_string(i));
+            auto box = defaultScene->createEntity("spinningObject" + std::to_string(i));
             box.addComponent<MeshComponent>(resourceManager.getMeshByName("portalFrame"), resourceManager.getMaterialByName("pbrGlowMaterial"));
             {
                 auto& boxNode = box.getSceneNode();
-                boxNode.getTransform().setPosition(facePositions[i] * cubeSize);
+                boxNode.getTransform().setPosition(facePositions[i] * cubeSize*2.0f);
                 boxNode.getTransform().setScale({0.1f, 0.1f, 0.1f});
 
                 // face outwards from the cube, so rotate the box relative to their face
@@ -950,6 +938,24 @@ void EngineInstance::initialize()
                 cube.getSceneNode().addChild(&boxNode);
             }
         }
+
+
+        EntityView teapotPOV = defaultScene->createEntity("teapotPOV");
+        auto& teapotPOVNode = teapotPOV.getSceneNode();
+        {
+            auto testRenderTextureCamera = std::make_shared<Camera>("testRenderTextureCamera");
+            testRenderTexture = renderer.getDevice().createTexture(TextureDesc::new2D(TextureFormat::RGBA_UNorm8, desc.width, desc.height, TextureDesc::TextureUsageBits::Attachment | TextureDesc::TextureUsageBits::Sampled | TextureDesc::TextureUsageBits::Storage));
+            auto testRenderTextureCameraTarget = graphics::RenderTarget{
+                    .colorTexture = testRenderTexture,
+                    .clearColor = {0.0f, 0.2f, 0.2f, 1.0f},
+            };
+            teapotPOV.addComponent<CameraComponent>(testRenderTextureCamera, testRenderTextureCameraTarget);
+
+            auto& teapotPOVTransform = teapotPOVNode.getTransform();
+            teapotPOVTransform.setPosition({0.0f, 0.0f, 2.5f});
+            teapotPOVTransform.setRotation({0.0f, glm::radians(180.0f), 0.0f});
+        }
+        cube.getSceneNode().addChild(&teapotPOVNode);
     }
 
     // create a room with a floor and walls
@@ -1221,15 +1227,14 @@ void EngineInstance::updateSimulation(float dt)
 {
 //    std::cout << "Updating simulation (" << (dt * 1000.0f) << " ms)" << std::endl;
 
-    // rotate the cube artifact in a chaotic manner
     {
-        std::optional<EntityView> cubeArtifact_ = defaultScene->getEntityByName("artifactCube");
-        if (cubeArtifact_)
+        std::optional<EntityView> spinningObject = defaultScene->getEntityByName("spinningObject");
+        if (spinningObject)
         {
-            auto& cubeArtifact = cubeArtifact_->getSceneNode();
-            cubeArtifact.getTransform().rotate(glm::angleAxis(glm::radians(0.1f), glm::vec3(0.0f, 1.0f, 0.0f)));
-            cubeArtifact.getTransform().rotate(glm::angleAxis(glm::radians(0.2f), glm::vec3(1.0f, 0.0f, 0.0f)));
-            cubeArtifact.getTransform().rotate(glm::angleAxis(glm::radians(0.3f), glm::vec3(0.0f, 0.0f, 1.0f)));
+            auto& spinningObjectNode = spinningObject->getSceneNode();
+            spinningObjectNode.getTransform().rotate(glm::angleAxis(glm::radians(0.1f), glm::vec3(0.0f, 1.0f, 0.0f)));
+            spinningObjectNode.getTransform().rotate(glm::angleAxis(glm::radians(0.2f), glm::vec3(1.0f, 0.0f, 0.0f)));
+            spinningObjectNode.getTransform().rotate(glm::angleAxis(glm::radians(0.3f), glm::vec3(0.0f, 0.0f, 1.0f)));
         }
     }
 
@@ -1239,9 +1244,7 @@ void EngineInstance::updateSimulation(float dt)
         if (root_)
         {
             auto& root = root_->getSceneNode();
-            root.visit([](SceneNode& node) {
-                node.setVisible(true);
-            });
+
 //            root.getTransform().rotate(glm::angleAxis(glm::radians(1.0f), glm::vec3(0.0f, 0.0f, 1.0f)));
             auto* childNode_ = root.findNode("childTeapot");
             if (childNode_)

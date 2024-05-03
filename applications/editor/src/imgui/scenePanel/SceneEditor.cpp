@@ -380,11 +380,6 @@ void SceneEditor::drawMaterialEditor()
                 }
                 if (ImGui::BeginPopup("Texture Selection"))
                 {
-                    if (ImGui::Selectable("None"))
-                    {
-                        mat1->setTextureSampler(texSamplerForSelection_, nullptr, 0);
-                        texSamplerForSelection_ = "";
-                    }
                     for (auto& [texName, tex] : engineInstance_.resourceManager.getTextures())
                     {
                         if (ImGui::Selectable(texName.c_str()))
