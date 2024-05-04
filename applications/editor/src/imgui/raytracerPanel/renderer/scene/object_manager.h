@@ -156,39 +156,40 @@ color3 compute_color(const ray& incident_ray, const uint32_t max_rays)
         total_color += local_color;
     }
 
-    // Global illumination (indirect)
-    constexpr int num_samples = 16;
+        // Global illumination (indirect)
+        constexpr int num_samples = 16;
 
-    // Dynamic specular weight based on material shinines
-    const float specular_weight = std::min(1.0f, std::max(0.1f, 1.0f - exp(-0.1f * closest_hit_object->get_shininess())));
+        // Dynamic specular weight based on material shininess
+        const float specular_weight = std::min(1.0f, std::max(0.1f, 1.0f - exp(-0.1f * closest_hit_object->get_shininess())));
 
-    color3 global_illumination{0.0f, 0.0f, 0.0f};
+        color3 global_illumination{0.0f, 0.0f, 0.0f};
 
-    for (int i = 0; i < num_samples; ++i)
-    {
-        vec3 sample_direction;
-        float specular_prob = dist(rng);
-
-        if (specular_prob < specular_weight)
+        for (int i = 0; i < num_samples; ++i)
         {
-            // Specular component
-            closest_hit_object->alter_ray_direction(incident_ray, closest_hit_normal, sample_direction);
-            ray next_ray = {closest_hit_t + EPSILON, sample_direction};
-            global_illumination += compute_color(next_ray, max_rays - 1);
-        }
-        else
-        {
-            // Diffuse/glossy component
-            sample_direction = sample_hemisphere(closest_hit_normal);
-            ray next_ray = {closest_hit_t + EPSILON, sample_direction};
-            global_illumination += compute_color(next_ray, max_rays - 1);
-        }
-    }
-    global_illumination /= static_cast<float>(num_samples);
+            vec3 sample_direction;
+            float specular_prob = dist(rng);
 
-    total_color += global_illumination;
+            if (specular_prob < specular_weight)
+            {
+                // Specular component
+                closest_hit_object->alter_ray_direction(incident_ray, closest_hit_normal, sample_direction);
+                ray next_ray = {closest_hit_t + EPSILON, sample_direction};
+                global_illumination += compute_color(next_ray, max_rays - 1);
+            }
+            else
+            {
+                sample_direction  = sample_hemisphere(closest_hit_normal);
+                ray next_ray = {closest_hit_t + EPSILON, sample_direction};
+                global_illumination += compute_color(next_ray, max_rays - 1);
+            }
+        }
+        global_illumination /= static_cast<float>(num_samples);
 
-    return total_color * closest_hit_object->color_at(closest_hit_t, closest_hit_uv);
+        global_illumination *= closest_hit_object->color_at(closest_hit_t, closest_hit_uv);
+
+        total_color += global_illumination;
+
+        return total_color;
 }
 private:
     std::vector<i_object*> objects{};
