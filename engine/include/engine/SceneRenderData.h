@@ -4,17 +4,23 @@
 
 #pragma once
 
+#include "Light.h"
+#include "engine/graphics/Material.h"
 #include <glm/glm.hpp>
 #include <vector>
-#include "engine/graphics/Material.h"
+
+class MeshResource;
+class MaterialResource;
+class TextureResource;
+class Light;
 
 struct Mesh;
 
 struct MeshRenderData
 {
-    glm::mat4 modelMatrix;
-    Mesh* mesh;
-    std::shared_ptr<graphics::Material> material;
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    std::shared_ptr<MeshResource> mesh = nullptr;
+    std::shared_ptr<MaterialResource> material = nullptr;
 };
 
 struct LineRenderData
@@ -23,14 +29,33 @@ struct LineRenderData
     glm::vec4 color;
 };
 
+struct LightData
+{
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    glm::vec3 position;
+    glm::vec3 direction;
+    const Light* light;
+};
+
+struct SkyboxData
+{
+    std::shared_ptr<TextureResource> texture;
+};
+
 struct SceneRenderData
 {
     std::vector<LineRenderData> lineRenderData;
     std::vector<MeshRenderData> meshRenderData;
+    std::vector<LightData> lights;
+    SkyboxData skybox;
+    int lightModel = 0; // test variable
 
 public:
     void reset()
     {
+        lineRenderData.clear();
         meshRenderData.clear();
+        lights.clear();
+        skybox.texture = nullptr;
     }
 };

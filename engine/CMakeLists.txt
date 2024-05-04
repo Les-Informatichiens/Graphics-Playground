@@ -54,13 +54,40 @@ add_library(
         src/engine/graphics/VertexDataLayout.cpp
         include/engine/graphics/VertexDataLayout.h
         src/engine/LineRenderer.cpp
-        src/engine/LineRenderer.h
+        include/engine/LineRenderer.h
         src/engine/util/Math.cpp
         include/engine/util/Math.h
         src/engine/Bounds.cpp
         include/engine/Bounds.h
         src/engine/Input.cpp
         include/engine/Input.h
+        src/engine/ResourceManager.cpp
+        include/engine/ResourceManager.h
+        src/engine/graphics/TextureResource.cpp
+        include/engine/graphics/TextureResource.h
+        src/engine/Resource.cpp
+        include/engine/Resource.h
+        src/engine/graphics/MeshResource.cpp
+        include/engine/graphics/MeshResource.h
+        src/engine/ResourceHandle.cpp
+        include/engine/ResourceHandle.h
+        src/engine/graphics/MaterialResource.cpp
+        include/engine/graphics/MaterialResource.h
+        src/engine/graphics/DeviceManager.cpp
+        include/engine/graphics/DeviceManager.h
+        src/engine/ImageResource.cpp
+        include/engine/ImageResource.h
+        src/engine/components/LightComponent.cpp
+        include/engine/components/LightComponent.h
+        src/engine/Light.cpp
+        include/engine/Light.h
+        src/engine/graphics/ShaderResource.cpp
+        include/engine/graphics/ShaderResource.h
+        src/engine/TempResourceInitializer.h
+        src/engine/util/Ray.cpp
+        include/engine/util/Ray.h
+        src/engine/TempResourceInitializer.cpp
+        src/engine/TempResourceInitializer.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
@@ -103,6 +130,16 @@ if (EnTT_ADDED)
     target_link_libraries(${PROJECT_NAME} PUBLIC EnTT)
 endif()
 # =====================================================================================================
+
+
+## lua ================================================================================================
+CPMAddPackage(
+        NAME "sol2"
+        GITHUB_REPOSITORY "ThePhD/sol2"
+        VERSION "3.3.0"
+)
+target_link_libraries(${PROJECT_NAME} PRIVATE sol2::sol2)
+## ====================================================================================================
 
 ## assimp ===============================================================================================
 #CPMAddPackage(

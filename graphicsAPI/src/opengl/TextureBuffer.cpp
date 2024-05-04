@@ -128,10 +128,24 @@ void TextureBuffer::bind()
     getContext().bindTexture(target, handle);
 }
 
-void TextureBuffer::bindImage(size_t unit)
+void TextureBuffer::bindImage(size_t unit, uint8_t accessFlags, uint32_t mipLevel, uint32_t layer)
 {
     assert(getUsage() & TextureDesc::TextureUsageBits::Storage && "TextureBuffer::bindImage: Texture must have storage to be bound as image");
-    getContext().bindImageTexture(static_cast<GLuint>(unit), getHandle(), 0, getTarget() == GL_TEXTURE_2D ? GL_TRUE : GL_FALSE, 0, GL_READ_WRITE, glInternalFormat);
+    GLenum access = 0;
+    if (accessFlags == ImageAccessFlags::ReadWrite)
+    {
+        access = GL_READ_WRITE;
+    }
+    else if (accessFlags == ImageAccessFlags::ReadOnly)
+    {
+        access = GL_READ_ONLY;
+    }
+    else if (accessFlags == ImageAccessFlags::WriteOnly)
+    {
+        access = GL_WRITE_ONLY;
+    }
+
+    getContext().bindImageTexture(static_cast<GLuint>(unit), getHandle(), mipLevel, getTarget() == GL_TEXTURE_2D ? GL_FALSE : GL_FALSE, layer, access, glInternalFormat);
 }
 
 void TextureBuffer::unbind()

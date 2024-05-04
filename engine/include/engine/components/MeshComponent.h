@@ -6,21 +6,22 @@
 
 #include "engine/Mesh.h"
 #include "engine/graphics/Material.h"
+#include "engine/graphics/MeshResource.h"
 #include <memory>
 
 class MeshComponent
 {
 public:
-    explicit MeshComponent(std::shared_ptr<Mesh> mesh, std::shared_ptr<graphics::Material> material);
+    explicit MeshComponent(std::shared_ptr<MeshResource> mesh, std::shared_ptr<MaterialResource> material);
     ~MeshComponent();
 
-    [[nodiscard]] const std::shared_ptr<Mesh>& getMesh() const;
-    void setMesh(std::shared_ptr<Mesh> mesh_);
+    [[nodiscard]] std::shared_ptr<MeshResource> getMesh() const;
+    [[nodiscard]] std::shared_ptr<MaterialResource> getMaterial() const;
 
-    [[nodiscard]] const std::shared_ptr<graphics::Material>& getMaterial() const;
-    void setMaterial(std::shared_ptr<graphics::Material> material_);
+    void setMesh(std::shared_ptr<MeshResource> mesh);
+    void setMaterial(std::shared_ptr<MaterialResource> material);
 
 private:
-    std::shared_ptr<Mesh> mesh;
-    std::shared_ptr<graphics::Material> material;
+    std::shared_ptr<MeshResource> mesh;
+    std::shared_ptr<MaterialResource> material;
 };

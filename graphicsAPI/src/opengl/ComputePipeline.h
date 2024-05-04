@@ -26,7 +26,8 @@ public:
     void bind();
     void unbind();
 
-    void bindTextureUnit(size_t unit, Texture* texture);
+    void bindImageUnit(size_t unit, Texture* texture, uint8_t accessFlags, uint32_t mipLevel = 0, uint32_t layer = 0);
+    GLint getTextureUnitLocation(size_t unit);
     void bindBuffer(size_t unit, Buffer* buffer);
 
     bool isUsingShaderStorageBuffers() const { return usingShaderStorageBuffers; }
@@ -39,6 +40,7 @@ private:
 
     std::array<GLint, MAX_VERTEX_BUFFERS> bufferUnitMap;
     std::array<GLint, MAX_TEXTURE_SAMPLERS> imageUnitMap;
+    std::array<GLint, MAX_TEXTURE_SAMPLERS> textureUnitMap;
 
     bool usingShaderStorageBuffers = false;
 };

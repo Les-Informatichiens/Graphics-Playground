@@ -329,6 +329,7 @@ struct TextureFormatProperties {
     [[nodiscard]] bool isValid() const noexcept {
         return format != TextureFormat::Invalid;
     }
+
     /**
    * @brief true compressed texture formats.
    */

@@ -41,7 +41,7 @@ void ComputePipeline::initialize(const ComputePipelineDesc& desc)
             getContext().getUniformiv(shaderStages->getProgram(), loc, &unit);
             if (unit >= 0)
             {
-                imageUnitMap[texUnit] = loc;
+                imageUnitMap[texUnit] = unit;
             }
             else
             {
@@ -51,6 +51,28 @@ void ComputePipeline::initialize(const ComputePipelineDesc& desc)
         else
         {
             std::cerr << "Image uniform (" << texName << ") not found in shader" << std::endl;
+        }
+    }
+
+    for (const auto& [texUnit, texName]: desc.texturesMap)
+    {
+        GLint loc = reflection->getLocation(texName);
+        if (loc >= 0)
+        {
+            GLint unit = 0;
+            getContext().getUniformiv(shaderStages->getProgram(), loc, &unit);
+            if (unit >= 0)
+            {
+                textureUnitMap[texUnit] = loc;
+            }
+            else
+            {
+                std::cerr << "Texture uniform unit (" << texName << ") not found in shader" << std::endl;
+            }
+        }
+        else
+        {
+            std::cerr << "Texture uniform (" << texName << ") not found in shader" << std::endl;
         }
     }
 
@@ -111,7 +133,7 @@ void ComputePipeline::unbind()
     }
 }
 
-void ComputePipeline::bindTextureUnit(size_t unit, Texture* texture)
+void ComputePipeline::bindImageUnit(size_t unit, Texture* texture, uint8_t accessFlags, uint32_t mipLevel, uint32_t layer)
 {
     if (!shaderStages)
     {
@@ -123,15 +145,25 @@ void ComputePipeline::bindTextureUnit(size_t unit, Texture* texture)
         return;
     }
 
-    GLint samplerLocation = imageUnitMap[unit];
-    if (samplerLocation >= 0)
+    GLint imageUnit = imageUnitMap[unit];
+    if (imageUnit >= 0)
     {
-        texture->bindImage(samplerLocation);
+        texture->bindImage(imageUnit, accessFlags, mipLevel, layer);
     }
     else
     {
-        std::cerr << "Warning: No sampler found for texture unit: " << unit << std::endl;
+        std::cerr << "Warning: No image found for texture unit: " << unit << std::endl;
     }
+}
+
+GLint ComputePipeline::getTextureUnitLocation(size_t unit)
+{
+    if (unit >= MAX_TEXTURE_SAMPLERS)
+    {
+        return -1;
+    }
+
+    return textureUnitMap[unit];
 }
 
 void ComputePipeline::bindBuffer(size_t unit, Buffer* buffer)

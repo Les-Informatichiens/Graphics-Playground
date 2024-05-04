@@ -57,6 +57,11 @@ void GraphicsPipeline::initialize()
         {
             unitSamplerLocations[unit] = loc;
         }
+        else
+        {
+            // log warning
+            std::cout << "Warning: No sampler found with name: " << samplerName << std::endl;
+        }
     }
 
     // Setup the texture units
@@ -66,6 +71,11 @@ void GraphicsPipeline::initialize()
         if (loc >= 0)
         {
             unitSamplerLocations[unit] = loc;
+        }
+        else
+        {
+            // log warning
+            std::cout << "Warning: No sampler found with name: " << samplerName << std::endl;
         }
     }
 
@@ -174,6 +184,26 @@ void GraphicsPipeline::bindTextureUnit(const size_t unit, uint8_t bindTarget)
         std::cout << "Warning: No sampler found for texture unit: " << unit << std::endl;
     }
 
+}
+
+int GraphicsPipeline::getTextureUnitLocation(const size_t unit, uint8_t bindTarget)
+{
+    if (unit >= MAX_TEXTURE_SAMPLERS)
+    {
+        return -1;
+    }
+
+    GLint samplerLocation = -1;
+    if (bindTarget == BindTarget::BindTarget_Vertex)
+    {
+        samplerLocation = unitSamplerLocations[unit];
+    }
+    else
+    {
+        samplerLocation = unitSamplerLocations[unit];
+    }
+
+    return samplerLocation;
 }
 
 void GraphicsPipeline::bindVertexAttributes(size_t bufferIndex, size_t offset)

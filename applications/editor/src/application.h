@@ -5,18 +5,17 @@
 
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
-#include <GL/glew.h>
 
 #include "engine/EngineInstance.h"
 #include "imgui/ImGuiInstance.h"
 #include "imgui/drawingPanel/picasso.h"
-#include "imgui/drawingPanel/shape.h"
 #include "imgui/scenePanel/SceneEditor.h"
 
 #include "graphicsAPI/common/Texture.h"
+#include "imgui/curvesPanel/curvesDrawer.h"
+#include "imgui/raytracerPanel/rt.h"
 
 #include <memory>
-
 
 struct PixelColor
 {
@@ -25,6 +24,7 @@ struct PixelColor
     uint8_t b;
     uint8_t a;
 };
+
 struct ImageData
 {
     int w;
@@ -36,7 +36,7 @@ struct ImageData
     PixelColor getPixel(int x, int y)
     {
         int i = y * this->w + x;
-        return PixelColor { .r = this->pixels[i], .g = this->pixels[i + 1], .b = this->pixels[i + 2], .a = this->pixels[i + 3] };
+        return PixelColor{.r = this->pixels[i], .g = this->pixels[i + 1], .b = this->pixels[i + 2], .a = this->pixels[i + 3]};
     }
 
 
@@ -54,9 +54,8 @@ struct ImageData
 class application
 {
 public:
-
-    application(EngineInstance& engine, GLFWwindow *window)
-        : gameEngine(engine), window(window), imguiInstance({}), sceneEditor(engine), imageData({}), imageTexture(nullptr) {};
+    application(EngineInstance& engine, GLFWwindow* window)
+        : gameEngine(engine), imguiInstance({}), window(window), RTimageData({}), imageData({}), imageTexture(nullptr), sceneEditor(engine){};
 
     void init();
 
@@ -69,6 +68,8 @@ public:
 
     void run();
 
+    void raycastSelection();
+
     void initImGui();
     void beginImGuiFrame();
     void endImGuiFrame();
@@ -78,7 +79,6 @@ public:
     ~application();
 
 private:
-
     EngineInstance& gameEngine;
     imgui::ImGuiInstance imguiInstance;
     GLFWwindow* window;
@@ -88,15 +88,40 @@ private:
     int height{};
 
     // imgui state
-    bool show_demo_window = true;
+    bool show_demo_window = false;
     bool show_another_window = false;
     bool show_editor = false;
     bool show_pov_cam = false;
     bool lockCamOnSelected = true;
     bool cameraMotion = true;
     bool showImageWindow = false;
-
+    bool showRayTracer = false;
+    bool showCurvesUwu = false;
+    bool renderedImage = false;
     picasso vectorDrawer;
+    CurvesDrawer curvesDrawer;
+    std::shared_ptr<ITexture> RTtexture;
+    ImageData RTimageData;
+
+    std::vector<vec3> corners{
+            {0.15f, 0.15f, 0.0f},
+            {0.65f, 0.25f, 0.0f},
+            {0.85f, 0.75f, 0.0f},
+            {0.25f, 0.55f, 0.0f}};
+
+    std::vector<vec3> controlPoints{
+            {0.15f, 0.15f, 0.0f},
+            {0.65f, 0.25f, 0.0f},
+            {0.85f, 0.75f, 0.0f},
+            {0.25f, 0.55f, 0.0f},
+            {0.55f, 0.85f, 0.0f}};
+
+    // Define wave parameters
+    float Ax = 50.0f;// Amplitude for x-axis waves
+    float Ay = 50.0f;// Amplitude for y-axis waves
+    float fx = 2.0f; // Frequency for x-axis waves
+    float fy = 2.0f; // Frequency for y-axis waves
+
 
     std::string selectedImagePath;
     ImageData imageData;
@@ -104,4 +129,6 @@ private:
     void calculateAndDisplayHistogram();
     void histogram();
     SceneEditor sceneEditor;
+
+    std::string selectedEntityUUID;
 };

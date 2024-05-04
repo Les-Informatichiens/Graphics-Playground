@@ -88,6 +88,31 @@ struct TextureDesc {
                            ResourceStorage::Invalid};
     }
 
+    /**
+   * @brief Utility to create a new cube texture
+   *
+   * @param format The format of the texture
+   * @param width  The width of the texture
+   * @param height The height of the texture
+   * @param usage A combination of TextureUsage flags
+   * @param debugName An optional debug name
+   * @return TextureDesc
+   */
+    static TextureDesc newCube(TextureFormat format,
+                               size_t width,
+                               size_t height,
+                               TextureUsage usage) {
+        return TextureDesc{width,
+                           height,
+                           1,
+                           1,
+                           1,
+                           usage,
+                           1,
+                           TextureType::TextureCube,
+                           format,
+                           ResourceStorage::Invalid};
+    }
 
     /**
    * @brief Utility to calculate maximum mipmap level support

@@ -6,6 +6,7 @@
 
 #include "graphicsAPI/common/Buffer.h"
 #include "graphicsAPI/common/Texture.h"
+#include "graphicsAPI/common/SamplerState.h"
 #include "graphicsAPI/common/ComputePipeline.h"
 
 #include <memory>
@@ -29,5 +30,7 @@ public:
     virtual void dispatch(const ThreadGroupDimensions& dimensions) = 0;
 
     virtual void bindBuffer(size_t index, std::shared_ptr<IBuffer> buffer, size_t offset) = 0;
+    virtual void bindImage(size_t index, std::shared_ptr<ITexture> texture, uint8_t accessFlags, uint32_t mipLevel = 0, uint32_t layer = 0) = 0;
     virtual void bindTexture(size_t index, std::shared_ptr<ITexture> texture) = 0;
+    virtual void bindSamplerState(size_t index, std::shared_ptr<ISamplerState> samplerState) = 0;
 };

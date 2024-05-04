@@ -2,7 +2,7 @@
 // Created by Jonathan Richard on 2024-03-07.
 //
 
-#include "LineRenderer.h"
+#include "engine/LineRenderer.h"
 #include "engine/util/Math.h"
 #include <algorithm>
 
@@ -139,103 +139,103 @@ void LineRenderer::drawLines(graphics::Renderer& renderer, const std::vector<glm
     )";
 
 
-        auto shaderProgram = renderer.createShaderProgram(vs, fs);
-        LineRenderer::lineMaterial = renderer.createMaterial(shaderProgram);
+        auto shaderProgram = renderer.getDeviceManager().createShaderProgram(vs, fs);
+        LineRenderer::lineMaterial = renderer.getDeviceManager().createMaterial(shaderProgram);
 
     }
 
     LineRenderer::lineMaterial->setCullMode(CullMode::None);
     LineRenderer::lineMaterial->setDepthTestConfig(graphics::DepthTestConfig::Enable);
 
-    struct Constants
-    {
-        alignas(4) float aspect = 1.0f;
-        alignas(4) float thickness = 1.0f;
-        alignas(4) int miter = 0;
-        alignas(16) glm::vec4 color;
-    } constants = {
-        .aspect = settings.aspect,
-        .thickness = settings.lineWidth,
-        .miter = settings.miter,
-        .color = settings.color
-    };
-
-    struct MVP
-    {
-        glm::mat4 model = glm::mat4(1.0f);
-        glm::mat4 view = glm::mat4(1.0f);
-        glm::mat4 projection = glm::mat4(1.0f);
-    } mvp = {
-        .model = glm::mat4(1.0f),
-        .view = view,
-        .projection = projection
-    };
-
-    lineMaterial->setUniformBytes("MVP", &mvp, sizeof(mvp), 0);
-    lineMaterial->setUniformBytes("Constants", &constants, sizeof(constants), 1);
-
-    // Create vertex data
-    graphics::VertexDataLayout attribLayout({
-        {"position", 0, VertexAttributeFormat::Float3},
-        {"direction", 1, VertexAttributeFormat::Float},
-        {"next", 2, VertexAttributeFormat::Float3},
-        {"previous", 3, VertexAttributeFormat::Float3}
-    });
-
-    auto indices = createIndices(lines.size());
-
-    struct LineVertex
-    {
-        glm::vec3 position = glm::vec3(0.0f);
-        float direction = 1.0f;
-        glm::vec3 next = glm::vec3(0.0f);
-        glm::vec3 previous = glm::vec3(0.0f);
-    };
-
-    auto relative = [](int offset, const glm::vec3& point, int index, const std::vector<glm::vec3>& list)
-    {
-        index = std::clamp(index + offset, 0, static_cast<int>(list.size() - 1));
-        return list[index];
-    };
-
-    std::vector<LineVertex> vertices;
-    // Process line points into vertices
-    for (size_t i = 0; i < lines.size(); i++)
-    {
-        glm::vec3 current = lines[i];
-        glm::vec3 previous = relative(-1, current, i, lines);
-        glm::vec3 next = relative(1, current, i, lines);
-
-        LineVertex v1;
-        v1.position = current;
-        v1.direction = 1.0f;
-        v1.next = next;
-        v1.previous = previous;
-
-        LineVertex v2;
-        v2.position = current;
-        v2.direction = -1.0f;
-        v2.next = next;
-        v2.previous = previous;
-
-        vertices.push_back(v1);
-        vertices.push_back(v2);
-    }
-    if (!lineVertexData)
-    {
-        lineVertexData = renderer.createIndexedVertexData(attribLayout, IndexFormat::UInt16, vertices.size(), indices.size());
-    }
-    else
-    {
-        lineVertexData->allocateVertexBuffer(renderer.getDevice(), vertices.size());
-        lineVertexData->allocateIndexBuffer(renderer.getDevice(), indices.size());
-    }
-    lineVertexData->pushIndices(indices);
-    lineVertexData->pushVertices(vertices);
-
-    graphics::Renderable lineRenderable(LineRenderer::lineMaterial, lineVertexData);
-    lineRenderable.setElementCount((lines.size()-1)*6);
-    renderer.draw(lineRenderable);
+    // struct Constants
+    // {
+    //     alignas(4) float aspect = 1.0f;
+    //     alignas(4) float thickness = 1.0f;
+    //     alignas(4) int miter = 0;
+    //     alignas(16) glm::vec4 color;
+    // } constants = {
+    //     .aspect = settings.aspect,
+    //     .thickness = settings.lineWidth,
+    //     .miter = settings.miter,
+    //     .color = settings.color
+    // };
+    //
+    // struct MVP
+    // {
+    //     glm::mat4 model = glm::mat4(1.0f);
+    //     glm::mat4 view = glm::mat4(1.0f);
+    //     glm::mat4 projection = glm::mat4(1.0f);
+    // } mvp = {
+    //     .model = glm::mat4(1.0f),
+    //     .view = view,
+    //     .projection = projection
+    // };
+    //
+    // lineMaterial->setUniformBytes("MVP", &mvp, sizeof(mvp), 0);
+    // lineMaterial->setUniformBytes("Constants", &constants, sizeof(constants), 1);
+    //
+    // // Create vertex data
+    // graphics::VertexDataLayout attribLayout({
+    //     {"position", 0, VertexAttributeFormat::Float3},
+    //     {"direction", 1, VertexAttributeFormat::Float},
+    //     {"next", 2, VertexAttributeFormat::Float3},
+    //     {"previous", 3, VertexAttributeFormat::Float3}
+    // });
+    //
+    // auto indices = createIndices(lines.size());
+    //
+    // struct LineVertex
+    // {
+    //     glm::vec3 position = glm::vec3(0.0f);
+    //     float direction = 1.0f;
+    //     glm::vec3 next = glm::vec3(0.0f);
+    //     glm::vec3 previous = glm::vec3(0.0f);
+    // };
+    //
+    // auto relative = [](int offset, const glm::vec3& point, int index, const std::vector<glm::vec3>& list)
+    // {
+    //     index = std::clamp(index + offset, 0, static_cast<int>(list.size() - 1));
+    //     return list[index];
+    // };
+    //
+    // std::vector<LineVertex> vertices;
+    // // Process line points into vertices
+    // for (size_t i = 0; i < lines.size(); i++)
+    // {
+    //     glm::vec3 current = lines[i];
+    //     glm::vec3 previous = relative(-1, current, i, lines);
+    //     glm::vec3 next = relative(1, current, i, lines);
+    //
+    //     LineVertex v1;
+    //     v1.position = current;
+    //     v1.direction = 1.0f;
+    //     v1.next = next;
+    //     v1.previous = previous;
+    //
+    //     LineVertex v2;
+    //     v2.position = current;
+    //     v2.direction = -1.0f;
+    //     v2.next = next;
+    //     v2.previous = previous;
+    //
+    //     vertices.push_back(v1);
+    //     vertices.push_back(v2);
+    // }
+    // if (!lineVertexData)
+    // {
+    //     lineVertexData = renderer.getDeviceManager().createIndexedVertexData(attribLayout, IndexFormat::UInt16, vertices.size(), indices.size());
+    // }
+    // else
+    // {
+    //     lineVertexData->allocateVertexBuffer(renderer.getDevice(), vertices.size());
+    //     lineVertexData->allocateIndexBuffer(renderer.getDevice(), indices.size());
+    // }
+    // lineVertexData->pushIndices(indices);
+    // lineVertexData->pushVertices(vertices);
+    //
+    // graphics::Renderable lineRenderable(LineRenderer::lineMaterial, lineVertexData);
+    // lineRenderable.setElementCount((lines.size()-1)*6);
+    // renderer.draw(lineRenderable);
 
 
 }

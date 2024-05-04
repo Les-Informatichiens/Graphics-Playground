@@ -4,6 +4,7 @@
 
 #include "ImGuiInstance.h"
 
+#include <imgui_internal.h>
 #include <utility>
 
 namespace imgui {
@@ -12,6 +13,8 @@ namespace imgui {
 ImGuiInstance::ImGuiInstance(ImGuiInstanceDesc desc)
 {
     context = ImGui::CreateContext();
+    context->IO.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    context->IO.ConfigWindowsMoveFromTitleBarOnly = true;
     ImGui::SetCurrentContext(context);
 }
 
@@ -32,6 +35,7 @@ void ImGuiInstance::beginFrame()
 {
     ImGui::SetCurrentContext(context);
     ImGui::NewFrame();
+    ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 }
 
 void ImGuiInstance::endFrame()

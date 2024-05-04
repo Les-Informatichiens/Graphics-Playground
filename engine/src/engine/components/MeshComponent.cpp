@@ -6,29 +6,29 @@
 
 #include "engine/components/MeshComponent.h"
 
-MeshComponent::MeshComponent(std::shared_ptr<Mesh> mesh, std::shared_ptr<graphics::Material> material)
+MeshComponent::MeshComponent(std::shared_ptr<MeshResource> mesh, std::shared_ptr<MaterialResource> material)
     : mesh(std::move(mesh)), material(std::move(material))
 {
 }
 
 MeshComponent::~MeshComponent() = default;
 
-const std::shared_ptr<Mesh>& MeshComponent::getMesh() const
+std::shared_ptr<MeshResource> MeshComponent::getMesh() const
 {
     return mesh;
 }
 
-void MeshComponent::setMesh(std::shared_ptr<Mesh> mesh_)
-{
-    this->mesh = std::move(mesh_);
-}
-
-const std::shared_ptr<graphics::Material>& MeshComponent::getMaterial() const
+std::shared_ptr<MaterialResource> MeshComponent::getMaterial() const
 {
     return material;
 }
 
-void MeshComponent::setMaterial(std::shared_ptr<graphics::Material> material_)
+void MeshComponent::setMesh(std::shared_ptr<MeshResource> mesh_)
+{
+    this->mesh = std::move(mesh_);
+}
+
+void MeshComponent::setMaterial(std::shared_ptr<MaterialResource> material_)
 {
     this->material = std::move(material_);
 }

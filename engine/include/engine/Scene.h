@@ -6,17 +6,25 @@
 
 #include "util/UUID.h"
 
+#include "engine/graphics/TextureResource.h"
+#include "engine/util/Ray.h"
 #include "entt/entt.hpp"
 
-#include <vector>
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <vector>
-#include <optional>
 
 struct SceneRenderData;
 class EntityView;
 class SceneNode;
+
+struct RaycastHit
+{
+    util::UUID entityUUID;
+    glm::vec3 hitPoint;
+    glm::vec3 hitNormal;
+};
 
 class Scene
 {
@@ -42,6 +50,15 @@ public:
 
     void getSceneRenderData(SceneRenderData& sceneRenderData) const;
 
+    void setSkyboxTexture(std::shared_ptr<TextureResource> texture) { skyboxTexture = texture; }
+    std::shared_ptr<TextureResource> getSkyboxTexture() const { return skyboxTexture; }
+
+    std::optional<EntityView> findMainCameraEntity();
+
+    // raycasting
+    std::optional<RaycastHit> raycastFirstHit(util::Ray ray, float maxDistance = 1000.0f);
+
+
 private:
     static void linkSceneNodeWithEntity(entt::registry &reg, entt::entity e);
 
@@ -58,4 +75,6 @@ private:
 
     entt::registry registry;
     std::unordered_map<util::UUID, EntityData> entityMap;
+
+    std::shared_ptr<TextureResource> skyboxTexture;
 };

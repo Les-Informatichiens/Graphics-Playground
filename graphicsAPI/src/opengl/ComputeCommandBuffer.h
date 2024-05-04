@@ -8,6 +8,7 @@
 #include "graphicsAPI/opengl/Context.h"
 
 #include "Texture.h"
+#include "SamplerState.h"
 #include "graphicsAPI/opengl/Buffer.h"
 #include "UniformBinder.h"
 
@@ -24,7 +25,22 @@ class ComputeCommandBuffer : public IComputeCommandBuffer
         DirtyBits_ComputePipeline = 1 << 1,
     };
 
-    using TextureStates = std::array<std::shared_ptr<Texture>, MAX_TEXTURE_SAMPLERS>;
+    struct TextureState
+    {
+        std::shared_ptr<Texture> texture = nullptr;
+        std::shared_ptr<SamplerState> samplerState = nullptr;
+    };
+    using TextureStates = std::array<TextureState, MAX_TEXTURE_SAMPLERS>;
+
+    struct ImageState
+    {
+        std::shared_ptr<Texture> texture = nullptr;
+        uint32_t mipLevel = 0;
+        uint32_t layer = 0;
+        uint8_t access = ReadWrite;
+    };
+
+    using ImageStates = std::array<ImageState, MAX_TEXTURE_SAMPLERS>;
 
     struct BufferState
     {
@@ -45,7 +61,9 @@ public:
     void dispatch(const ThreadGroupDimensions& dimensions) override;
 
     void bindBuffer(size_t index, std::shared_ptr<IBuffer> buffer, size_t offset) override;
+    void bindImage(size_t index, std::shared_ptr<ITexture> texture, uint8_t accessFlags, uint32_t mipLevel, uint32_t layer) override;
     void bindTexture(size_t index, std::shared_ptr<ITexture> texture) override;
+    void bindSamplerState(size_t index, std::shared_ptr<ISamplerState> samplerState) override;
 
 private:
 
@@ -56,8 +74,10 @@ private:
 private:
     std::bitset<MAX_VERTEX_BUFFERS> dirtyBufferUnits;
     std::bitset<MAX_TEXTURE_SAMPLERS> dirtyImageUnits;
+    std::bitset<MAX_TEXTURE_SAMPLERS> dirtyTextureUnits;
 
-    TextureStates texturesCache;
+    ImageStates imagesCache;
+    TextureStates textureStates;
     BufferStates buffersCache;
 
     std::shared_ptr<IComputePipeline> activeComputePipeline;

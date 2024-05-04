@@ -147,6 +147,7 @@ void Context::bindVertexArray(GLuint array)
 void Context::bindBuffer(GLenum target, GLuint buffer)
 {
     glLog(glBindBuffer(target, buffer));
+    buffers[target] = buffer;
 }
 
 void Context::bindTexture(GLenum target, GLuint texture)
@@ -392,6 +393,7 @@ void Context::deleteBuffer(GLuint id)
 void Context::unbindBuffer(GLenum target)
 {
     glLog(glBindBuffer(target, 0));
+    buffers[target] = 0;
 }
 
 void Context::bufferData(GLenum target, uint32_t size, const void* data, GLenum usage)
@@ -422,6 +424,7 @@ void Context::bindBufferBase(GLenum target, GLuint index, GLuint id)
 void Context::bindBufferRange(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size)
 {
     glLog(glBindBufferRange(target, index, buffer, offset, size));
+    buffers[target] = buffer;
 }
 
 void Context::framebufferTexture2D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)

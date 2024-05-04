@@ -143,6 +143,7 @@ public: // OpenGL functions
     void getProgramInterfaceiv(GLuint program, GLenum programInterface, GLenum pname, GLint* params);
     void dispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
     void memoryBarrier(GLbitfield barriers);
+    GLuint getBoundBuffer(GLenum target) { return buffers[target]; }
 
 
 private:
@@ -150,6 +151,7 @@ private:
 
     std::vector<std::unique_ptr<IGraphicsCommandBuffer>> graphicsCommandBuffers;
     std::vector<std::unique_ptr<IComputeCommandBuffer>> computeCommandBuffers;
+    std::unordered_map<GLuint, GLuint> buffers;
 };
 
 class WithContext {

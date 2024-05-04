@@ -4,12 +4,15 @@
 
 #include "SceneEditor.h"
 #include "engine/components/CameraComponent.h"
+#include "engine/components/LightComponent.h"
 #include "engine/components/MeshComponent.h"
 #include "imgui.h"
 
 
 void SceneEditor::draw()
 {
+    drawMaterialEditor();
+
     ImGui::Begin("Scene Hierarchy");
 
     ImGui::Text("Scene Hierarchy");
@@ -136,11 +139,62 @@ void SceneEditor::draw()
                             // mesh info
                             ImGui::BeginTooltip();
                             ImGui::TextDisabled("Mesh info");
-                            ImGui::Text("Vertex count: %zu", mesh.getMesh()->vertices.size());
-                            ImGui::Text("Index count: %zu", mesh.getMesh()->indices.size());
+                            ImGui::Text("Vertex count: %zu", mesh.getMesh()->getMesh().vertices.size());
+                            ImGui::Text("Index count: %zu", mesh.getMesh()->getMesh().indices.size());
                             ImGui::EndTooltip();
                         }
-                        ImGui::Text("Material: %d", mesh.getMaterial().get());
+                        ImGui::Text("Material:");
+                        ImGui::SameLine(); ImGui::TextDisabled(mesh.getMaterial() ? mesh.getMaterial()->getName().c_str() : "None");
+                        if (ImGui::SameLine(); ImGui::SmallButton("Select"))
+                        {
+                            // open a material selection context menu
+                            ImGui::OpenPopup("Material Selection");
+                        }
+                        if (ImGui::BeginPopup("Material Selection"))
+                        {
+                            if (materialResources_.empty())
+                            {
+                                ImGui::Text("No materials available");
+                            }
+                            for (auto& [name, material] : materialResources_)
+                            {
+                                if (ImGui::Selectable(name.c_str()))
+                                {
+                                    mesh.setMaterial(material.lock());
+                                }
+                            }
+                            ImGui::EndPopup();
+                        }
+
+                    }
+                }
+                if (entity->hasComponent<LightComponent>())
+                {
+                    auto& light = entity->getComponent<LightComponent>();
+                    if (ImGui::CollapsingHeader("Light"))
+                    {
+                        ImGui::TextDisabled("Light properties");
+
+                        ImGui::Combo("Type", (int*)&light.getLight()->type, "Directional\0Point\0Spot\0");
+
+                        ImGui::ColorEdit3("Color", &light.getLight()->color.r,
+                                          ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_AlphaBar);
+
+
+                        ImGui::DragFloat("Intensity", &light.getLight()->intensity, 0.1f);
+
+                        if (light.getLight()->type != LightType::Directional)
+                        {
+                            ImGui::DragFloat("Constant", &light.getLight()->constant, 0.1f);
+                            ImGui::DragFloat("Linear", &light.getLight()->linear, 0.1f);
+                            ImGui::DragFloat("Quadratic", &light.getLight()->quadratic, 0.1f);
+                        }
+
+                        if (light.getLight()->type == LightType::Spot)
+                        {
+                            ImGui::DragFloat("Cutoff", &light.getLight()->cutOff, 0.1f);
+                            ImGui::DragFloat("Outer Cutoff", &light.getLight()->outerCutOff, 0.1f);
+                        }
                     }
                 }
                 ImGui::PopID();
@@ -215,4 +269,167 @@ void SceneEditor::drawSceneTree(SceneNode& node)
 
 
     ImGui::PopID();
+}
+
+void SceneEditor::drawMaterialEditor()
+{
+    ImGui::Begin("Material Editor");
+
+    if (ImGui::Button("Refresh"))
+    {
+        refreshMaterialResources();
+    }
+
+    // material list
+    ImGui::BeginGroup();
+    ImGui::Text("Material List");
+    ImGui::BeginChild("Material List", ImVec2(150, 0), ImGuiChildFlags_Border);
+
+    // material list
+    for (auto& [name, material] : materialResources_)
+    {
+        if (ImGui::Selectable(name.c_str(), selectedMaterial_ == name))
+        {
+            selectedMaterial_ = name;
+        }
+    }
+
+    ImGui::EndChild();
+    ImGui::EndGroup();
+    ImGui::SameLine();
+
+    // material property editor
+    ImGui::BeginGroup();
+    ImGui::Text("Material Properties");
+    ImGui::BeginChild("Material Properties", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()), ImGuiChildFlags_Border);
+
+    if (!selectedMaterial_.empty())
+    {
+        struct alignas(16) PBRSettings {
+            // Flags
+            int useAlbedoMap = true;
+            int useNormalMap = true;
+            int useMetallicMap = true;
+            int useRoughnessMap = true;
+            int useAOMap = true;
+            int useEmissiveMap = true;
+
+            // Data
+            alignas(16) glm::vec3 baseColor = glm::vec3(1.0f);
+            float metallic = 0.0f;
+            float roughness = 0.5f;
+            float ao = 1.0f;
+            alignas(16) glm::vec3 emissionColor = glm::vec3(1.0f);
+            float emissionIntensity = 1.0f;
+            int lightModel = 0;
+        };
+
+        if (auto it = materialResources_.find(selectedMaterial_); it != materialResources_.end())
+        {
+            if (auto mat1 = it->second.lock())
+            {
+                bool hasEdited = false;
+                ImGui::SeparatorText(it->first.c_str());
+                PBRSettings pbrSettings;
+                mat1->getCachedUniformData("Settings", pbrSettings);
+                hasEdited |= ImGui::Checkbox("Use Albedo Map", reinterpret_cast<bool*>(&pbrSettings.useAlbedoMap));
+                hasEdited |= ImGui::Checkbox("Use Normal Map", reinterpret_cast<bool*>(&pbrSettings.useNormalMap));
+                hasEdited |= ImGui::Checkbox("Use Metallic Map", reinterpret_cast<bool*>(&pbrSettings.useMetallicMap));
+                hasEdited |= ImGui::Checkbox("Use Roughness Map", reinterpret_cast<bool*>(&pbrSettings.useRoughnessMap));
+                hasEdited |= ImGui::Checkbox("Use AO Map", reinterpret_cast<bool*>(&pbrSettings.useAOMap));
+                hasEdited |= ImGui::Checkbox("Use Emissive Map", reinterpret_cast<bool*>(&pbrSettings.useEmissiveMap));
+                hasEdited |= ImGui::ColorEdit3("Base Color", &pbrSettings.baseColor.x);
+                hasEdited |= ImGui::SliderFloat("Metallic", &pbrSettings.metallic, 0.0f, 1.0f);
+                hasEdited |= ImGui::SliderFloat("Roughness", &pbrSettings.roughness, 0.0f, 1.0f);
+                hasEdited |= ImGui::SliderFloat("AO", &pbrSettings.ao, 0.0f, 1.0f);
+                hasEdited |= ImGui::ColorEdit3("Emission Color", &pbrSettings.emissionColor.x);
+                hasEdited |= ImGui::SliderFloat("Emission Intensity", &pbrSettings.emissionIntensity, 0.0f, 10.0f);
+                if (hasEdited)
+                {
+                    mat1->setUniformBuffer("Settings", &pbrSettings, sizeof(pbrSettings), 2);
+                }
+
+                // textures
+                auto textures = mat1->getAllCachedTextureSamplers();
+                for (auto [name, texResource] : textures)
+                {
+                    if (texResource && texResource->isLoaded())
+                    {
+                        ImGui::Text(name.c_str());
+                        ImGui::SameLine();
+                        ImGui::TextDisabled("Texture: %d", texResource->getTexture().get());
+                        if (ImGui::ImageButton((ImTextureID)texResource->getTexture().get(), ImVec2(100, 100)))
+                        {
+                            // open a texture selection context menu
+                            ImGui::OpenPopup("Texture Selection");
+                            texSamplerForSelection_ = name;
+                        }
+                        if (ImGui::IsItemHovered())
+                        {
+                            ImGui::BeginTooltip();
+                            ImGui::Image((ImTextureID)texResource->getTexture().get(), ImVec2(256, 256));
+                            ImGui::TextDisabled("Texture info");
+                            ImGui::Text("Width: %d", texResource->getTexture()->getWidth());
+                            ImGui::SameLine(); ImGui::Text("Height: %d", texResource->getTexture()->getHeight());
+                            ImGui::Text("Format: %d", texResource->getTexture()->getFormat());
+                            ImGui::Text("Type: %d", texResource->getTexture()->getType());
+
+                            ImGui::EndTooltip();
+                        }
+                    }
+                }
+                if (ImGui::BeginPopup("Texture Selection"))
+                {
+                    for (auto& [texName, tex] : engineInstance_.resourceManager.getTextures())
+                    {
+                        if (ImGui::Selectable(texName.c_str()))
+                        {
+                            mat1->setTextureSampler(texSamplerForSelection_, tex, 0);
+                            texSamplerForSelection_ = "";
+                        }
+                    }
+                    ImGui::EndPopup();
+                }
+            }
+        }
+    }
+
+    ImGui::EndChild();
+    ImGui::EndGroup();
+    ImGui::End();
+}
+
+void SceneEditor::refreshMaterialResources()
+{
+    materialResources_.clear();
+    std::vector<std::string> materials = {"pbrMaterial", "pbrMaterial1", "pbrMaterial2"};
+    for (auto& [name, mat] : engineInstance_.resourceManager.getMaterials())
+    {
+        auto material = mat;
+        if (material)
+        {
+            materialResources_[name] = material;
+        }
+    }
+    selectedMaterial_ = "";
+    if (!materialResources_.empty())
+    {
+        selectedMaterial_ = materialResources_.begin()->first;
+    }
+}
+
+void SceneEditor::clearSelection()
+{
+    selectedEntities_.clear();
+    lastSelectedEntity_ = util::UUID::zero();
+}
+void SceneEditor::setEntitySelection(util::UUID uuid, bool isSelected)
+{
+    selectedEntities_[uuid] = isSelected;
+    lastSelectedEntity_ = uuid;
+}
+
+bool SceneEditor::isEntitySelected(util::UUID uuid) const
+{
+    return selectedEntities_.find(uuid) != selectedEntities_.end();
 }

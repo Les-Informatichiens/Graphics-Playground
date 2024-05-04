@@ -55,7 +55,7 @@ GraphicsCommandBuffer::GraphicsCommandBuffer(const std::shared_ptr<Context>& con
 void GraphicsCommandBuffer::beginRenderPass(const RenderPassBeginDesc& desc)
 {
     // save the current state
-    scissorEnabled = context->isEnabled(GL_SCISSOR_TEST);
+    scissorEnabled = false;//context->isEnabled(GL_SCISSOR_TEST);
     context->disable(GL_SCISSOR_TEST);
 
     if (activeVAO)
@@ -222,18 +222,25 @@ void GraphicsCommandBuffer::prepareForDraw()
             auto& textureState = vertTexturesCache[i];
             if (auto& texture = textureState.texture)
             {
-                activeGraphicsPipeline->bindTextureUnit(i, BindTarget::BindTarget_Vertex);
+//                activeGraphicsPipeline->bindTextureUnit(i, BindTarget::BindTarget_Vertex);
+                int loc = activeGraphicsPipeline->getTextureUnitLocation(i, BindTarget::BindTarget_Vertex);
+                if (loc >= 0)
+                {
+                    context->uniform1i(loc, static_cast<GLint>(i));
+                    context->activeTexture(GL_TEXTURE0 + i);
+
 //                context->uniform1i(static_cast<GLint>(i), static_cast<GLint>(textureState.textureUnit));
 //                context->activeTexture(GL_TEXTURE0 + textureState.textureUnit);
-                texture->bind();
-                freeTextureUnits.push(textureState.textureUnit);
-                textureState.textureUnit = -1;
+                    texture->bind();
+                    freeTextureUnits.push(textureState.textureUnit);
+                    textureState.textureUnit = -1;
 
-                if (auto& sampler = textureState.samplerState)
-                {
-                    sampler->bind(texture);
+                    if (auto& sampler = textureState.samplerState)
+                    {
+                        sampler->bind(texture);
+                    }
+                    vertTexturesDirtyCache.reset(i);
                 }
-                vertTexturesDirtyCache.reset(i);
             }
         }
         for (size_t i = 0; i < MAX_TEXTURE_SAMPLERS; ++i)
@@ -245,18 +252,25 @@ void GraphicsCommandBuffer::prepareForDraw()
             auto& textureState = fragTexturesCache[i];
             if (auto& texture = textureState.texture)
             {
-                activeGraphicsPipeline->bindTextureUnit(i, BindTarget::BindTarget_Fragment);
+//                activeGraphicsPipeline->bindTextureUnit(i, BindTarget::BindTarget_Fragment);
+                int loc = activeGraphicsPipeline->getTextureUnitLocation(i, BindTarget::BindTarget_Fragment);
+                if (loc >= 0)
+                {
+                    context->uniform1i(loc, static_cast<GLint>(i));
+                    context->activeTexture(GL_TEXTURE0 + i);
+
 //                context->uniform1i(static_cast<GLint>(i), static_cast<GLint>(textureState.textureUnit));
 //                context->activeTexture(GL_TEXTURE0 + textureState.textureUnit);
-                texture->bind();
-                freeTextureUnits.push(textureState.textureUnit);
-                textureState.textureUnit = -1;
+                    texture->bind();
+                    freeTextureUnits.push(textureState.textureUnit);
+                    textureState.textureUnit = -1;
 
-                if (auto& sampler = textureState.samplerState)
-                {
-                    sampler->bind(texture);
+                    if (auto& sampler = textureState.samplerState)
+                    {
+                        sampler->bind(texture);
+                    }
+                    fragTexturesDirtyCache.reset(i);
                 }
-                fragTexturesDirtyCache.reset(i);
             }
         }
     }

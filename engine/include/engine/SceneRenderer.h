@@ -10,6 +10,8 @@
 
 struct SceneCameraDesc
 {
+    glm::vec3 position;
+    glm::vec3 direction;
     glm::mat4 view;
     glm::mat4 projection;
     int viewportWidth;

@@ -81,7 +81,17 @@ public:
 
     void allocateVertexBuffer(IDevice& device, uint32_t vertexCount_) override
     {
+        // do not reallocate if current buffer is large enough
         vertexCount = vertexCount_;
+        vertexBufferHead = 0;
+
+        if (vertexBuffer &&  vertexCount_ * VERTEX_SIZE <= vertexBuffer->getSize())
+        {
+            // fill the buffer with zeros
+            vertexBuffer->data(nullptr, vertexBuffer->getSize(), 0);
+            return;
+        }
+
 
         BufferDesc vertexBufferDesc;
         vertexBufferDesc.size = vertexCount * VERTEX_SIZE;
@@ -89,13 +99,22 @@ public:
         vertexBufferDesc.type = BufferDesc::BufferTypeBits::Vertex;
         vertexBufferDesc.storage = ResourceStorage::Shared;
         vertexBuffer = device.createBuffer(vertexBufferDesc);
-
-        vertexBufferHead = 0;
     }
 
     void allocateIndexBuffer(IDevice& device, uint32_t indexCount_) override
     {
+        // do not reallocate if current buffer is large enough
+
         indexCount = indexCount_;
+        indexBufferHead = 0;
+
+        if (indexBuffer && indexCount_ * INDEX_SIZE <= indexBuffer->getSize())
+        {
+            // fill the buffer with zeros
+            indexBuffer->data(nullptr, indexBuffer->getSize(), 0);
+            return;
+        }
+
 
         BufferDesc indexBufferDesc;
         indexBufferDesc.size = indexCount * INDEX_SIZE;
@@ -103,8 +122,6 @@ public:
         indexBufferDesc.type = BufferDesc::BufferTypeBits::Index;
         indexBufferDesc.storage = ResourceStorage::Shared;
         indexBuffer = device.createBuffer(indexBufferDesc);
-
-        indexBufferHead = 0;
     }
 
     template<typename V>

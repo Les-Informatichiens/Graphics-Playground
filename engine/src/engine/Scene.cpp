@@ -7,6 +7,7 @@
 #include "engine/SceneNode.h"
 #include "engine/SceneRenderData.h"
 #include "engine/components/CameraComponent.h"
+#include "engine/components/LightComponent.h"
 #include "engine/components/MeshComponent.h"
 
 
@@ -38,12 +39,16 @@ void Scene::getSceneRenderData(SceneRenderData& sceneRenderData) const
         if (!node.isVisible())
             return;
 
-        sceneRenderData.meshRenderData.push_back({node.getWorldTransform().getModel(), mesh.getMesh().get(), mesh.getMaterial()});
+        MeshRenderData meshRenderData;
+        meshRenderData.modelMatrix = node.getWorldTransform().getModel();
+        meshRenderData.mesh = mesh.getMesh();
+        meshRenderData.material = mesh.getMaterial();
+        sceneRenderData.meshRenderData.push_back(meshRenderData);
 
         if (node.showBoundingBox)
         {
             auto model = node.getWorldTransform().getModel();
-            Bounds bounds = mesh.getMesh()->bounds;
+            Bounds bounds = mesh.getMesh()->getMesh().bounds;
 
             // create line segments for each edge of the bounding box, we can join the segments from the top and bottom of the box
             glm::vec3 min = bounds.getMin();
@@ -75,6 +80,39 @@ void Scene::getSceneRenderData(SceneRenderData& sceneRenderData) const
             }
         }
     });
+
+    // iterate over all entities with a SceneNode and LightComponent
+    registry.view<SceneNode, LightComponent>().each([&sceneRenderData](const SceneNode& node, const LightComponent& light){
+        if (!node.isVisible())
+            return;
+
+        LightData lightData;
+        lightData.modelMatrix = node.getWorldTransform().getModel();
+        lightData.position = node.getWorldTransform().getPosition();
+        lightData.direction = node.getWorldTransform().getForward();
+        lightData.light = light.getLight();
+        sceneRenderData.lights.push_back(lightData);
+    });
+
+
+    // draw a circle with the lines for testing
+    {
+        int numPoints = 100;
+        float pi = glm::pi<float>();
+        float radius = 100.0f;
+        glm::vec4 color = {0.0f, 1.0f, 0.0f, 1.0f};
+        for (int i = 0; i < numPoints; i++)
+        {
+            float angle = 2.0f * pi * i / numPoints;
+            glm::vec3 p1 = glm::vec3(radius * cos(angle), 0.0f, radius * sin(angle));
+            glm::vec3 p2 = glm::vec3(radius * cos(angle + 2.0f * pi / numPoints), 0.0f, radius * sin(angle + 2.0f * pi / numPoints));
+            //hueshift color
+            color = {color[1], color[2], color[0], color[3]};
+            sceneRenderData.lineRenderData.push_back({{p1, p2}, color});
+        }
+    }
+
+    sceneRenderData.skybox = { skyboxTexture };
 }
 
 void Scene::linkSceneNodeWithEntity(entt::registry& reg, entt::entity e)
@@ -171,4 +209,52 @@ std::vector<EntityView> Scene::getRootEntities()
         }
     });
     return rootEntities;
+}
+
+std::optional<RaycastHit> Scene::raycastFirstHit(util::Ray ray, float maxDistance)
+{
+    std::optional<RaycastHit> hit;
+    float closestDistance = maxDistance;
+
+    registry.view<SceneNode, MeshComponent>().each([&ray, &hit, &closestDistance](SceneNode& node, MeshComponent& mesh){
+        if (!node.isVisible())
+            return;
+
+        Bounds bounds = mesh.getMesh()->getMesh().bounds;
+        glm::mat4 model = node.getWorldTransform().getModel();
+        glm::mat4 invModel = glm::inverse(model);
+
+        glm::vec3 rayOrigin = glm::vec3(invModel * glm::vec4(ray.getOrigin(), 1.0f));
+        glm::vec3 rayDirection = glm::vec3(invModel * glm::vec4(ray.getDirection(), 0.0f));
+        util::Ray localRay(rayOrigin, rayDirection);
+
+        if (bounds.intersects(localRay))
+        {
+            glm::vec3 localIntersectionPoint = bounds.getIntersectionPoint(localRay);
+            glm::vec3 intersectionPoint = glm::vec3(model * glm::vec4(localIntersectionPoint, 1.0f));
+            // if point is not behind ray origin
+            if (glm::dot(ray.getDirection(), intersectionPoint - ray.getOrigin()) < 0.0f)
+                return;
+            float distance = glm::length(intersectionPoint - ray.getOrigin());
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                hit = RaycastHit{node.getEntityView().getUUID(), intersectionPoint, glm::vec3()};
+            }
+        }
+    });
+
+    return hit;
+}
+
+std::optional<EntityView> Scene::findMainCameraEntity()
+{
+    std::optional<EntityView> mainCameraEntity;
+    registry.view<SceneNode, CameraComponent>().each([&mainCameraEntity](SceneNode& node, CameraComponent& camera){
+        if (camera.isRenderingToScreen())
+        {
+            mainCameraEntity = node.getEntityView();
+        }
+    });
+    return mainCameraEntity;
 }
